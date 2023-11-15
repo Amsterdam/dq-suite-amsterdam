@@ -1,0 +1,44 @@
+{
+    "rules": [
+        {
+            "rule_name": "expect_table_row_count_to_be_between",
+            "parameters": [
+                {
+                    "min_value": 1,
+                    "max_value": 1000
+                }
+            ]
+        },
+        {
+            "rule_name": "expect_column_values_to_not_be_null",
+            "parameters": [
+                {
+                    "column": "weight"
+                },
+                {
+                    "column": "volume"
+                }
+                
+            ]
+        },
+        {
+            "rule_name": "expect_column_values_to_be_between",
+            "parameters": [
+                {
+                    "column": "volume",
+                    "min_value": 0,
+                    "max_value": 10000
+                }
+            ]
+        },
+        {
+            "rule_name": "expect_column_values_to_be_of_type",
+            "parameters": [
+                {
+                    "column": "volume",
+                    "type_": "DoubleType"
+                }
+            ]
+        }
+    ]
+}
