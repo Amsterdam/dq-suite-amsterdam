@@ -1,0 +1,28 @@
+# Azure pipeline that creates an artifact for the DQ Suite
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10'
+  displayName: 'Use Python 3.10'
+
+# Install python distributions like wheel, twine etc
+- script: |
+    python -m pip install --upgrade pip
+    python -m pip install --upgrade build setuptools twine
+    pip install -r requirements.txt
+    python -m build
+  displayName: 'Install dependencies'
+
+- task: TwineAuthenticate@1
+  inputs:
+    pythonUploadServiceConnection: 'PyPi'
+
+# Use command line script to 'twine upload', use -r to pass the repository name and --config-file to pass the environment variable set by the authenticate task.
+- script: |
+    python -m twine upload --non-interactive --config-file $(PYPIRC_PATH) dist/*

@@ -1,3 +1,11 @@
+Metadata-Version: 2.1
+Name: dq-suite-gemeente-amsterdam
+Version: 0.0.1
+Summary: Wrapper for Great Expectations to fit the requirements of the gemeente Amsterdam.
+Author-email: Arthur Kordes <a.kordes@amsterdam.nl>
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
 # Introduction 
 DISCLAIMER: Repo is in PoC phase
 
