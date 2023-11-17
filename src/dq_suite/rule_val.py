@@ -1,5 +1,5 @@
 import json
-# from GX import df_check
+
 
 def handle_dq_error(e):
     error_message = str(e)
@@ -13,8 +13,10 @@ def handle_dq_error(e):
     if "Expecting value:" in error_message:
         print("Rules's Value is missing in the JSON.")
 
+
 def handle_unexpected_error(e):
     print(f"An unexpected error occurred: {e}")
+
 
 def handle_errors(dq_rules):
     try:

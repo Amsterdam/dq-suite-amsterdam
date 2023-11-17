@@ -1,4 +1,4 @@
 """DQ API."""
 
-from src.dq_suite.df_checker import *
-from src.dq_suite.rule_val import *
+from dq_suite.df_checker import df_check
+from dq_suite.rule_val import *
