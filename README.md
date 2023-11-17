@@ -1,5 +1,6 @@
 # Introduction 
 DISCLAIMER: Repo is in PoC phase
+DISCLAIMER: The functions can run on Databricks using a Personal Compute Cluster
 
 This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get rules in return.
 

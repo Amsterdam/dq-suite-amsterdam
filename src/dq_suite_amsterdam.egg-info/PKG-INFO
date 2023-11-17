@@ -1,13 +1,14 @@
 Metadata-Version: 2.1
-Name: dq-suite-gemeente-amsterdam
+Name: dq-suite-amsterdam
 Version: 0.0.1
-Summary: Wrapper for Great Expectations to fit the requirements of the gemeente Amsterdam.
+Summary: Wrapper for Great Expectations to fit the requirements of the Gemeente Amsterdam.
 Author-email: Arthur Kordes <a.kordes@amsterdam.nl>
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 
 # Introduction 
 DISCLAIMER: Repo is in PoC phase
+DISCLAIMER: The functions can run on Databricks using a Personal Compute Cluster
 
 This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get rules in return.
 
