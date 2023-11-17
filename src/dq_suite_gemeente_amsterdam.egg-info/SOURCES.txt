@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-src/dq_suite/__init__.py
-src/dq_suite/df_checker.py
-src/dq_suite/rule_val.py
-src/dq_suite_gemeente_amsterdam.egg-info/PKG-INFO
-src/dq_suite_gemeente_amsterdam.egg-info/SOURCES.txt
-src/dq_suite_gemeente_amsterdam.egg-info/dependency_links.txt
-src/dq_suite_gemeente_amsterdam.egg-info/top_level.txt
