@@ -3,10 +3,12 @@ from jsonschema import validate as validate_json
 
 from databricks.sdk.runtime import *
 
+from pyspark.sql import DataFrame
+
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
-from pyspark.sql import DataFrame
+from dq_suite.input_validator import validate_dqrules
 
 
 def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
@@ -23,7 +25,7 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     :rtype: str.
     """
     name = check_name
-    validate_input(dq_rules)
+    validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
   
     # Configure the Great Expectations context

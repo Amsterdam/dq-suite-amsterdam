@@ -1,7 +1,7 @@
 import json
 
 
-def validate_input(dq_rules):
+def validate_dqrules(dq_rules):
     try:
         rule_json = json.loads(dq_rules)
 
