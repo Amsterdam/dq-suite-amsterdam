@@ -1,11 +1,12 @@
 import json
 from jsonschema import validate as validate_json
+
 from databricks.sdk.runtime import *
-# from rule_val import handle_dq_error, handle_unexpected_error
+
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
+
 from pyspark.sql import DataFrame
-from rule_val import handle_errors
 
 
 def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
