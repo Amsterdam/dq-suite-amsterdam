@@ -23,7 +23,7 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     :rtype: str.
     """
     name = check_name
-    handle_errors(dq_rules)
+    validate_input(dq_rules)
     rule_json = json.loads(dq_rules)
   
     # Configure the Great Expectations context
