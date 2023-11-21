@@ -1,11 +1,16 @@
 import json
 from jsonschema import validate as validate_json
+
 from databricks.sdk.runtime import *
-# from rule_val import handle_dq_error, handle_unexpected_error
+
+from pyspark.sql import DataFrame
+
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
-from pyspark.sql import DataFrame
-from rule_val import handle_errors
+
+from dq_suite.input_validator import validate_dqrules
+from dq_suite.output_transformations import extract_dq_validatie_data
+from dq_suite.output_transformations import extract_dq_afwijking_data
 
 
 def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
@@ -18,11 +23,11 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    :return: A JSON string with the DQ results, parsed from the GX output
-    :rtype: str.
+    :return: Two tables df result_dqValidatie - result_dqAfwijking with the DQ results, parsed from the GX output
+    :rtype: df.
     """
     name = check_name
-    handle_errors(dq_rules)
+    validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
   
     # Configure the Great Expectations context
@@ -80,7 +85,10 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
 
     # Parse output
     output = checkpoint_result["run_results"]
+    
     for key in output.keys():
         result = output[key]["validation_result"]
+        result_dqValidatie = extract_dq_validatie_data(name,result)
+        result_dqAfwijking = extract_dq_afwijking_data(name,result)
 
-    return result
+    return result_dqValidatie, result_dqAfwijking
