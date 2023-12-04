@@ -1,12 +1,16 @@
 import json
 from jsonschema import validate as validate_json
+
 from databricks.sdk.runtime import *
-# from rule_val import handle_dq_error, handle_unexpected_error
+
+from pyspark.sql import DataFrame
+
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
-from pyspark.sql import DataFrame
-from rule_val import handle_errors
-from df_converter import extract_dq_validatie_data, extract_dq_afwijking_data
+
+from dq_suite.input_validator import validate_dqrules
+from dq_suite.output_transformations import extract_dq_validatie_data
+from dq_suite.output_transformations import extract_dq_afwijking_data
 
 
 def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
@@ -15,8 +19,6 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     
     :param df: A DataFrame instance to process
     :type df: DataFrame
-    :param result_dqValidatie: A df containing the valid result
-    :param result_dqAfwijking: A df containing the deviated results
     :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
@@ -25,15 +27,13 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     :rtype: df.
     """
     name = check_name
-    handle_errors(dq_rules)
+    validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
 
     # Add the unique 'id' values to dataframe_parameters in the existing rules
     unique_ids = df.select("id").rdd.flatMap(lambda x: x).collect()
     rule_json["dataframe_parameters"]["unique_identifier_values"] = unique_ids
-    # Convert the updated rules dictionary back to JSON string
-    updated_dq_rules = json.dumps(rule_json, indent=4)
-
+    
     # Configure the Great Expectations context
     context_root_dir = "/dbfs/great_expectations/"
     context = gx.get_context(context_root_dir=context_root_dir)
@@ -56,8 +56,7 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
 
     # DQ rules
     # This section converts the DQ_rules input into expectations that Great Expectations understands
-    updated_rules_dict = json.loads(updated_dq_rules)
-    for rule in updated_rules_dict["rules"]:
+    for rule in rule_json["rules"]:
         check = getattr(validator, rule["rule_name"])
         for param_set in rule["parameters"]:
             kwargs = {}
