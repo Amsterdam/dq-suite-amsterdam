@@ -1,90 +1,98 @@
-import pandas as pd
-import itertools
+import json
+from jsonschema import validate as validate_json
+from databricks.sdk.runtime import *
+# from rule_val import handle_dq_error, handle_unexpected_error
+import great_expectations as gx
+from great_expectations.checkpoint import Checkpoint
+from pyspark.sql import DataFrame
+from rule_val import handle_errors
+from df_converter import extract_dq_validatie_data, extract_dq_afwijking_data
 
-# for df_dqValidatie
-def extract_dq_validatie_data(check_name, dq_result):
+
+def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     """
-    Function takes a json dq_rules,and a string check_name and returns dataframe.
+    Function takes a DataFrame instance and returns a JSON string with the DQ results in a different dataframe, result_dqValidatie -  "result_dqAfwijking.
     
-    :param df_dq_validatie: A df containing the valid result
+    :param df: A DataFrame instance to process
     :type df: DataFrame
+    :param result_dqValidatie: A df containing the valid result
+    :param result_dqAfwijking: A df containing the deviated results
     :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    :param output: A boolean containing is success true or false 
-    :type output: boolean
-    :return: A table df with the valid result DQ results, parsed from the extract_dq_validatie_data output
+    :return: Two tables df result_dqValidatie -  result_dqAfwijking with the DQ results, parsed from the GX output
     :rtype: df.
     """
+    name = check_name
+    handle_errors(dq_rules)
+    rule_json = json.loads(dq_rules)
 
-    # Access run_time attribute
-    run_time = dq_result["meta"]["run_id"].run_time
-    # Extracted data
-    extracted_data = []
-    for result in dq_result["results"]:
-        element_count = int(result["result"].get("element_count", 0))
-        unexpected_count = int(result["result"].get("unexpected_count", 0))
-        aantal_valide_records = element_count - unexpected_count
-        expectation_type = result["expectation_config"]["expectation_type"]
-        attribute = result["expectation_config"]["kwargs"].get("column")
-        dq_regel_id = f"{check_name}_{expectation_type}_{attribute}"
-        output=result["success"]
-        output_text = "success" if output else "failure"
-        extracted_data.append({
-            "dqRegelId": dq_regel_id,
-            "aantalValideRecords": aantal_valide_records,
-            "aantalReferentieRecords": element_count,
-            "dqDatum": run_time,
-            "output": output_text,
-        })
-    # Create a DataFrame
-    df_dq_validatie = pd.DataFrame(extracted_data)
-    return df_dq_validatie
+    # Add the unique 'id' values to dataframe_parameters in the existing rules
+    unique_ids = df.select("id").rdd.flatMap(lambda x: x).collect()
+    rule_json["dataframe_parameters"]["unique_identifier_values"] = unique_ids
+    # Convert the updated rules dictionary back to JSON string
+    updated_dq_rules = json.dumps(rule_json, indent=4)
 
+    # Configure the Great Expectations context
+    context_root_dir = "/dbfs/great_expectations/"
+    context = gx.get_context(context_root_dir=context_root_dir)
 
-def extract_dq_afwijking_data(check_name, dq_result, unique_ids):
-    """
-    Function takes a json dq_rules and a string check_name and returns a DataFrame.
+    dataframe_datasource = context.sources.add_or_update_spark(
+        name="my_spark_in_memory_datasource_" + name,
+    )
 
-    :param df_dq_validatie: A DataFrame containing the invalid (deviated) result
-    :type df: DataFrame
-    :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
-    :type dq_rules: str
-    :param check_name: Name of the run for reference purposes
-    :type check_name: str
-    : param unique_ids_cycle: a list containing ids in df
-    :type unique_ids: list
-    : param unique_ids_cycle: an integer to get unique_ids by one by
-    :type unique_ids_cycle: int
-    :return: A table df with the invalid result DQ results, parsed from the extract_dq_afwijking_data output
-    :rtype: DataFrame
-    """
-    # Extracting information from the JSON
-    run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
-    # Extracted data
-    extracted_data = []
-    # Assign unique_ids sequentially to each row
-    unique_ids_cycle = itertools.cycle(unique_ids)
+    # GX Structures
+    df_asset = dataframe_datasource.add_dataframe_asset(name=name, dataframe=df)
+    batch_request = df_asset.build_batch_request()
 
-    for result in dq_result["results"]:
-        filter_veld_waarde = result["expectation_config"]["kwargs"].get("column")
-        expectation_type = result["expectation_config"]["expectation_type"]
-        attribute = result["expectation_config"]["kwargs"].get("column")
-        dq_regel_id = f"{check_name}_{expectation_type}_{attribute}"
-        afwijkende_attribuut_waarde = result.get("result", {}).get("partial_unexpected_list", [])
-        for value in afwijkende_attribuut_waarde:
-            extracted_data.append({
-                "dqRegelId": dq_regel_id,
-                "IdentifierVeldWaarde": next(unique_ids_cycle),
-                "afwijkendeAttribuutWaarde": value,
-                "dqDatum": run_time,
-            })
+    expectation_suite_name = name + "_exp_suite"
+    context.add_or_update_expectation_suite(expectation_suite_name=expectation_suite_name)
+
+    validator = context.get_validator(
+        batch_request=batch_request,
+        expectation_suite_name=expectation_suite_name,
+    )
+
+    # DQ rules
+    # This section converts the DQ_rules input into expectations that Great Expectations understands
+    updated_rules_dict = json.loads(updated_dq_rules)
+    for rule in updated_rules_dict["rules"]:
+        check = getattr(validator, rule["rule_name"])
+        for param_set in rule["parameters"]:
+            kwargs = {}
+            for param in param_set.keys():
+                kwargs[param] = param_set[param]
+            check(**kwargs)
     
-    # Create a DataFrame
-    df_dq_afwijking = pd.DataFrame(extracted_data)
-    return df_dq_afwijking
+    validator.save_expectation_suite(discard_failed_expectations=False)
+    
+    # Save output
+    my_checkpoint_name = name + "_checkpoint"
 
+    checkpoint = Checkpoint(
+        name=my_checkpoint_name,
+        run_name_template="%Y%m%d-%H%M%S-" + name + "-template",
+        data_context=context,
+        batch_request=batch_request,
+        expectation_suite_name=expectation_suite_name,
+        action_list=[
+            {
+                "name": "store_validation_result",
+                "action": {"class_name": "StoreValidationResultAction"},
+            },
+        ],
+    )
 
+    context.add_or_update_checkpoint(checkpoint=checkpoint)
+    checkpoint_result = checkpoint.run()
 
+    # Parse output
+    output = checkpoint_result["run_results"]
+    
+    for key in output.keys():
+        result = output[key]["validation_result"]
+        result_dqValidatie = extract_dq_validatie_data(name,result)
+        result_dqAfwijking = extract_dq_afwijking_data(name, result, unique_ids)
 
+    return result_dqValidatie, result_dqAfwijking
