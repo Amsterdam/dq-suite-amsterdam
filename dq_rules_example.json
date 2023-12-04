@@ -1,4 +1,7 @@
 {
+    "dataframe_parameters": {
+        "unique_identifier": "id"
+    },
     "rules": [
         {
             "rule_name": "expect_table_row_count_to_be_between",
