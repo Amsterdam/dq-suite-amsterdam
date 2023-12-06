@@ -1,5 +1,5 @@
 import pandas as pd
-import itertools
+from pyspark.sql.functions import col
 
 # for df_dqValidatie
 def extract_dq_validatie_data(check_name, dq_result):
@@ -40,48 +40,50 @@ def extract_dq_validatie_data(check_name, dq_result):
     df_dq_validatie = pd.DataFrame(extracted_data)
     return df_dq_validatie
 
-
-def extract_dq_afwijking_data(check_name, dq_result, unique_ids):
+# for df_dq_afwijking
+def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
     """
     Function takes a json dq_rules and a string check_name and returns a DataFrame.
 
     :param df_dq_validatie: A DataFrame containing the invalid (deviated) result
     :type df: DataFrame
-    :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
-    :type dq_rules: str
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    : param unique_ids_cycle: a list containing ids in df
-    :type unique_ids: list
-    : param unique_ids_cycle: an integer to get unique_ids by one by
-    :type unique_ids_cycle: int
-    :return: A table df with the invalid result DQ results, parsed from the extract_dq_afwijking_data output
+    : param unique_identifier: int comes from dq_rules
+    :type unique_identifier: int
     :rtype: DataFrame
     """
     # Extracting information from the JSON
     run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
-    # Extracted data
+    # Extracted data for df
     extracted_data = []
-    # Assign unique_ids sequentially to each row
-    unique_ids_cycle = itertools.cycle(unique_ids)
+    #for IdentifierVeldWaarde
+    unique_identifier = unique_identifier
+    # To store unique combinations of value and IDs
+    unique_entries = set()  
 
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
         attribute = result["expectation_config"]["kwargs"].get("column")
         dq_regel_id = f"{check_name}_{expectation_type}_{attribute}"
-        afwijkende_attribuut_waarde = result.get("result", {}).get("partial_unexpected_list", [])
+        afwijkende_attribuut_waarde = result["result"].get("partial_unexpected_list", [])
+
         for value in afwijkende_attribuut_waarde:
-            extracted_data.append({
-                "dqRegelId": dq_regel_id,
-                "IdentifierVeldWaarde": next(unique_ids_cycle),
-                "afwijkendeAttribuutWaarde": value,
-                "dqDatum": run_time,
-            })
-    
+            filtered_df = df.filter(col(attribute).isNull())
+            ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+
+            for id_value in ids:
+                entry = (dq_regel_id, id_value, value)
+
+                if entry not in unique_entries:  # Check for uniqueness before appending
+                    unique_entries.add(entry)
+                    extracted_data.append({
+                        "dqRegelId": dq_regel_id,
+                        "IdentifierVeldWaarde": id_value,
+                        "afwijkendeAttribuutWaarde": value,
+                        "dqDatum": run_time,
+                    })
+
     # Create a DataFrame
     df_dq_afwijking = pd.DataFrame(extracted_data)
     return df_dq_afwijking
-
-
-
-

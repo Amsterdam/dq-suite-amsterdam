@@ -19,6 +19,8 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     
     :param df: A DataFrame instance to process
     :type df: DataFrame
+    :param result_dqValidatie: A df containing the valid result
+    :param result_dqAfwijking: A df containing the deviated results
     :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
@@ -29,10 +31,7 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     name = check_name
     validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
-
-    # Add the unique 'id' values to dataframe_parameters in the existing rules
-    unique_ids = df.select("id").rdd.flatMap(lambda x: x).collect()
-    rule_json["dataframe_parameters"]["unique_identifier_values"] = unique_ids
+    unique_identifier = rule_json["dataframe_parameters"]["unique_identifier"] 
     
     # Configure the Great Expectations context
     context_root_dir = "/dbfs/great_expectations/"
@@ -92,6 +91,6 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     for key in output.keys():
         result = output[key]["validation_result"]
         result_dqValidatie = extract_dq_validatie_data(name,result)
-        result_dqAfwijking = extract_dq_afwijking_data(name, result, unique_ids)
+        result_dqAfwijking = extract_dq_afwijking_data(name, result, df, unique_identifier)
 
     return result_dqValidatie, result_dqAfwijking
