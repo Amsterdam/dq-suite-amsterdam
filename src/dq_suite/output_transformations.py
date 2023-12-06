@@ -36,11 +36,11 @@ def extract_dq_validatie_data(check_name, dq_result):
             "dqDatum": run_time,
             "output": output_text,
         })
+        
     # Create a DataFrame
     df_dq_validatie = pd.DataFrame(extracted_data)
     return df_dq_validatie
 
-# for df_dq_afwijking
 def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
     """
     Function takes a json dq_rules and a string check_name and returns a DataFrame.
@@ -53,6 +53,7 @@ def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
     :type unique_identifier: int
     :rtype: DataFrame
     """
+    
     # Extracting information from the JSON
     run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
     # Extracted data for df
@@ -67,23 +68,25 @@ def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
         attribute = result["expectation_config"]["kwargs"].get("column")
         dq_regel_id = f"{check_name}_{expectation_type}_{attribute}"
         afwijkende_attribuut_waarde = result["result"].get("partial_unexpected_list", [])
-
         for value in afwijkende_attribuut_waarde:
-            filtered_df = df.filter(col(attribute).isNull())
-            ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+            if value == None: 
+                filtered_df = df.filter(col(attribute).isNull())
+                ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+            else:
+                    filtered_df = df.filter(col(attribute)==value)
+                    ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
 
             for id_value in ids:
-                entry = (dq_regel_id, id_value, value)
-
+                entry = (id_value)
                 if entry not in unique_entries:  # Check for uniqueness before appending
                     unique_entries.add(entry)
                     extracted_data.append({
-                        "dqRegelId": dq_regel_id,
-                        "IdentifierVeldWaarde": id_value,
-                        "afwijkendeAttribuutWaarde": value,
-                        "dqDatum": run_time,
-                    })
-
+                                "dqRegelId": dq_regel_id,
+                                "IdentifierVeldWaarde": id_value,
+                                "afwijkendeAttribuutWaarde": value,
+                                "dqDatum": run_time,
+                            })
+                    
     # Create a DataFrame
     df_dq_afwijking = pd.DataFrame(extracted_data)
     return df_dq_afwijking
