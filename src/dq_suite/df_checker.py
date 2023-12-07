@@ -19,13 +19,11 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     
     :param df: A DataFrame instance to process
     :type df: DataFrame
-    :param result_dqValidatie: A df containing the valid result
-    :param result_dqAfwijking: A df containing the deviated results
     :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    :return: Two tables df result_dqValidatie -  result_dqAfwijking with the DQ results, parsed from the GX output
+    :return: Two tables df result_dqValidatie - result_dqAfwijking with the DQ results, parsed from the GX output
     :rtype: df.
     """
     name = check_name
