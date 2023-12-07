@@ -13,7 +13,7 @@ from dq_suite.output_transformations import extract_dq_validatie_data
 from dq_suite.output_transformations import extract_dq_afwijking_data
 
 
-def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
+def df_check(df: DataFrame, dq_rules: str, check_name: str, catalog: str) -> list[DataFrame]:
     """
     Function takes a DataFrame instance and returns a JSON string with the DQ results in a different dataframe, result_dqValidatie -  "result_dqAfwijking.
     
@@ -23,6 +23,8 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes
     :type check_name: str
+    :param catalog: Name of the catalog (UC) where the data is stored
+    :type catalog: str
     :return: Two tables df result_dqValidatie - result_dqAfwijking with the DQ results, parsed from the GX output
     :rtype: df.
     """
@@ -91,4 +93,6 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
         result_dqValidatie = extract_dq_validatie_data(name,result)
         result_dqAfwijking = extract_dq_afwijking_data(name, result, df, unique_identifier)
 
-    return result_dqValidatie, result_dqAfwijking
+    cat_test = spark.sql("SELECT table_name FROM system.information_schema.tables WHERE table_catalog = 'dpd1_dev'")
+
+    return result_dqValidatie, result_dqAfwijking, cat_test
