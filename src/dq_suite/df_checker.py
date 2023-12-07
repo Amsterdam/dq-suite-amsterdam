@@ -15,8 +15,8 @@ from dq_suite.output_transformations import extract_dq_afwijking_data
 
 def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     """
-    Function takes a DataFrame instance and returns a JSON string with the DQ results.
-
+    Function takes a DataFrame instance and returns a JSON string with the DQ results in a different dataframe, result_dqValidatie -  "result_dqAfwijking.
+    
     :param df: A DataFrame instance to process
     :type df: DataFrame
     :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
@@ -29,7 +29,8 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     name = check_name
     validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
-  
+    unique_identifier = rule_json["dataframe_parameters"]["unique_identifier"] 
+    
     # Configure the Great Expectations context
     context_root_dir = "/dbfs/great_expectations/"
     context = gx.get_context(context_root_dir=context_root_dir)
@@ -54,7 +55,6 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     # This section converts the DQ_rules input into expectations that Great Expectations understands
     for rule in rule_json["rules"]:
         check = getattr(validator, rule["rule_name"])
-        
         for param_set in rule["parameters"]:
             kwargs = {}
             for param in param_set.keys():
@@ -89,6 +89,6 @@ def df_check(df: DataFrame, dq_rules: str, check_name: str) -> str:
     for key in output.keys():
         result = output[key]["validation_result"]
         result_dqValidatie = extract_dq_validatie_data(name,result)
-        result_dqAfwijking = extract_dq_afwijking_data(name,result)
+        result_dqAfwijking = extract_dq_afwijking_data(name, result, df, unique_identifier)
 
     return result_dqValidatie, result_dqAfwijking

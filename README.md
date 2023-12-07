@@ -23,3 +23,12 @@ user: j.cruijff@amsterdam.nl
 repo_name: dq_repo
 file: df_checker
 function: df_check
+
+# Updates
+
+version = "0.1.0" :
+dq_rules_example.json is updated.
+Added:
+"dataframe_parameters": {
+        "unique_identifier": "id"
+    }
