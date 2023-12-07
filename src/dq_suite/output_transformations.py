@@ -70,11 +70,10 @@ def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
         for value in afwijkende_attribuut_waarde:
             if value == None: 
                 filtered_df = df.filter(col(attribute).isNull())
-                ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
             else:
-                    filtered_df = df.filter(col(attribute)==value)
-                    ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
-
+                filtered_df = df.filter(col(attribute)==value)
+            
+            ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
             for id_value in ids:
                 entry = (id_value)
                 if entry not in unique_entries:  # Check for uniqueness before appending
