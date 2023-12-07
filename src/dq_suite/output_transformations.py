@@ -4,7 +4,7 @@ from pyspark.sql.functions import col
 # for df_dqValidatie
 def extract_dq_validatie_data(check_name, dq_result):
     """
-    Function takes a json with the GX output and a string check_name and returns dataframe.
+    Function takes a json with the GX output and a string check_name and returns a dataframe.
     
     :param dq_result: A dictionary containing the Data Quality results from GX
     :type dq_result: dict
