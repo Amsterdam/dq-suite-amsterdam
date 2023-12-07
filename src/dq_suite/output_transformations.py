@@ -6,13 +6,11 @@ def extract_dq_validatie_data(check_name, dq_result):
     """
     Function takes a json with the GX output and a string check_name and returns dataframe.
     
-    :param df_dq_validatie: A df containing the valid result
-    :type df: DataFrame
-    :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
-    :type dq_rules: str
+    :param dq_result: A dictionary containing the Data Quality results from GX
+    :type dq_result: dict
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    :return: A table df with the valid result DQ results, parsed from the extract_dq_validatie_data output
+    :return: A dataframe with the DQ results per rule
     :rtype: df.
     """
 
@@ -43,23 +41,24 @@ def extract_dq_validatie_data(check_name, dq_result):
 
 def extract_dq_afwijking_data(check_name, dq_result, df, unique_identifier):
     """
-    Function takes a json dq_rules and a string check_name and returns a DataFrame.
-
-    :param df_dq_validatie: A DataFrame containing the invalid (deviated) result
-    :type df: DataFrame
+    Function takes a json with the GX output and a string check_name and returns dataframe.
+    
+    :param dq_result: A dictionary containing the Data Quality results from GX
+    :type dq_result: dict
     :param check_name: Name of the run for reference purposes
     :type check_name: str
-    : param unique_identifier: int comes from dq_rules
-    :type unique_identifier: int
-    :rtype: DataFrame
+    :param df: A dataframe with the actual data
+    :type: df
+    :param unique_identifier: The column name of the id values of the actual data
+    :type: str
+    :return: A dataframe with all unexpected values and their id
+    :rtype: df.
     """
     
     # Extracting information from the JSON
     run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
     # Extracted data for df
     extracted_data = []
-    #for IdentifierVeldWaarde
-    unique_identifier = unique_identifier
     # To store unique combinations of value and IDs
     unique_entries = set()  
 
