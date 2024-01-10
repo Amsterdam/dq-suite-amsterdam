@@ -32,3 +32,26 @@ Added:
 "dataframe_parameters": {
         "unique_identifier": "id"
     }
+
+version = "0.2.0" :
+dq_rules_example.json is updated.
+Added for each tables:
+{
+    "dataframe_parameters": [
+        {
+            "unique_identifier": "id",
+            "table_name": "well",
+            "rules": [ 
+                {
+                    "rule_name": "expect_column_values_to_be_between",
+                    "parameters": [
+                        {
+                            "column": "latitude",
+                            "min_value": 6,
+                            "max_value": 10000
+                        }
+                    ]
+                }
+            ]
+        },
+        ....
