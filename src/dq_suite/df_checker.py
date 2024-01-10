@@ -12,7 +12,7 @@ from dq_suite.output_transformations import extract_dq_validatie_data, extract_d
 
 def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Function takes DataFrame instances with specified Data Quality rules 
+    Function takes DataFrame instances with specified Data Quality rules. 
     and returns a JSON string with the DQ results with different dataframes in results dict, 
     and returns different dfs as specified using Data Quality rules
     
