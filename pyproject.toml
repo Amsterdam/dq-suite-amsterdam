@@ -12,3 +12,6 @@ authors = [
 description = "Wrapper for Great Expectations to fit the requirements of the Gemeente Amsterdam."
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = [
+  "great_expectations"
+]
