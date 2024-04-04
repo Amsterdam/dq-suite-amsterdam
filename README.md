@@ -1,31 +1,35 @@
 # Introduction 
-DISCLAIMER: Repo is in PoC phase
-DISCLAIMER: The functions can run on Databricks using a Personal Compute Cluster
+This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get results in return.
 
-This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get rules in return.
+DISCLAIMER: Repo is in PoC phase
+
+DISCLAIMER: The functions can run on Databricks using a Personal Compute Cluster
 
 
 # Getting Started
-Prerequisites:
-
 Run the following code in your workspace:
 
+```
 pip install great_expectations
+```
 
-When working in Databricks you can clone this repo to Databricks Repos. Then you can access it in your workspace using:
+```
+pip install dq-suite-amsterdam
+```
 
-import sys
-sys.path.append("/Workspace/Repos/{user}/{repo_name}")
-from {file} import {function}
+```
+import dq_suite
+```
 
-Parameter examples:
-user: j.cruijff@amsterdam.nl
-repo_name: dq_repo
-file: df_checker
-function: df_check
+- Define 'dfs' as a list of dataframes that require a dq check
+- Define 'dq_rules' as a JSON as shown in dq_rules_example.json in this repo
+
+```
+results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
+```
+
 
 # Updates
-
 version = "0.1.0" :
 dq_rules_example.json is updated.
 Added:
