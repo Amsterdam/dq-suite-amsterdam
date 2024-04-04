@@ -3,8 +3,6 @@ This repository contains functions that will ease the use of Great Expectations.
 
 DISCLAIMER: Repo is in PoC phase
 
-DISCLAIMER: The functions can run on Databricks using a Personal Compute Cluster
-
 
 # Getting Started
 Run the following code in your workspace:
@@ -27,6 +25,10 @@ import dq_suite
 ```
 results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
 ```
+
+
+# Known exceptions
+The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
 
 
 # Updates
