@@ -1,7 +1,7 @@
 # Introduction 
 This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get results in return.
 
-DISCLAIMER: Repo is in PoC phase
+DISCLAIMER: The package is in MVP phase
 
 
 # Getting started
@@ -38,4 +38,5 @@ The functions can run on Databricks using a Personal Compute Cluster or using a 
 
 # Updates
 Version 0.1: Run a DQ check for a dataframe
+
 Version 0.2: Run a DQ check for multiple dataframes
