@@ -5,11 +5,7 @@ DISCLAIMER: Repo is in PoC phase
 
 
 # Getting Started
-Run the following code in your workspace:
-
-```
-pip install great_expectations
-```
+Install the dq suite on your compute, for example by running the following code in your workspace:
 
 ```
 pip install dq-suite-amsterdam
@@ -19,8 +15,17 @@ pip install dq-suite-amsterdam
 import dq_suite
 ```
 
+Load your data in dataframes, give them a table_name, and create a list of all dataframes:
+
+```
+df = spark.read.csv(csv_path+file_name, header=True, inferSchema=True) #example using csv
+df.table_name = "showcase_table"
+dfs = [df]
+```
+
 - Define 'dfs' as a list of dataframes that require a dq check
 - Define 'dq_rules' as a JSON as shown in dq_rules_example.json in this repo
+- Define a name for your dq check, in this case "showcase"
 
 ```
 results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
