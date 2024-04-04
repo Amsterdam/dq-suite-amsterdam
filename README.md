@@ -4,7 +4,7 @@ This repository contains functions that will ease the use of Great Expectations.
 DISCLAIMER: Repo is in PoC phase
 
 
-# Getting Started
+# Getting started
 Install the dq suite on your compute, for example by running the following code in your workspace:
 
 ```
@@ -37,32 +37,5 @@ The functions can run on Databricks using a Personal Compute Cluster or using a 
 
 
 # Updates
-version = "0.1.0" :
-dq_rules_example.json is updated.
-Added:
-"dataframe_parameters": {
-        "unique_identifier": "id"
-    }
-
-version = "0.2.0" :
-dq_rules_example.json is updated.
-Added for each tables:
-{
-    "dataframe_parameters": [
-        {
-            "unique_identifier": "id",
-            "table_name": "well",
-            "rules": [ 
-                {
-                    "rule_name": "expect_column_values_to_be_between",
-                    "parameters": [
-                        {
-                            "column": "latitude",
-                            "min_value": 6,
-                            "max_value": 10000
-                        }
-                    ]
-                }
-            ]
-        },
-        ....
+Version 0.1: Run a DQ check for a dataframe
+Version 0.2: Run a DQ check for multiple dataframes
