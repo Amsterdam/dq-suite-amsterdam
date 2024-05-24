@@ -90,8 +90,8 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
             print(f"{df_name} output: ", output)
             for key, value in output.items():
                 result = value["validation_result"]
-                result_dqValidatie = extract_dq_validatie_data(name, result)
-                result_dqAfwijking = extract_dq_afwijking_data(name, result, df, unique_identifier)
+                result_dqValidatie = extract_dq_validatie_data(df_name, result)
+                result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
                 results[df_name] = (result_dqValidatie, result_dqAfwijking)
       
     return  results ,brontabel_df, bronattribute_df, dqRegel_df
