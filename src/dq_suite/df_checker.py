@@ -7,7 +7,11 @@ import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 from great_expectations.profile.user_configurable_profiler import UserConfigurableProfiler  
+from great_expectations.profile.basic_dataset_profiler import BasicDatasetProfiler
+from great_expectations.render.renderer import *
+from great_expectations.render.view import DefaultJinjaPageView
 from great_expectations.dataset.sparkdf_dataset import SparkDFDataset
+from IPython.display import HTML, display
 
 from dq_suite.input_validator import validate_dqrules
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel, convert_to_string
@@ -39,13 +43,20 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     dqRegel_df = create_dqRegel(rule_json)
     for df in dfs:
 
-        #Profiling
+        # #Profiling
         # Convert datetime columns to string to avoid SerializationError
+        print(f"{df.table_name} profiling result: ")
         df_string = convert_to_string(df)
         gx_df = SparkDFDataset(df_string)
+        # for rule suggesstions
         profiler = UserConfigurableProfiler(profile_dataset=gx_df)
         generated_suite = profiler.build_suite()
-     
+        #for charactarization
+        expectation_suite, validation_result = BasicDatasetProfiler.profile(SparkDFDataset(df))
+        document_model = ProfilingResultsPageRenderer().render(validation_result)
+        # print(DefaultJinjaPageView().render(document_model))
+        display(HTML(DefaultJinjaPageView().render(document_model)))
+        
         context_root_dir = "/dbfs/great_expectations/"
         context = gx.get_context(context_root_dir=context_root_dir)
  
