@@ -55,6 +55,9 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
 
         # to compare table_name in dq_rules and given table_names by data teams
         matching_rules = [rule for rule in rule_json["dataframe_parameters"] if rule["table_name"] == df.table_name]
+
+        if not matching_rules:
+            continue
  
         for rule in matching_rules:
             df_name = rule["table_name"]
