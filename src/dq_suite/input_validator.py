@@ -25,6 +25,7 @@ def expand_input(rule_json):
         for rule in table["rules"]:
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:
+                    # GX requires this statement for conditional rules when using spark
                     parameter["condition_parser"] = "great_expectations__experimental__"
 
     return rule_json
