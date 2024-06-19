@@ -7,7 +7,7 @@ import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
-from dq_suite.input_validator import validate_dqrules
+from dq_suite.input_validator import validate_dqrules, expand_input
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
 def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -27,15 +27,19 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
              Results contains 'result_dqValidatie' and 'result_dqAfwijking'.
     :rtype: Tuple[Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]
     """
+
     results = {}
     name = check_name
+
     validate_dqrules(dq_rules)
-    rule_json = json.loads(dq_rules)
+    initial_rule_json = json.loads(dq_rules)
+    rule_json = expand_input(initial_rule_json)
+
     brontabel_df = create_brontabel(rule_json)
     bronattribute_df = create_bronattribute(rule_json)
     dqRegel_df = create_dqRegel(rule_json)
+
     for df in dfs:
-       
         context_root_dir = "/dbfs/great_expectations/"
         context = gx.get_context(context_root_dir=context_root_dir)
  
@@ -51,7 +55,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
 
         # to compare table_name in dq_rules and given table_names by data teams
         matching_rules = [rule for rule in rule_json["dataframe_parameters"] if rule["table_name"] == df.table_name]
- 
+
         if not matching_rules:
             continue
  
