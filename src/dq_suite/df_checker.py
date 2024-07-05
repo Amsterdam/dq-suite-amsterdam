@@ -35,6 +35,10 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     initial_rule_json = json.loads(dq_rules)
     rule_json = expand_input(initial_rule_json)
 
+    # Generate DQ rules from schema
+    rule_json = generate_dq_rules_from_schema(rule_json, schema)
+    print(json.dumps(rule_json, indent=4))
+
     brontabel_df = create_brontabel(rule_json)
     bronattribute_df = create_bronattribute(rule_json)
     dqRegel_df = create_dqRegel(rule_json)
