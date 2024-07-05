@@ -19,6 +19,7 @@
         {
             "unique_identifier": "id",
             "table_name": "container",
+            "schema_id" : "container",
             "rules": [
                 {
                     "rule_name": "expect_column_values_to_not_be_null",
@@ -79,4 +80,3 @@
         
     ]
 }
- 
