@@ -37,7 +37,7 @@ def generate_dq_rules_from_schema(dq_rules: dict, schema: dict) -> dict:
     schema_columns = schema['schema']['properties']
     if "schema" in schema_columns: del schema_columns["schema"]
     for table in dq_rules['dataframe_parameters']:
-        if 'schema_id' in table and table['schema_id'] == schema['id']:
+        if 'schema_id' in table and table['validate_table_schema'] == schema['id']:
             for column, properties in schema_columns.items():
                 column_type = properties.get('type')
                 if column_type:
