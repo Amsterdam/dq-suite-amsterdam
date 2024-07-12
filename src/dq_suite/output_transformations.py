@@ -1,8 +1,7 @@
 import pandas as pd
 from pyspark.sql.functions import col
-# import pyspark.pandas as ps
 
-# for df_dqValidatie
+
 def extract_dq_validatie_data(df_name, dq_result):
     """
     Function takes a json dq_rules,and a string df_name and returns dataframe.
