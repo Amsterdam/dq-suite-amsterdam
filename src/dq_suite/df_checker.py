@@ -10,7 +10,7 @@ from great_expectations.checkpoint import Checkpoint
 from dq_suite.input_validator import validate_dqrules, expand_input, generate_dq_rules_from_schema
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
-def df_check(dfs: list, dq_rules: str, schema: Dict[str, Any] check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def df_check(dfs: list, dq_rules: str, schema: Dict[str, Any], check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Function takes DataFrame instances with specified Data Quality rules. 
     and returns a JSON string with the DQ results with different dataframes in results dict, 
