@@ -34,6 +34,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     brontabel_df = create_brontabel(rule_json)
     bronattribute_df = create_bronattribute(rule_json)
     dqRegel_df = create_dqRegel(rule_json)
+    
     for df in dfs:
        
         context_root_dir = "/dbfs/great_expectations/"
@@ -87,11 +88,11 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
             context.add_or_update_checkpoint(checkpoint=checkpoint)
             checkpoint_result = checkpoint.run()
             output = checkpoint_result["run_results"]
-            print(f"{df_name} output: ", output)
+           
             for key, value in output.items():
                 result = value["validation_result"]
                 result_dqValidatie = extract_dq_validatie_data(df_name, result)
                 result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
                 results[df_name] = (result_dqValidatie, result_dqAfwijking)
       
-    return  results ,brontabel_df, bronattribute_df, dqRegel_df
+    return  results, brontabel_df, bronattribute_df, dqRegel_df
