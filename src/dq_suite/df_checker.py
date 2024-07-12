@@ -7,10 +7,10 @@ import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
-from dq_suite.input_validator import validate_dqrules, expand_input
+from dq_suite.input_validator import validate_dqrules, expand_input, generate_dq_rules_from_schema
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
-def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def df_check(dfs: list, dq_rules: str, schema: Dict[str, Any] check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Function takes DataFrame instances with specified Data Quality rules. 
     and returns a JSON string with the DQ results with different dataframes in results dict, 
@@ -20,8 +20,10 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     :type dfs: list[DataFrame]
     :param dq_rules: JSON string containing the Data Quality rules to be evaluated.
     :type dq_rules: str
-    :param check_name: Name of the run for reference purposes.
+    :param check_name: JSON containing schema which is obtained from github amsterdam schema.
     :type check_name: str
+    :param schema: Name of the run for reference purposes.
+    :type schema: dic
     :return: A dictionary of Data Quality results for each DataFrame, 
              along with metadata DataFrames:  brontabel_df, bronattribute_df, dqRegel_df .
              Results contains 'result_dqValidatie' and 'result_dqAfwijking'.
@@ -37,7 +39,6 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
 
     # Generate DQ rules from schema
     rule_json = generate_dq_rules_from_schema(rule_json, schema)
-    print(json.dumps(rule_json, indent=4))
 
     brontabel_df = create_brontabel(rule_json)
     bronattribute_df = create_bronattribute(rule_json)
@@ -58,7 +59,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
         validator = context.get_validator(batch_request=batch_request, expectation_suite_name=expectation_suite_name)
 
         # to compare table_name in dq_rules and given table_names by data teams
-        matching_rules = [rule for rule in rule_json["dataframe_parameters"] if rule["table_name"] == df.table_name]
+        matching_rules = [rule for rule in rule_json["tables"] if rule["table_name"] == df.table_name]
 
         if not matching_rules:
             continue
