@@ -21,7 +21,7 @@ def validate_dqrules(dq_rules):
         print(f"An unexpected error occurred: {e}")
     
 def expand_input(rule_json):
-    for table in rule_json["dataframe_parameters"]:
+    for table in rule_json["tables"]:
         for rule in table["rules"]:
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:
@@ -36,7 +36,7 @@ def generate_dq_rules_from_schema(dq_rules: dict, schema: dict) -> dict:
 
     schema_columns = schema['schema']['properties']
     if "schema" in schema_columns: del schema_columns["schema"]
-    for table in dq_rules['dataframe_parameters']:
+    for table in dq_rules['tables']:
         if 'schema_id' in table and table['validate_table_schema'] == schema['id']:
             for column, properties in schema_columns.items():
                 column_type = properties.get('type')
