@@ -21,7 +21,7 @@ def validate_dqrules(dq_rules):
         print(f"An unexpected error occurred: {e}")
     
 def expand_input(rule_json):
-    for table in rule_json["dataframe_parameters"]:
+    for table in rule_json["tables"]:
         for rule in table["rules"]:
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:
