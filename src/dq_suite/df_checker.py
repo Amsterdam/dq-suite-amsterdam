@@ -54,7 +54,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
         validator = context.get_validator(batch_request=batch_request, expectation_suite_name=expectation_suite_name)
 
         # to compare table_name in dq_rules and given table_names by data teams
-        matching_rules = [rule for rule in rule_json["tables"] if rule["table_name"] == df.table_name
+        matching_rules = [rule for rule in rule_json["tables"] if rule["table_name"] == df.table_name]
                           
         if not matching_rules:
             continue
