@@ -54,8 +54,8 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
         validator = context.get_validator(batch_request=batch_request, expectation_suite_name=expectation_suite_name)
 
         # to compare table_name in dq_rules and given table_names by data teams
-        matching_rules = [rule for rule in rule_json["dataframe_parameters"] if rule["table_name"] == df.table_name]
-
+        matching_rules = [rule for rule in rule_json["tables"] if rule["table_name"] == df.table_name
+                          
         if not matching_rules:
             continue
  
@@ -91,11 +91,11 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
             context.add_or_update_checkpoint(checkpoint=checkpoint)
             checkpoint_result = checkpoint.run()
             output = checkpoint_result["run_results"]
-            print(f"{df_name} output: ", output)
+           
             for key, value in output.items():
                 result = value["validation_result"]
-                result_dqValidatie = extract_dq_validatie_data(name, result)
-                result_dqAfwijking = extract_dq_afwijking_data(name, result, df, unique_identifier)
+                result_dqValidatie = extract_dq_validatie_data(df_name, result)
+                result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
                 results[df_name] = (result_dqValidatie, result_dqAfwijking)
       
-    return  results ,brontabel_df, bronattribute_df, dqRegel_df
+    return  results, brontabel_df, bronattribute_df, dqRegel_df
