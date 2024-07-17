@@ -7,7 +7,7 @@ import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
-from dq_suite.input_validator import validate_dqrules, expand_input, generate_dq_rules_from_schema,fetch_schema_from_github
+from dq_suite.input_validator import validate_dqrules, expand_input, generate_dq_rules_from_schema, fetch_schema_from_github
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
 def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -38,7 +38,6 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     # Generate DQ rules from schema
     schema = fetch_schema_from_github(rule_json) 
     rule_json = generate_dq_rules_from_schema(rule_json, schema)
-    print(json.dumps(rule_json, indent=4))
 
     brontabel_df = create_brontabel(rule_json)
     bronattribute_df = create_bronattribute(rule_json)
@@ -103,4 +102,4 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
                 result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
                 results[df_name] = (result_dqValidatie, result_dqAfwijking)
       
-    return  results ,brontabel_df, bronattribute_df, dqRegel_df
+    return  results, brontabel_df, bronattribute_df, dqRegel_df
