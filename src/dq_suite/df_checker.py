@@ -95,7 +95,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
             context.add_or_update_checkpoint(checkpoint=checkpoint)
             checkpoint_result = checkpoint.run()
             output = checkpoint_result["run_results"]
-            print(f"{df_name} output: ", output)
+            print(f"Validation results for {df_name}: ", output)
             for key, value in output.items():
                 result = value["validation_result"]
                 result_dqValidatie = extract_dq_validatie_data(df_name, result)
