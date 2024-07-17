@@ -1,9 +1,11 @@
+# DQ rules for multiple tables
+dq_rules = """
 {
-    "dataframe_parameters": [
-        {
+    "tables": [
+        {   
             "unique_identifier": "id",
             "table_name": "well",
-            "rules": [ 
+            "rules": [
                 {
                     "rule_name": "expect_column_values_to_be_between",
                     "parameters": [
@@ -13,13 +15,21 @@
                             "max_value": 10000
                         }
                     ]
+                },
+                {
+                    "rule_name": "expect_column_distinct_values_to_equal_set",
+                    "parameters": [
+                        {
+                            "column": "latitude",
+                            "value_set": [1, 2]
+                        }
+                    ]
                 }
             ]
         },
         {
             "unique_identifier": "id",
             "table_name": "container",
-            "validate_table_schema" : "container",
             "rules": [
                 {
                     "rule_name": "expect_column_values_to_not_be_null",
@@ -33,50 +43,33 @@
         },
         {
             "unique_identifier": "id",
+            "table_name": "afvalwijzer",
+            "validate_table_schema": "afvalwijzer",
+            "validate_table_schema_url": "https://raw.githubusercontent.com/Amsterdam/amsterdam-schema/master/datasets/afvalwijzer/afvalwijzer/v1.1.0.json",
+            "rules": []
+        },
+        {
+            "unique_identifier": "id",
+            "table_name": "grex",
+            "validate_table_schema": "projecten",
+            "validate_table_schema_url": "https://raw.githubusercontent.com/Amsterdam/amsterdam-schema/master/datasets/grex/dataset.json",
+            "rules": []
+        },
+          {
+            "unique_identifier": "id",
             "table_name": "containertype",
             "rules": [
-                {
-                    "rule_name": "expect_table_row_count_to_be_between",
-                    "parameters": [
-                        {
-                            "min_value": 1,
-                            "max_value": 1000
-                        }
-                    ]
-                },
                 {
                     "rule_name": "expect_column_values_to_not_be_null",
                     "parameters": [
                         {
-                            "column": "weight",
-                            "row_condition": "col(\\\"volume\\\") < 5"
-                        },
-                        {
-                            "column": "volume"
-                        }
-                    ]
-                },
-                {
-                    "rule_name": "expect_column_values_to_be_between",
-                    "parameters": [
-                        {
-                            "column": "volume",
-                            "min_value": 0,
-                            "max_value": 10000
-                        }
-                    ]
-                },
-                {
-                    "rule_name": "expect_column_values_to_be_of_type",
-                    "parameters": [
-                        {
-                            "column": "volume",
-                            "type_": "DoubleType"
+                            "column": "weight"
                         }
                     ]
                 }
             ]
-        }
-        
+        }         
     ]
 }
+ 
+"""
