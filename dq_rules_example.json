@@ -48,6 +48,13 @@
         },
         {
             "unique_identifier": "id",
+            "table_name": "grex",
+            "validate_table_schema": "projecten",
+            "validate_table_schema_url": "https://raw.githubusercontent.com/Amsterdam/amsterdam-schema/master/datasets/grex/dataset.json",
+            "rules": []
+        },
+        {
+            "unique_identifier": "id",
             "table_name": "containertype",
             "rules": [
                 {
