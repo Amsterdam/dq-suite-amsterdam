@@ -20,10 +20,8 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     :type dfs: list[DataFrame]
     :param dq_rules: JSON string containing the Data Quality rules to be evaluated.
     :type dq_rules: str
-    :param check_name: JSON containing schema which is obtained from github amsterdam schema.
+    :param check_name: Name of the run for reference purposes.
     :type check_name: str
-    :param schema: Name of the run for reference purposes.
-    :type schema: dic
     :return: A dictionary of Data Quality results for each DataFrame, 
              along with metadata DataFrames:  brontabel_df, bronattribute_df, dqRegel_df .
              Results contains 'result_dqValidatie' and 'result_dqAfwijking'.
