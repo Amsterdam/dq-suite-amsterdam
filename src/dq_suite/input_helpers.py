@@ -1,4 +1,5 @@
 import json
+import requests
 
 from pyspark.sql import SparkSession
 
