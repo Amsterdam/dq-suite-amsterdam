@@ -92,3 +92,51 @@ def export_schema(dataset: str, spark: SparkSession):
     }
     
     return json.dumps(output_dict)
+
+
+def fetch_schema_from_github(dq_rules):
+    schemas = {}
+    for table in dq_rules['tables']:
+        if 'validate_table_schema_url' in table:
+            url = table['validate_table_schema_url']
+            r = requests.get(url)
+            schema = json.loads(r.text)
+            schemas[table['table_name']] = schema
+
+    return schemas
+
+
+def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
+    for table in dq_rules['tables']:
+        if 'validate_table_schema' in table:
+            schema_id = table['validate_table_schema']
+            table_name = table['table_name']
+            
+            if table_name in schemas:
+                schema = schemas[table_name]
+                if 'schema' in schema and 'properties' in schema['schema']: schema_columns = schema['schema']['properties']# separated tables - getting from table json    
+                elif 'tables' in schema: # integrated tables - getting from dataset.json
+                    for t in schema['tables']:
+                        if t['id'] == schema_id:
+                            schema_columns = t['schema']['properties']
+                            break
+                
+                if "schema" in schema_columns: del schema_columns["schema"]
+
+                for column, properties in schema_columns.items():
+                    column_type = properties.get('type')
+                    if column_type:
+                        if column_type == 'number': rule_type = "IntegerType"
+                        else: rule_type = column_type.capitalize() + "Type"
+                        rule = {
+                            "rule_name": "expect_column_values_to_be_of_type",
+                            "parameters": [
+                                {
+                                    "column": column,
+                                    "type_": rule_type
+                                }
+                            ]
+                        }
+                        table['rules'].append(rule)
+    
+    return dq_rules
