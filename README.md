@@ -40,3 +40,9 @@ The functions can run on Databricks using a Personal Compute Cluster or using a 
 Version 0.1: Run a DQ check for a dataframe
 
 Version 0.2: Run a DQ check for multiple dataframes
+
+Version 0.3: Refactored I/O
+
+Version 0.4: Added schema validation with Amsterdam Schema per table
+
+Version 0.5: Export schema from Unity Catalog
