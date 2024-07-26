@@ -32,13 +32,9 @@ results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_
 ```
 
 # Validate the schema of a table
-
-It is possible to validate the schema of an entire table to a schema definition from Amsterdam Schema in one go.
-
-This is done by adding two fields to the "dq_rules" JSON when describing the table (See: https://github.com/Amsterdam/dq-suite-amsterdam/blob/main/dq_rules_example.json). 
+It is possible to validate the schema of an entire table to a schema definition from Amsterdam Schema in one go. This is done by adding two fields to the "dq_rules" JSON when describing the table (See: https://github.com/Amsterdam/dq-suite-amsterdam/blob/main/dq_rules_example.json). 
 
 You will need:
-
 - validate_table_schema: the id field of the table from Amsterdam Schema
 - validate_table_schema_url: the url of the table or dataset from Amsterdam Schema
 
