@@ -36,9 +36,10 @@ results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_
 If we want to make schema validation for column types of tables from Amsterdam Schema:
 
 - Define validate_table_schema and validate_table_schema_url in dq_rules for table to be validated.
-- Use Amsterdam schema url for validate_table_schema_url
+- Use Amsterdam schema url for validate_table_schema_url.
+  
 The schema is fetched from GitHub for each table defined in dq_rules.
-With these schema inputs taken from dq_rules json, expect_column_values_to_be_of_type validation rule is generated for each column based on the schema
+With these schema inputs taken from dq_rules json, expect_column_values_to_be_of_type validation rule is generated for each column based on the schema.
 
 # Known exceptions
 The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
