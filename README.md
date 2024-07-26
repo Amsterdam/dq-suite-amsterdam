@@ -31,6 +31,15 @@ dfs = [df]
 results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
 ```
 
+# Code for Schema Validation
+
+If we want to make schema validation for column types of tables from Amsterdam Schema:
+
+fetch_schema_from_github()
+This function fetches the schema from GitHub for each table defined in dq_rules.
+
+generate_dq_rules_from_schema()
+This function generates data quality rules based on the schema fetched from GitHub.
 
 # Known exceptions
 The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
