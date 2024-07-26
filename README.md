@@ -31,7 +31,7 @@ dfs = [df]
 results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
 ```
 
-# Code for Schema Validation
+# Validate the schema of a table
 
 If we want to make schema validation for column types of tables from Amsterdam Schema:
 
