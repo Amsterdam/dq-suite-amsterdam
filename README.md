@@ -32,7 +32,7 @@ results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_
 ```
 
 
-# Validate the schema of a table
+# Export the schema from Unity Catalog to the Input Form
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
 
 ```
