@@ -97,10 +97,10 @@ def export_schema(dataset: str, spark: SparkSession):
 
 def fetch_schema_from_github(dq_rules):
     """
-    Function fetches a schema from the Github Amsterdam schema using the Excel input form.    
+    Function fetches a schema from the Github Amsterdam schema using the dq_rules.    
     
-    :param rule_json: A dictionary with all DQ configuration.
-    :type rule_json: dict
+    :param dq_rules: A dictionary with all DQ configuration.
+    :type dq_rules: dict
     :return: schemas: A dictionary with the schema of the required tables.
     :rtype: dict
     """
@@ -118,10 +118,10 @@ def fetch_schema_from_github(dq_rules):
 
 def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
     """
-    Function adds  expect_column_values_to_be_of_type rule for each column of tables having schema_id and schema_url in rule_json.
+    Function adds  expect_column_values_to_be_of_type rule for each column of tables having schema_id and schema_url in dq_rules.
     
-    :param rule_json: A dictionary with all DQ configuration.
-    :type rule_json: dict
+    :param dq_rules: A dictionary with all DQ configuration.
+    :type dq_rules: dict
     :param schemas: A dictionary with the schemas of the required tables.
     : type: dict
     :return: dq_rules: A dictionary with all DQ configuration.
