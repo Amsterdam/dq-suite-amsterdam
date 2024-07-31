@@ -7,7 +7,7 @@ import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
-from dq_suite.input_validator import validate_dqrules, expand_input, generate_dq_rules_from_schema, fetch_schema_from_github
+from dq_suite.input_helpers import validate_dqrules, expand_input, export_schema, generate_dq_rules_from_schema, fetch_schema_from_github
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
 def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
