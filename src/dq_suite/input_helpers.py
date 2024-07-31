@@ -122,7 +122,7 @@ def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
     
     :param rule_json: A dictionary with all DQ configuration.
     :type rule_json: dict
-    : param: schemas: A dictionary with the schemas of the required tables.
+    :param schemas: A dictionary with the schemas of the required tables.
     : type: dict
     :return: dq_rules: A dictionary with all DQ configuration.
     :rtype: dict
