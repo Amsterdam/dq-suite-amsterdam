@@ -28,8 +28,9 @@ dfs = [df]
 - Define a name for your dq check, in this case "showcase"
 
 ```
-results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
+dq_suite.df_check(dfs, dq_rules, "dpxx_dev", "showcase", spark)
 ```
+
 
 # Validate the schema of a table
 It is possible to validate the schema of an entire table to a schema definition from Amsterdam Schema in one go. This is done by adding two fields to the "dq_rules" JSON when describing the table (See: https://github.com/Amsterdam/dq-suite-amsterdam/blob/main/dq_rules_example.json). 
@@ -39,6 +40,7 @@ You will need:
 - validate_table_schema_url: the url of the table or dataset from Amsterdam Schema
 
 The schema definition is converted into column level expectations (expect_column_values_to_be_of_type) on run time.
+
 
 # Known exceptions
 The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
@@ -54,3 +56,5 @@ Version 0.3: Refactored I/O
 Version 0.4: Added schema validation with Amsterdam Schema per table
 
 Version 0.5: Export schema from Unity Catalog
+
+Version 0.6: The results are written to tables in the "dataquality" schema
