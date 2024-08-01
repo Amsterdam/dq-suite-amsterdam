@@ -41,7 +41,7 @@ def expand_input(rule_json):
     :rtype: dict
     """
 
-    for table in rule_json["dataframe_parameters"]:
+    for table in rule_json["tables"]:
         for rule in table["rules"]:
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:

@@ -1,8 +1,9 @@
 import pandas as pd
 from pyspark.sql.functions import col
+from pyspark.sql import SparkSession
 
 
-def extract_dq_validatie_data(df_name, dq_result):
+def extract_dq_validatie_data(df_name, dq_result, catalog_name, spark: SparkSession):
     """
     Function takes a json dq_rules,and a string df_name and returns dataframe.
     
@@ -30,18 +31,20 @@ def extract_dq_validatie_data(df_name, dq_result):
         output=result["success"]
         output_text = "success" if output else "failure"
         extracted_data.append({
-            "dqRegelId": dq_regel_id,
+            "regelId": dq_regel_id,
             "aantalValideRecords": aantal_valide_records,
             "aantalReferentieRecords": element_count,
             "dqDatum": run_time,
-            "output": output_text,
+            "dqResultaat": output_text,
         })
     # Create a DataFrame
     df_dq_validatie = pd.DataFrame(extracted_data)
-    return df_dq_validatie
+    if not df_dq_validatie.empty:
+        spark.createDataFrame(df_dq_validatie).write.mode("append").option("overwriteSchema", "true").saveAsTable(f'{catalog_name}.dataquality.validatie')
+    return
 
 
-def extract_dq_afwijking_data(df_name, dq_result, df, unique_identifier):
+def extract_dq_afwijking_data(df_name, dq_result, df, unique_identifier, catalog_name, spark: SparkSession):
     """
     Function takes a json dq_rules and a string df_name and returns a DataFrame.
 
@@ -79,42 +82,40 @@ def extract_dq_afwijking_data(df_name, dq_result, df, unique_identifier):
                 if entry not in unique_entries:  # Check for uniqueness before appending
                     unique_entries.add(entry)
                     extracted_data.append({
-                                "dqRegelId": dq_regel_id,
-                                "IdentifierVeldWaarde": id_value,
+                                "regelId": dq_regel_id,
+                                "identifierVeldWaarde": id_value,
                                 "afwijkendeAttribuutWaarde": value,
                                 "dqDatum": run_time,
                             })
                     
     # Create a DataFrame
     df_dq_afwijking = pd.DataFrame(extracted_data)
-    return df_dq_afwijking
+    if not df_dq_afwijking.empty:
+        spark.createDataFrame(df_dq_afwijking).write.mode("append").option("overwriteSchema", "true").saveAsTable(f'{catalog_name}.dataquality.afwijking')
+    return
 
-def create_brontabel(dq_rules):
+def create_brontabel(dq_rules, catalog_name, spark: SparkSession):
     """
     Function takes the table name and their unique identifier from the provided Data Quality rules 
     to create a DataFrame containing this metadata.
 
-    :param name: str comes from dq_rules
+    :param name: dq_rules
     :type name: str
-    :param unique_identifier: int comes from dq_rules
-    :type unique_identifier: int
-    :rtype: DataFrame
-    :return: df_brontable
-    :rtype: DataFrame
     """
     extracted_data = []
     for param in dq_rules["tables"]:
         name = param["table_name"]  
         unique_identifier = param["unique_identifier"]
         extracted_data.append({
-            "name": name,
-            "unique_identifier": unique_identifier
+            "bronTabelId": name,
+            "uniekeSleutel": unique_identifier
         })
     
     df_brontable = pd.DataFrame(extracted_data)
-    return df_brontable
+    spark.createDataFrame(df_brontable).write.mode("append").option("overwriteSchema", "true").saveAsTable(f'{catalog_name}.dataquality.brontabel')
+    return
 
-def create_bronattribute(dq_rules):
+def create_bronattribute(dq_rules, catalog_name, spark: SparkSession):
     """
     This function takes attributes/columns for each table specified in the Data Quality rules and creates a DataFrame containing these attribute details.
 
@@ -126,43 +127,38 @@ def create_bronattribute(dq_rules):
     extracted_data = []
     used_ids = set()  # To keep track of used IDs
     for param in dq_rules["tables"]:
-        BronTabel = param["table_name"] 
+        bron_tabel = param["table_name"] 
         for rule in param["rules"]:
             parameters = rule.get("parameters", [])
             for parameter in parameters:
                 if isinstance(parameter, dict) and "column" in parameter:
                     attribute_name = parameter["column"]
                     # Create a unique ID
-                    unique_id = f"{BronTabel}_{attribute_name}"
+                    unique_id = f"{bron_tabel}_{attribute_name}"
                     # Check if the ID is already used
                     if unique_id not in used_ids:
                         used_ids.add(unique_id)
                         extracted_data.append({
-                            "name": attribute_name,
-                            "BronTabel": BronTabel,
-                            "id": unique_id
+                            "bronAttribuutId": unique_id,
+                            "attribuutNaam": attribute_name,
+                            "bronTabelId": bron_tabel
                         })
     
     df_bronattribuut = pd.DataFrame(extracted_data)
-    return df_bronattribuut
+    spark.createDataFrame(df_bronattribuut).write.mode("append").option("overwriteSchema", "true").saveAsTable(f'{catalog_name}.dataquality.bronattribuut')
+    return
 
 
-def create_dqRegel(dq_rules):
+def create_dqRegel(dq_rules, catalog_name, spark: SparkSession):
     """
     Function extracts information about Data Quality rules applied to each attribute/column for tables specified in the Data Quality rules and creates a DataFrame containing these rule details.
 
-    :param BronTabel: str comes from dq_rules
-    :type BronTabel: str
-    :param rule_name: str comes from dq_rules
-    :type rule_name: str
-    :param attribute_name: str comes from dq_rules
-    :type attribute_name: str
-    :return: df_dqRegel
-    :rtype: DataFrame
+    :param dq_rules:
+    :type dq_rules: str
     """
     extracted_data = []
     for param in dq_rules["tables"]:
-        BronTabel = param["table_name"] 
+        bron_tabel = param["table_name"] 
         for rule in param["rules"]:
             rule_name = rule["rule_name"]
             parameters = rule.get("parameters", [])
@@ -170,11 +166,11 @@ def create_dqRegel(dq_rules):
                 if isinstance(parameter, dict) and "column" in parameter:
                     attribute_name = parameter["column"]
                     extracted_data.append({
-                        "id": f"{BronTabel}_{rule_name}_{attribute_name}",
-                        "bronAttibuteId": f"{BronTabel}_{attribute_name}" ,
-                        "BronTabel name": BronTabel
+                        "regelId": f"{bron_tabel}_{rule_name}_{attribute_name}",
+                        "bronAttribuutId": f"{bron_tabel}_{attribute_name}" ,
+                        "bronTabelId": bron_tabel
                     })
     
     df_dqRegel = pd.DataFrame(extracted_data)
-    return df_dqRegel
-
+    spark.createDataFrame(df_dqRegel).write.mode("append").option("overwriteSchema", "true").saveAsTable(f'{catalog_name}.dataquality.regel')
+    return
