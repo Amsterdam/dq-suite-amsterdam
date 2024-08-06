@@ -1,16 +1,16 @@
 import json
 from jsonschema import validate as validate_json
-
 from typing import Dict, Any, Tuple
-import pandas as pd
 
+from pyspark.sql import SparkSession
+import pandas as pd
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 
 from dq_suite.input_helpers import validate_dqrules, expand_input, export_schema, generate_dq_rules_from_schema, fetch_schema_from_github
 from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel
 
-def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def df_check(dfs: list, dq_rules: str, catalog_name: str, check_name: str, spark: SparkSession):
     """
     Function takes DataFrame instances with specified Data Quality rules. 
     and returns a JSON string with the DQ results with different dataframes in results dict, 
@@ -22,10 +22,6 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     :type dq_rules: str
     :param check_name: Name of the run for reference purposes.
     :type check_name: str
-    :return: A dictionary of Data Quality results for each DataFrame, 
-             along with metadata DataFrames:  brontabel_df, bronattribute_df, dqRegel_df .
-             Results contains 'result_dqValidatie' and 'result_dqAfwijking'.
-    :rtype: Tuple[Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]
     """
 
     results = {}
@@ -39,9 +35,9 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     schema = fetch_schema_from_github(rule_json) 
     rule_json = generate_dq_rules_from_schema(rule_json, schema)
 
-    brontabel_df = create_brontabel(rule_json)
-    bronattribute_df = create_bronattribute(rule_json)
-    dqRegel_df = create_dqRegel(rule_json)
+    create_brontabel(rule_json, catalog_name, spark)
+    create_bronattribute(rule_json, catalog_name, spark)
+    create_dqRegel(rule_json, catalog_name, spark)
 
     for df in dfs:
         context_root_dir = "/dbfs/great_expectations/"
@@ -95,11 +91,9 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
             context.add_or_update_checkpoint(checkpoint=checkpoint)
             checkpoint_result = checkpoint.run()
             output = checkpoint_result["run_results"]
-            print(f"Validation results for {df_name}: ", output)
             for key, value in output.items():
                 result = value["validation_result"]
-                result_dqValidatie = extract_dq_validatie_data(df_name, result)
-                result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
-                results[df_name] = (result_dqValidatie, result_dqAfwijking)
-      
-    return  results, brontabel_df, bronattribute_df, dqRegel_df
+                extract_dq_validatie_data(df_name, result, catalog_name, spark)
+                extract_dq_afwijking_data(df_name, result, df, unique_identifier, catalog_name, spark)
+
+    return
