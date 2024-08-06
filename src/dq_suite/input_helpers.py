@@ -21,7 +21,10 @@ def validate_dqrules(dq_rules):
         if "Invalid control character at:" in error_message:
             print("Quota is missing in the JSON.")
         if "Expecting ',' delimiter:" in error_message:
-            print("Square brackets, Comma or curly brackets can be missing in the JSON.")
+            print(
+                "Square brackets, Comma or curly brackets can be missing in "
+                "the JSON."
+            )
         if "Expecting ':' delimiter:" in error_message:
             print("Colon is missing in the JSON.")
         if "Expecting value:" in error_message:
@@ -46,7 +49,9 @@ def expand_input(rule_json):
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:
                     # GX requires this statement for conditional rules when using spark
-                    parameter["condition_parser"] = "great_expectations__experimental__"
+                    parameter[
+                        "condition_parser"
+                    ] = "great_expectations__experimental__"
 
     return rule_json
 
@@ -68,8 +73,15 @@ def export_schema(dataset: str, spark: SparkSession):
         FROM system.information_schema.tables
         WHERE table_schema = {dataset}
     """
-    tables = spark.sql(table_query, dataset=dataset).select("table_name").rdd.flatMap(lambda x: x).collect()
-    table_list = "'" + "', '".join(tables) + "'"  # creates a list of all tables, is used by the next query
+    tables = (
+        spark.sql(table_query, dataset=dataset)
+        .select("table_name")
+        .rdd.flatMap(lambda x: x)
+        .collect()
+    )
+    table_list = (
+        "'" + "', '".join(tables) + "'"
+    )  # creates a list of all tables, is used by the next query
 
     column_query = f"""
             SELECT column_name, table_name
@@ -81,7 +93,10 @@ def export_schema(dataset: str, spark: SparkSession):
     columns_list = []
     for table in tables:
         columns_table = (
-            columns.filter(columns.table_name == table).select("column_name").rdd.flatMap(lambda x: x).collect()
+            columns.filter(columns.table_name == table)
+            .select("column_name")
+            .rdd.flatMap(lambda x: x)
+            .collect()
         )
         columns_dict = {"table_name": table, "attributes": columns_table}
         columns_list.append(columns_dict)
@@ -114,7 +129,8 @@ def fetch_schema_from_github(dq_rules):
 
 def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
     """
-    Function adds  expect_column_values_to_be_of_type rule for each column of tables having schema_id and schema_url in dq_rules.
+    Function adds  expect_column_values_to_be_of_type rule for each column of
+    tables having schema_id and schema_url in dq_rules.
 
     :param dq_rules: A dictionary with all DQ configuration.
     :type dq_rules: dict
@@ -132,8 +148,12 @@ def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
             if table_name in schemas:
                 schema = schemas[table_name]
                 if "schema" in schema and "properties" in schema["schema"]:
-                    schema_columns = schema["schema"]["properties"]  # separated tables - getting from table json
-                elif "tables" in schema:  # integrated tables - getting from dataset.json
+                    schema_columns = schema["schema"][
+                        "properties"
+                    ]  # separated tables - getting from table json
+                elif (
+                    "tables" in schema
+                ):  # integrated tables - getting from dataset.json
                     for t in schema["tables"]:
                         if t["id"] == schema_id:
                             schema_columns = t["schema"]["properties"]
@@ -151,7 +171,9 @@ def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
                             rule_type = column_type.capitalize() + "Type"
                         rule = {
                             "rule_name": "expect_column_values_to_be_of_type",
-                            "parameters": [{"column": column, "type_": rule_type}],
+                            "parameters": [
+                                {"column": column, "type_": rule_type}
+                            ],
                         }
                         table["rules"].append(rule)
 

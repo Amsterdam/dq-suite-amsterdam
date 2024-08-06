@@ -8,11 +8,13 @@ def extract_dq_validatie_data(df_name, dq_result):
 
     :param df_dq_validatie: A df containing the valid result
     :type df: DataFrame
-    :param dq_rules: A JSON string containing the Data Quality rules to be evaluated
+    :param dq_rules: A JSON string containing the Data Quality rules to be
+        evaluated
     :type dq_rules: str
     :param df_name: Name of the tables
     :type df_name: str
-    :return: A table df with the valid result DQ results, parsed from the extract_dq_validatie_data output
+    :return: A table df with the valid result DQ results, parsed from the
+        extract_dq_validatie_data output
     :rtype: df.
     """
 
@@ -67,18 +69,30 @@ def extract_dq_afwijking_data(df_name, dq_result, df, unique_identifier):
         expectation_type = result["expectation_config"]["expectation_type"]
         attribute = result["expectation_config"]["kwargs"].get("column")
         dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
-        afwijkende_attribuut_waarde = result["result"].get("partial_unexpected_list", [])
+        afwijkende_attribuut_waarde = result["result"].get(
+            "partial_unexpected_list", []
+        )
         for value in afwijkende_attribuut_waarde:
             if value == None:
                 filtered_df = df.filter(col(attribute).isNull())
-                ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+                ids = (
+                    filtered_df.select(unique_identifier)
+                    .rdd.flatMap(lambda x: x)
+                    .collect()
+                )
             else:
                 filtered_df = df.filter(col(attribute) == value)
-                ids = filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+                ids = (
+                    filtered_df.select(unique_identifier)
+                    .rdd.flatMap(lambda x: x)
+                    .collect()
+                )
 
             for id_value in ids:
                 entry = id_value
-                if entry not in unique_entries:  # Check for uniqueness before appending
+                if (
+                    entry not in unique_entries
+                ):  # Check for uniqueness before appending
                     unique_entries.add(entry)
                     extracted_data.append(
                         {
@@ -96,8 +110,8 @@ def extract_dq_afwijking_data(df_name, dq_result, df, unique_identifier):
 
 def create_brontabel(dq_rules):
     """
-    Function takes the table name and their unique identifier from the provided Data Quality rules
-    to create a DataFrame containing this metadata.
+    Function takes the table name and their unique identifier from the provided
+    Data Quality rules to create a DataFrame containing this metadata.
 
     :param name: str comes from dq_rules
     :type name: str
@@ -111,7 +125,9 @@ def create_brontabel(dq_rules):
     for param in dq_rules["tables"]:
         name = param["table_name"]
         unique_identifier = param["unique_identifier"]
-        extracted_data.append({"name": name, "unique_identifier": unique_identifier})
+        extracted_data.append(
+            {"name": name, "unique_identifier": unique_identifier}
+        )
 
     df_brontable = pd.DataFrame(extracted_data)
     return df_brontable
@@ -119,7 +135,8 @@ def create_brontabel(dq_rules):
 
 def create_bronattribute(dq_rules):
     """
-    This function takes attributes/columns for each table specified in the Data Quality rules and creates a DataFrame containing these attribute details.
+    This function takes attributes/columns for each table specified in the Data
+    Quality rules and creates a DataFrame containing these attribute details.
 
     :param dq_rules: Data Quality rules
     :type dq_rules: dict
@@ -154,7 +171,9 @@ def create_bronattribute(dq_rules):
 
 def create_dqRegel(dq_rules):
     """
-    Function extracts information about Data Quality rules applied to each attribute/column for tables specified in the Data Quality rules and creates a DataFrame containing these rule details.
+    Function extracts information about Data Quality rules applied to each
+    attribute/column for tables specified in the Data Quality rules and creates
+    a DataFrame containing these rule details.
 
     :param BronTabel: str comes from dq_rules
     :type BronTabel: str
