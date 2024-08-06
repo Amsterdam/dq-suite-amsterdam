@@ -17,3 +17,29 @@ dependencies = [
   "pandas==2.2.2",
   "pyspark==3.3.2",
 ]
+
+
+[project.optional-dependencies]
+dev = [
+    'bandit~=1.7',
+    'black~=23.1',
+    'pytest~=7.2',
+    'mypy~=1.4.1',
+    'pylint ~= 2.16',
+    'autoflake ~= 2.0.1',
+]
+
+[tool.isort]
+line_length = 120
+profile = "black"
+src_paths = ["src"]
+
+[tool.black]
+line-length = 120
+
+[tool.autoflake]
+recursive = 'true'
+in-place = 'true'
+remove-unused-variables = 'true'
+remove-all-unused-imports = 'true'
+quiet = 'true' # only report issues
