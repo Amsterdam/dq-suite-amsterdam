@@ -61,6 +61,10 @@ The schema definition is converted into column level expectations (expect_column
 The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
 
 
+# Contributing to this library
+See the separate [developers readme](src/Readme-dev.md).
+
+
 # Updates
 Version 0.1: Run a DQ check for a dataframe
 
