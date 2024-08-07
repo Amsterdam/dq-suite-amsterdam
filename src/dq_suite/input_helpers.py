@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import requests
 from pyspark.sql import SparkSession
@@ -13,16 +13,15 @@ class Rule:
     """
 
     rule_name: str  # Name of the GX expectation
-    parameters: List[Dict]  # Collection of parameters required for
+    parameters: List[Dict[str, Any]]  # Collection of parameters required for
     # evaluating the expectation
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
         if key == "rule_name":
             return self.rule_name
         elif key == "parameters":
             return self.parameters
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
 
 @dataclass()
@@ -35,18 +34,17 @@ class RulesDict:
     table_name: str
     rules_list: List[Rule]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str | List[Rule] | None:
         if key == "unique_identifier":
             return self.unique_identifier
         elif key == "table_name":
             return self.table_name
         elif key == "rules_list":
             return self.rules_list
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
 
-RulesDictList = List[RulesDict]
+RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 
 
 @dataclass()
@@ -57,23 +55,13 @@ class DataQualityRulesDict:
 
     tables: RulesDictList
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> RulesDictList | None:
         if key == "tables":
             return self.tables
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
 
-@dataclass()
-class SchemaDict:
-    """
-    info goes here
-    """
-
-    # TODO: implement
-
-
-def validate_dqrules(dq_rules: str) -> None:
+def validate_and_load_dqrules(dq_rules: str) -> Any | None:
     """
     Function validates the input JSON
 
@@ -81,7 +69,7 @@ def validate_dqrules(dq_rules: str) -> None:
     """
 
     try:
-        json.loads(dq_rules)
+        return json.loads(dq_rules)
 
     except json.JSONDecodeError as e:
         error_message = str(e)
@@ -123,16 +111,13 @@ def expand_input(rule_json: DataQualityRulesDict) -> DataQualityRulesDict:
     return rule_json
 
 
-def export_schema(dataset: str, spark: SparkSession):
+def export_schema(dataset: str, spark: SparkSession) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel input form
 
     :param dataset: The name of the required dataset
-    :type dataset: str
     :param spark: The current SparkSession required for querying
-    :type spark: SparkSession
     :return: schema_json: A JSON string with the schema of the required dataset
-    :rtype: str
     """
 
     table_query = """
@@ -173,50 +158,44 @@ def export_schema(dataset: str, spark: SparkSession):
     return json.dumps(output_dict)
 
 
-def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> SchemaDict:
+def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> Dict[str, Any]:
     """
     Function fetches a schema from the Github Amsterdam schema using the dq_rules.
 
     :param dq_rules: A dictionary with all DQ configuration.
-    :type dq_rules: dict
-    :return: schemas: A dictionary with the schema of the required tables.
-    :rtype: dict
+    :return: schema_dict: A dictionary with the schema of the required tables.
     """
 
-    schemas = {}
+    schema_dict = {}
     for table in dq_rules["tables"]:
         if "validate_table_schema_url" in table:
-            url = table["validate_table_schema_url"]
+            url = table["validate_table_schema_url"]  # TODO: validate URL
             r = requests.get(url)
             schema = json.loads(r.text)
-            schemas[table["table_name"]] = schema
+            schema_dict[table["table_name"]] = schema
 
-    return schemas
+    return schema_dict
 
 
-# TODO: fix return type
 def generate_dq_rules_from_schema(
-    dq_rules: DataQualityRulesDict, schemas: SchemaDict
-) -> dict:
+    dq_rules_dict: DataQualityRulesDict, schema_dict: Dict[str, Any]
+) -> DataQualityRulesDict:
     """
-    Function adds  expect_column_values_to_be_of_type rule for each column of
+    Function adds expect_column_values_to_be_of_type rule for each column of
     tables having schema_id and schema_url in dq_rules.
 
-    :param dq_rules: A dictionary with all DQ configuration.
-    :type dq_rules: dict
-    :param schemas: A dictionary with the schemas of the required tables.
-    : type: dict
-    :return: dq_rules: A dictionary with all DQ configuration.
-    :rtype: dict
+    :param dq_rules_dict: A dictionary with all DQ configuration.
+    :param schema_dict: A dictionary with the schemas of the required tables.
+    :return: A dictionary with all DQ configuration.
     """
 
-    for table in dq_rules["tables"]:
+    for table in dq_rules_dict["tables"]:
         if "validate_table_schema" in table:
             schema_id = table["validate_table_schema"]
             table_name = table["table_name"]
 
-            if table_name in schemas:
-                schema = schemas[table_name]
+            if table_name in schema_dict:
+                schema = schema_dict[table_name]
                 if "schema" in schema and "properties" in schema["schema"]:
                     schema_columns = schema["schema"][
                         "properties"
@@ -247,4 +226,4 @@ def generate_dq_rules_from_schema(
                         }
                         table["rules"].append(rule)
 
-    return dq_rules
+    return dq_rules_dict
