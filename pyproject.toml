@@ -4,10 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dq-suite-amsterdam"
-version = "0.6.0"
+version = "0.6.2"
 authors = [
   { name="Arthur Kordes", email="a.kordes@amsterdam.nl" },
-  { name="Aysegul Cayir Aydar", email="a.cayiraydar@amsterdam.nl" }
+  { name="Aysegul Cayir Aydar", email="a.cayiraydar@amsterdam.nl" },
+  { name="Rajesh Chellaswamy", email="r.chellaswamy@amsterdam.nl" },
+  { name="Bas Schotten", email="b.schotten@amsterdam.nl" }
 ]
 description = "Wrapper for Great Expectations to fit the requirements of the Gemeente Amsterdam."
 readme = "README.md"
