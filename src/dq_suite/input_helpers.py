@@ -1,15 +1,83 @@
 import json
+from dataclasses import dataclass
+from typing import Dict, List
 
 import requests
 from pyspark.sql import SparkSession
 
 
-def validate_dqrules(dq_rules):
+@dataclass()
+class Rule:
+    """
+    info goes here
+    """
+
+    rule_name: str  # Name of the GX expectation
+    parameters: List[Dict]  # Collection of parameters required for
+    # evaluating the expectation
+
+    def __getitem__(self, key):
+        if key == "rule_name":
+            return self.rule_name
+        elif key == "parameters":
+            return self.parameters
+        else:
+            raise KeyError
+
+
+@dataclass()
+class RulesDict:
+    """
+    info goes here
+    """
+
+    unique_identifier: str  # TODO: List[str] for more complex keys?
+    table_name: str
+    rules_list: List[Rule]
+
+    def __getitem__(self, key):
+        if key == "unique_identifier":
+            return self.unique_identifier
+        elif key == "table_name":
+            return self.table_name
+        elif key == "rules_list":
+            return self.rules_list
+        else:
+            raise KeyError
+
+
+RulesDictList = List[RulesDict]
+
+
+@dataclass()
+class DataQualityRulesDict:
+    """
+    info goes here
+    """
+
+    tables: RulesDictList
+
+    def __getitem__(self, key):
+        if key == "tables":
+            return self.tables
+        else:
+            raise KeyError(key)
+
+
+@dataclass()
+class SchemaDict:
+    """
+    info goes here
+    """
+
+    # TODO: implement
+
+
+def validate_dqrules(dq_rules: str) -> None:
     """
     Function validates the input JSON
 
     :param dq_rules: A string with all DQ configuration.
-    :type dq_rules: str
     """
 
     try:
@@ -34,21 +102,20 @@ def validate_dqrules(dq_rules):
         print(f"An unexpected error occurred: {e}")
 
 
-def expand_input(rule_json):
+def expand_input(rule_json: DataQualityRulesDict) -> DataQualityRulesDict:
     """
     Function adds a mandatory line in case of a conditional rule
 
     :param rule_json: A dictionary with all DQ configuration.
-    :type rule_json: dict
     :return: rule_json: A dictionary with all DQ configuration.
-    :rtype: dict
     """
 
     for table in rule_json["tables"]:
         for rule in table["rules"]:
             for parameter in rule["parameters"]:
                 if "row_condition" in parameter:
-                    # GX requires this statement for conditional rules when using spark
+                    #  GX requires this statement for conditional rules when
+                    #  using spark
                     parameter[
                         "condition_parser"
                     ] = "great_expectations__experimental__"
@@ -106,7 +173,7 @@ def export_schema(dataset: str, spark: SparkSession):
     return json.dumps(output_dict)
 
 
-def fetch_schema_from_github(dq_rules):
+def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> SchemaDict:
     """
     Function fetches a schema from the Github Amsterdam schema using the dq_rules.
 
@@ -127,7 +194,10 @@ def fetch_schema_from_github(dq_rules):
     return schemas
 
 
-def generate_dq_rules_from_schema(dq_rules: dict, schemas: dict) -> dict:
+# TODO: fix return type
+def generate_dq_rules_from_schema(
+    dq_rules: DataQualityRulesDict, schemas: SchemaDict
+) -> dict:
     """
     Function adds  expect_column_values_to_be_of_type rule for each column of
     tables having schema_id and schema_url in dq_rules.

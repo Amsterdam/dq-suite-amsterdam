@@ -1,8 +1,9 @@
 import json
+from typing import List
 
 import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 
 from src.dq_suite.input_helpers import (
     expand_input,
@@ -20,23 +21,22 @@ from src.dq_suite.output_transformations import (
 
 
 def df_check(
-    dfs: list,
+    dfs: List[DataFrame],
     dq_rules: str,
     catalog_name: str,
     check_name: str,
     spark: SparkSession,
-):
+) -> None:
     """
     Function takes DataFrame instances with specified Data Quality rules.
     and returns a JSON string with the DQ results with different dataframes in results dict,
     and returns different dfs as specified using Data Quality rules
 
     :param dfs: A list of DataFrame instances to process.
-    :type dfs: list[DataFrame]
     :param dq_rules: JSON string containing the Data Quality rules to be evaluated.
-    :type dq_rules: str
+    :param catalog_name: [explanation goes here]
     :param check_name: Name of the run for reference purposes.
-    :type check_name: str
+    :param spark: [explanation goes here]
     """
 
     name = check_name

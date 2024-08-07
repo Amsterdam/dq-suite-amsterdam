@@ -5,7 +5,7 @@ from pyspark.sql.functions import col
 
 def extract_dq_validatie_data(
     df_name, dq_result, catalog_name, spark: SparkSession
-):
+) -> None:
     """
     Function takes a json dq_rules,and a string df_name and returns dataframe.
 
@@ -47,12 +47,14 @@ def extract_dq_validatie_data(
         spark.createDataFrame(df_dq_validatie).write.mode("append").option(
             "overwriteSchema", "true"
         ).saveAsTable(f"{catalog_name}.dataquality.validatie")
-    return
+    else:
+        # TODO: implement (raise error?)
+        pass
 
 
 def extract_dq_afwijking_data(
     df_name, dq_result, df, unique_identifier, catalog_name, spark: SparkSession
-):
+) -> None:
     """
     Function takes a json dq_rules and a string df_name and returns a DataFrame.
 
@@ -116,10 +118,12 @@ def extract_dq_afwijking_data(
         spark.createDataFrame(df_dq_afwijking).write.mode("append").option(
             "overwriteSchema", "true"
         ).saveAsTable(f"{catalog_name}.dataquality.afwijking")
-    return
+    else:
+        # TODO: implement (raise error?)
+        pass
 
 
-def create_brontabel(dq_rules, catalog_name, spark: SparkSession):
+def create_brontabel(dq_rules, catalog_name, spark: SparkSession) -> None:
     """
     Function takes the table name and their unique identifier from the provided Data Quality rules
     to create a DataFrame containing this metadata.
@@ -139,10 +143,9 @@ def create_brontabel(dq_rules, catalog_name, spark: SparkSession):
     spark.createDataFrame(df_brontable).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.brontabel")
-    return
 
 
-def create_bronattribute(dq_rules, catalog_name, spark: SparkSession):
+def create_bronattribute(dq_rules, catalog_name, spark: SparkSession) -> None:
     """
     This function takes attributes/columns for each table specified in the Data Quality rules and creates a DataFrame containing these attribute details.
 
@@ -177,10 +180,9 @@ def create_bronattribute(dq_rules, catalog_name, spark: SparkSession):
     spark.createDataFrame(df_bronattribuut).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.bronattribuut")
-    return
 
 
-def create_dqRegel(dq_rules, catalog_name, spark: SparkSession):
+def create_dqRegel(dq_rules, catalog_name, spark: SparkSession) -> None:
     """
     Function extracts information about Data Quality rules applied to each attribute/column for tables specified in the Data Quality rules and creates a DataFrame containing these rule details.
 
@@ -208,4 +210,3 @@ def create_dqRegel(dq_rules, catalog_name, spark: SparkSession):
     spark.createDataFrame(df_dqRegel).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.regel")
-    return
