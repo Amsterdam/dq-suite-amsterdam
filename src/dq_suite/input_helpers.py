@@ -22,7 +22,7 @@ class Rule:
         elif key == "parameters":
             return self.parameters
         else:
-            raise KeyError
+            raise KeyError(key)
 
 
 @dataclass()
@@ -43,7 +43,7 @@ class RulesDict:
         elif key == "rules_list":
             return self.rules_list
         else:
-            raise KeyError
+            raise KeyError(key)
 
 
 RulesDictList = List[RulesDict]
