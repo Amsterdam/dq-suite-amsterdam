@@ -1,4 +1,3 @@
-import json
 from typing import List
 
 import great_expectations as gx
@@ -9,7 +8,7 @@ from src.dq_suite.input_helpers import (
     expand_input,
     fetch_schema_from_github,
     generate_dq_rules_from_schema,
-    validate_dqrules,
+    validate_and_load_dqrules,
 )
 from src.dq_suite.output_transformations import (
     create_bronattribute,
@@ -41,8 +40,7 @@ def df_check(
 
     name = check_name
 
-    validate_dqrules(dq_rules)
-    initial_rule_json = json.loads(dq_rules)
+    initial_rule_json = validate_and_load_dqrules(dq_rules)
     rule_json = expand_input(initial_rule_json)
 
     # Generate DQ rules from schema
