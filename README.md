@@ -28,7 +28,7 @@ dfs = [df]
 - Define a name for your dq check, in this case "showcase"
 
 ```
-results, brontabel_df, bronattribute_df, dqRegel_df = dq_suite.df_check(dfs, dq_rules, "showcase")
+dq_suite.df_check(dfs, dq_rules, "dpxx_dev", "showcase", spark)
 ```
 
 
@@ -71,3 +71,5 @@ Version 0.3: Refactored I/O
 Version 0.4: Added schema validation with Amsterdam Schema per table
 
 Version 0.5: Export schema from Unity Catalog
+
+Version 0.6: The results are written to tables in the "dataquality" schema
