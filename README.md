@@ -30,7 +30,11 @@ dfs = [df]
 ```
 dq_suite.df_check(dfs, dq_rules, "dpxx_dev", "showcase", spark)
 ```
+# Create dataquality schema and tables (in respective catalog of data team)
 
+for the first time installation create data quality schema and tables from the notebook from repo path scripts/data_quality_tables.sql
+- open the notebook, connect to a cluster
+- select the catalog of the data team and execute the notebook. It will check if schema is available if not it will create schema and same for tables.
 
 # Export the schema from Unity Catalog to the Input Form
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
