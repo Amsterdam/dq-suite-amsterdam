@@ -4,13 +4,13 @@ import great_expectations as gx
 from great_expectations.checkpoint import Checkpoint
 from pyspark.sql import SparkSession
 
-from dq_suite.input_helpers import (
+from src.dq_suite.input_helpers import (
     expand_input,
     fetch_schema_from_github,
     generate_dq_rules_from_schema,
     validate_dqrules,
 )
-from dq_suite.output_transformations import (
+from src.dq_suite.output_transformations import (
     create_bronattribute,
     create_brontabel,
     create_dqRegel,
