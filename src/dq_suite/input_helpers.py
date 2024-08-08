@@ -9,7 +9,7 @@ from pyspark.sql import SparkSession
 @dataclass()
 class Rule:
     """
-    Groups together the name of the GX validation rule, together with the
+    Groups the name of the GX validation rule together with the
     parameters required to apply this rule.
     """
 
@@ -28,9 +28,9 @@ class Rule:
 @dataclass()
 class RulesDict:
     """
-    Groups together a list of Rules, together with the name of the table
+    Groups a list of Rule-objects together with the name of the table
     these rules are to be applied to, as well as a unique identifier used for
-    uniquely identifying outliers.
+    identifying outliers.
     """
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
