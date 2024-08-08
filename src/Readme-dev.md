@@ -1,7 +1,12 @@
 # Requirements
-Both app and dev dependencies from [pyproject.toml](../pyproject.toml) need to be installed in the environment.
+Both app and dev dependencies from [pyproject.toml](../pyproject.toml) need to be installed 
+in the environment. To install app/core dependencies, use
 ``` shell
-pip install .[dev] # some shells don't recognize .[dev] and need '.[dev]' 
+pip install . 
+```
+To also install the (optional) dev dependencies, use
+``` shell
+pip install .[dev]  # some shells don't recognize .[dev] and need '.[dev]' 
 ```
 
 

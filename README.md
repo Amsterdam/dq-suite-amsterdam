@@ -58,11 +58,16 @@ The schema definition is converted into column level expectations (expect_column
 
 
 # Known exceptions
-The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. Using a Shared Compute Cluster will results in an error, as it does not have the permissions that Great Expectations requires.
+- The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. 
+Using a Shared Compute Cluster will result in an error, as it does not have the permissions that Great Expectations requires.
+
+- Since this project requires Python >= 3.10, the use of Databricks Runtime (DBR) >= 13.3 is needed 
+([click](https://docs.databricks.com/en/release-notes/runtime/13.3lts.html#system-environment)). 
+Older versions of DBR will result in errors upon install of the `dq-suite-amsterdam` library.
 
 
 # Contributing to this library
-See the separate [developers readme](src/Readme-dev.md).
+See the separate [developers' readme](src/Readme-dev.md).
 
 
 # Updates
