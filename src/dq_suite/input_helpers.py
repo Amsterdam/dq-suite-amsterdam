@@ -209,6 +209,7 @@ def generate_dq_rules_from_schema(
                             break
 
                 if "schema" in schema_columns:
+                    # TODO/check: what if schema_columns does not exist?
                     del schema_columns["schema"]
 
                 for column, properties in schema_columns.items():
@@ -218,12 +219,10 @@ def generate_dq_rules_from_schema(
                             rule_type = "IntegerType"
                         else:
                             rule_type = column_type.capitalize() + "Type"
-                        rule = {
-                            "rule_name": "expect_column_values_to_be_of_type",
-                            "parameters": [
-                                {"column": column, "type_": rule_type}
-                            ],
-                        }
+                        rule = Rule(
+                            rule_name="expect_column_values_to_be_of_type",
+                            parameters=[{"column": column, "type_": rule_type}],
+                        )
                         table["rules"].append(rule)
 
     return dq_rules_dict

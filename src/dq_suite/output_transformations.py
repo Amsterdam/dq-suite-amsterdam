@@ -12,7 +12,7 @@ def extract_dq_validatie_data(
     [insert explanation here]
 
     :param df_name: Name of the tables
-    :param dq_result:  # TODO: add dataclass
+    :param dq_result:  # TODO: add dataclass?
     :param catalog_name:
     :param spark:
     """
@@ -52,7 +52,7 @@ def extract_dq_validatie_data(
 
 def extract_dq_afwijking_data(
     df_name: str,
-    dq_result: dict,  # TODO: add dataclass
+    dq_result: dict,  # TODO: add dataclass?
     df: DataFrame,
     unique_identifier: str,
     catalog_name: str,
