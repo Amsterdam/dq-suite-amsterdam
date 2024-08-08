@@ -9,7 +9,8 @@ from pyspark.sql import SparkSession
 @dataclass()
 class Rule:
     """
-    info goes here
+    Groups together the name of the GX validation rule, together with the
+    parameters required to apply this rule.
     """
 
     rule_name: str  # Name of the GX expectation
@@ -27,7 +28,9 @@ class Rule:
 @dataclass()
 class RulesDict:
     """
-    info goes here
+    Groups together a list of Rules, together with the name of the table
+    these rules are to be applied to, as well as a unique identifier used for
+    uniquely identifying outliers.
     """
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
@@ -49,10 +52,6 @@ RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 
 @dataclass()
 class DataQualityRulesDict:
-    """
-    info goes here
-    """
-
     tables: RulesDictList
 
     def __getitem__(self, key) -> RulesDictList | None:
