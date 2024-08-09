@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 import requests
+from great_expectations.core.batch import RuntimeBatchRequest
 from pyspark.sql import SparkSession
 
 
@@ -58,6 +59,12 @@ class DataQualityRulesDict:
         if key == "tables":
             return self.tables
         raise KeyError(key)
+
+
+@dataclass
+class Validation:
+    batch_request: RuntimeBatchRequest
+    expectation_suite_name: str
 
 
 def validate_and_load_dqrules(dq_rules: str) -> Any | None:
@@ -177,16 +184,16 @@ def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> Dict[str, Any]:
 
 
 def generate_dq_rules_from_schema(
-    dq_rules_dict: DataQualityRulesDict, schema_dict: Dict[str, Any]
+    dq_rules_dict: DataQualityRulesDict,
 ) -> DataQualityRulesDict:
     """
     Function adds expect_column_values_to_be_of_type rule for each column of
     tables having schema_id and schema_url in dq_rules.
 
     :param dq_rules_dict: A dictionary with all DQ configuration.
-    :param schema_dict: A dictionary with the schemas of the required tables.
     :return: A dictionary with all DQ configuration.
     """
+    schema_dict = fetch_schema_from_github(dq_rules=dq_rules_dict)
 
     for table in dq_rules_dict["tables"]:
         if "validate_table_schema" in table:

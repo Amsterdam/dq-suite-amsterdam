@@ -28,7 +28,7 @@ dfs = [df]
 - Define a name for your dq check, in this case "showcase"
 
 ```
-dq_suite.df_check(dfs, dq_rules, "dpxx_dev", "showcase", spark)
+dq_suite.validate_dataframes(dfs, dq_rules, "dpxx_dev", "showcase", spark)
 ```
 # Create dataquality schema and tables (in respective catalog of data team)
 
