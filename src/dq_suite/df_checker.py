@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Tuple, Any
 
 from great_expectations import get_context
 from great_expectations.checkpoint import Checkpoint
 from great_expectations.data_context import AbstractDataContext
+from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame, SparkSession
 
 from src.dq_suite.common import (
@@ -53,6 +54,27 @@ def write_non_validation_tables_to_unity_catalog(
 #     dq_rules_json_string=dq_rules_json_string)
 
 
+def get_batch_request_and_validator(data_context: AbstractDataContext,
+                                    df: DataFrame, check_name: str,
+                                    expectation_suite_name: str) -> (
+        Tuple)[Any, Validator]:
+    dataframe_datasource = data_context.sources.add_or_update_spark(
+        name="my_spark_in_memory_datasource_" + check_name
+    )
+
+    df_asset = dataframe_datasource.add_dataframe_asset(
+        name=check_name, dataframe=df
+    )
+    batch_request = df_asset.build_batch_request()
+
+    validator = data_context.get_validator(
+        batch_request=batch_request,
+        expectation_suite_name=expectation_suite_name,
+    )
+
+    return batch_request, validator
+
+
 def validate_dataframes(
     dataframe_list: List[DataFrame],
     dq_rules_json_string: str,
@@ -88,28 +110,19 @@ def validate_dataframes(
     )
 
     data_context = get_data_context()
+    expectation_suite_name = check_name + "_exp_suite"
+
+    data_context.add_or_update_expectation_suite(
+        expectation_suite_name=expectation_suite_name
+    )
+
+    checkpoint_name = check_name + "_checkpoint"
+    run_name_template = "%Y%m%d-%H%M%S-" + check_name + "-template"
 
     for df in dataframe_list:
-        dataframe_datasource = data_context.sources.add_or_update_spark(
-            name="my_spark_in_memory_datasource_" + check_name
-        )
-
-        df_asset = dataframe_datasource.add_dataframe_asset(
-            name=check_name, dataframe=df
-        )
-        batch_request = df_asset.build_batch_request()
-
-        expectation_suite_name = check_name + "_exp_suite"
-        checkpoint_name = check_name + "_checkpoint"
-
-        data_context.add_or_update_expectation_suite(
-            expectation_suite_name=expectation_suite_name
-        )
-
-        validator = data_context.get_validator(
-            batch_request=batch_request,
-            expectation_suite_name=expectation_suite_name,
-        )
+        batch_request, validator = get_batch_request_and_validator(
+            data_context=data_context, df=df, check_name=check_name,
+            expectation_suite_name=expectation_suite_name)
 
         # to compare table_name in dq_rules and given table_names by data teams
         matching_rules = [
@@ -136,7 +149,7 @@ def validate_dataframes(
 
             checkpoint = Checkpoint(
                 name=checkpoint_name,
-                run_name_template="%Y%m%d-%H%M%S-" + check_name + "-template",
+                run_name_template=run_name_template,
                 data_context=data_context,
                 batch_request=batch_request,
                 expectation_suite_name=expectation_suite_name,
@@ -153,7 +166,8 @@ def validate_dataframes(
             output = checkpoint_result["run_results"]
             for key, value in output.items():
                 result = value["validation_result"]
-                extract_dq_validatie_data(df_name, result, catalog_name, spark_session)
+                extract_dq_validatie_data(df_name, result, catalog_name,
+                                          spark_session)
                 extract_dq_afwijking_data(
-                    df_name, result, df, unique_identifier, catalog_name, spark_session
-                )
+                    df_name, result, df, unique_identifier, catalog_name,
+                    spark_session)
