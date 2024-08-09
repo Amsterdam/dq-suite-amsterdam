@@ -7,9 +7,7 @@ from pyspark.sql import DataFrame, SparkSession
 
 from src.dq_suite.common import (
     DataQualityRulesDict,
-    expand_input,
-    generate_dq_rules_from_schema,
-    validate_and_load_dqrules,
+    dq_rules_json_string_to_dict,
 )
 from src.dq_suite.output_transformations import (
     create_bronattribute,
@@ -48,9 +46,16 @@ def write_non_validation_tables_to_unity_catalog(
     )
 
 
+# def read_data_quality_rules_from_json(file_path: str) -> str:
+#     with open(file_path, 'r') as json_file:
+#         dq_rules_json_string = json_file.read()
+#     return validate_and_load_dqrules(
+#     dq_rules_json_string=dq_rules_json_string)
+
+
 def validate_dataframes(
     dataframe_list: List[DataFrame],
-    dq_rules: str,
+    dq_rules_json_string: str,
     catalog_name: str,
     check_name: str,
     spark: SparkSession,
@@ -58,21 +63,23 @@ def validate_dataframes(
     """
     Function takes DataFrame instances with specified Data Quality rules.
     and returns a JSON string with the DQ results with different dataframes
-    in results dict, and returns different dataframe_list as specified using Data
-    Quality rules
+    in results dict, and returns different dataframe_list as specified using
+    Data Quality rules
 
     :param dataframe_list: A list of DataFrame instances to process.
-    :param dq_rules: JSON string containing the Data Quality rules to be
-    evaluated.
+    :param dq_rules_json_string: JSON string containing the Data Quality
+    rules to be evaluated.
     :param catalog_name: [explanation goes here]
     :param check_name: Name of the run for reference purposes.
     :param spark: [explanation goes here]
     """
-    # TODO: refactor into subsequent function
-    initial_rule_json = validate_and_load_dqrules(dq_rules=dq_rules)
-    dq_rules_dict = expand_input(rule_json=initial_rule_json)
+    # TODO/check: use file path instead of JSON string?
+    # dq_rules_json_string = read_data_quality_rules_from_json(
+    #     file_path=json_file_path)
 
-    dq_rules_dict = generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
+    dq_rules_dict = dq_rules_json_string_to_dict(
+        dq_rules_json_string=dq_rules_json_string
+    )
 
     write_non_validation_tables_to_unity_catalog(
         dq_rules_dict=dq_rules_dict,
@@ -150,5 +157,3 @@ def validate_dataframes(
                 extract_dq_afwijking_data(
                     df_name, result, df, unique_identifier, catalog_name, spark
                 )
-
-    return
