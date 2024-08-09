@@ -32,17 +32,17 @@ def write_non_validation_tables_to_unity_catalog(
     create_brontabel(
         dq_rules_dict=dq_rules_dict,
         catalog_name=catalog_name,
-        spark=spark_session,
+        spark_session=spark_session,
     )
     create_bronattribute(
         dq_rules_dict=dq_rules_dict,
         catalog_name=catalog_name,
-        spark=spark_session,
+        spark_session=spark_session,
     )
     create_dqRegel(
         dq_rules_dict=dq_rules_dict,
         catalog_name=catalog_name,
-        spark=spark_session,
+        spark_session=spark_session,
     )
 
 
@@ -58,7 +58,7 @@ def validate_dataframes(
     dq_rules_json_string: str,
     catalog_name: str,
     check_name: str,
-    spark: SparkSession,
+    spark_session: SparkSession,
 ) -> None:
     """
     Function takes DataFrame instances with specified Data Quality rules.
@@ -71,7 +71,7 @@ def validate_dataframes(
     rules to be evaluated.
     :param catalog_name: [explanation goes here]
     :param check_name: Name of the run for reference purposes.
-    :param spark: [explanation goes here]
+    :param spark_session: [explanation goes here]
     """
     # TODO/check: use file path instead of JSON string?
     # dq_rules_json_string = read_data_quality_rules_from_json(
@@ -84,7 +84,7 @@ def validate_dataframes(
     write_non_validation_tables_to_unity_catalog(
         dq_rules_dict=dq_rules_dict,
         catalog_name=catalog_name,
-        spark_session=spark,
+        spark_session=spark_session,
     )
 
     data_context = get_data_context()
@@ -153,7 +153,7 @@ def validate_dataframes(
             output = checkpoint_result["run_results"]
             for key, value in output.items():
                 result = value["validation_result"]
-                extract_dq_validatie_data(df_name, result, catalog_name, spark)
+                extract_dq_validatie_data(df_name, result, catalog_name, spark_session)
                 extract_dq_afwijking_data(
-                    df_name, result, df, unique_identifier, catalog_name, spark
+                    df_name, result, df, unique_identifier, catalog_name, spark_session
                 )
