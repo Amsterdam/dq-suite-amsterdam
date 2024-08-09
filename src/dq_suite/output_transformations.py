@@ -2,7 +2,7 @@ import pandas as pd
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
-from src.dq_suite.input_helpers import DataQualityRulesDict
+from src.dq_suite.common import DataQualityRulesDict
 
 
 def extract_dq_validatie_data(
