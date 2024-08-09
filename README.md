@@ -20,15 +20,15 @@ Load your data in dataframes, give them a table_name, and create a list of all d
 ```
 df = spark.read.csv(csv_path+file_name, header=True, inferSchema=True) #example using csv
 df.table_name = "showcase_table"
-dfs = [df]
+dataframe_list = [df]
 ```
 
-- Define 'dfs' as a list of dataframes that require a dq check
-- Define 'dq_rules' as a JSON as shown in dq_rules_example.json in this repo
+- Define 'dataframe_list' as a list of Pyspark dataframes that require a dq check
+- Define 'dq_rules_json_string' as a JSON string as shown in dq_rules_example.json in this repo
 - Define a name for your dq check, in this case "showcase"
 
 ```
-dq_suite.validate_dataframes(dfs, dq_rules, "dpxx_dev", "showcase", spark)
+dq_suite.validate_dataframes(dataframe_list, dq_rules_json_string, "dpxx_dev", "showcase", spark)
 ```
 # Create dataquality schema and tables (in respective catalog of data team)
 
