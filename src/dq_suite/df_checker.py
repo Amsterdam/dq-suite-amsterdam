@@ -8,7 +8,7 @@ from pyspark.sql import DataFrame, SparkSession
 
 from src.dq_suite.common import (
     DataQualityRulesDict,
-    dq_rules_json_string_to_dict,
+    dq_rules_json_string_to_dict, RulesDictList,
 )
 from src.dq_suite.output_transformations import (
     create_bronattribute,
@@ -125,19 +125,19 @@ def validate_dataframes(
             expectation_suite_name=expectation_suite_name)
 
         # to compare table_name in dq_rules and given table_names by data teams
-        matching_rules = [
-            rule
-            for rule in dq_rules_dict["tables"]
-            if rule["table_name"] == df.table_name
+        matching_rules: RulesDictList = [
+            rules_dict
+            for rules_dict in dq_rules_dict["tables"]
+            if rules_dict["table_name"] == df.table_name
         ]
 
         if not matching_rules:
             continue
 
-        for rule in matching_rules:
-            df_name = rule["table_name"]
-            unique_identifier = rule["unique_identifier"]
-            for rule_param in rule["rules"]:
+        for rules_dict in matching_rules:
+            df_name = rules_dict["table_name"]
+            unique_identifier = rules_dict["unique_identifier"]
+            for rule_param in rules_dict["rules"]:
                 check = getattr(validator, rule_param["rule_name"])
                 for param_set in rule_param["parameters"]:
                     kwargs = {}
