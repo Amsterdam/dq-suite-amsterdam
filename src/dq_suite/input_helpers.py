@@ -1,10 +1,10 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import requests
 from great_expectations.core.batch import RuntimeBatchRequest
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 
 
 @dataclass()
@@ -232,3 +232,26 @@ def generate_dq_rules_from_schema(
                         table["rules"].append(rule)
 
     return dq_rules_dict
+
+
+def get_full_table_name(
+    catalog_name: str, table_name: str, schema_name: str = "dataquality"
+) -> str:
+    return f"{catalog_name}.{schema_name}.{table_name}"
+
+
+def write_to_unity_catalog(
+    df: DataFrame,
+    catalog_name: str,
+    table_name: str,
+    # schema: StructType,
+    mode: Literal["append", "overwrite"] = "append",
+) -> None:
+    # TODO: enforce schema?
+    # df = enforce_schema(df=df, schema_to_enforce=schema)
+    full_table_name = get_full_table_name(
+        catalog_name=catalog_name, table_name=table_name
+    )
+    df.write.mode(mode).option("overwriteSchema", "true").saveAsTable(
+        full_table_name
+    )  # TODO: write as delta-table? .format("delta")

@@ -69,7 +69,7 @@ def validate_dataframes(
     :param spark: [explanation goes here]
     """
     # TODO: refactor into subsequent function
-    initial_rule_json = validate_and_load_dqrules(dq_rules=dq_rules)  
+    initial_rule_json = validate_and_load_dqrules(dq_rules=dq_rules)
     dq_rules_dict = expand_input(rule_json=initial_rule_json)
 
     dq_rules_dict = generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
