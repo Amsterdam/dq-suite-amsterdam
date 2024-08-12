@@ -1,4 +1,5 @@
-from typing import List, Tuple, Any
+from dataclasses import dataclass
+from typing import Any, List, Tuple
 
 from great_expectations import get_context
 from great_expectations.checkpoint import Checkpoint
@@ -20,9 +21,19 @@ from src.dq_suite.output_transformations import (
 
 
 def get_data_context(
-    context_root_dir: str = "/dbfs/great_expectations/",
+    data_context_root_dir: str = "/dbfs/great_expectations/",
 ) -> AbstractDataContext:
-    return get_context(context_root_dir=context_root_dir)
+    return get_context(context_root_dir=data_context_root_dir)
+
+
+@dataclass()
+class ValidationSettings:
+    spark_session: SparkSession
+    catalog_name: str
+    check_name: str
+    data_context_root_dir: str = "/dbfs/great_expectations/"
+    data_context: AbstractDataContext = get_data_context(
+        data_context_root_dir=data_context_root_dir)
 
 
 def write_non_validation_tables_to_unity_catalog(
@@ -47,11 +58,10 @@ def write_non_validation_tables_to_unity_catalog(
     )
 
 
-# def read_data_quality_rules_from_json(file_path: str) -> str:
-#     with open(file_path, 'r') as json_file:
-#         dq_rules_json_string = json_file.read()
-#     return validate_and_load_dqrules(
-#     dq_rules_json_string=dq_rules_json_string)
+def read_data_quality_rules_from_json(file_path: str) -> str:
+    with open(file_path, "r") as json_file:
+        dq_rules_json_string = json_file.read()
+    return dq_rules_json_string
 
 
 def get_batch_request_and_validator(data_context: AbstractDataContext,
