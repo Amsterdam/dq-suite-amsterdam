@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import Any, List, Tuple
 
@@ -10,8 +11,7 @@ from pyspark.sql import DataFrame, SparkSession
 from src.dq_suite.common import (
     DataQualityRulesDict,
     RulesDictList,
-    dq_rules_json_string_to_dict,
-    validate_and_load_dqrules,
+    generate_dq_rules_from_schema,
 )
 from src.dq_suite.output_transformations import (
     create_bronattribute,
@@ -35,12 +35,13 @@ class ValidationSettings:
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
     data_context: AbstractDataContext = get_data_context(
-        data_context_root_dir=data_context_root_dir)
+        data_context_root_dir=data_context_root_dir
+    )
 
 
 def write_non_validation_tables_to_unity_catalog(
     dq_rules_dict: DataQualityRulesDict,
-    validation_settings_obj: ValidationSettings
+    validation_settings_obj: ValidationSettings,
 ) -> None:
     create_brontabel(
         dq_rules_dict=dq_rules_dict,
@@ -65,17 +66,82 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
     return dq_rules_json_string
 
 
+def validate_and_load_dqrules(dq_rules_json_string: str) -> Any | None:
+    """
+    Function validates the input JSON
+
+    :param dq_rules_json_string: A JSON string with all DQ configuration.
+    """
+
+    try:
+        return json.loads(dq_rules_json_string)
+
+    except json.JSONDecodeError as e:
+        error_message = str(e)
+        print(f"Data quality check failed: {error_message}")
+        if "Invalid control character at:" in error_message:
+            print("Quota is missing in the JSON.")
+        if "Expecting ',' delimiter:" in error_message:
+            print(
+                "Square brackets, Comma or curly brackets can be missing in "
+                "the JSON."
+            )
+        if "Expecting ':' delimiter:" in error_message:
+            print("Colon is missing in the JSON.")
+        if "Expecting value:" in error_message:
+            print("Rules's Value is missing in the JSON.")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+def dq_rules_json_string_to_dict(
+    dq_rules_json_string: str,
+) -> DataQualityRulesDict:
+    """
+    Function adds a mandatory line in case of a conditional rule
+
+    :param dq_rules_json_string: A JSON string with all DQ configuration.
+    :return: rule_json: A dictionary with all DQ configuration.
+    """
+    dq_rules_dict: DataQualityRulesDict = validate_and_load_dqrules(
+        dq_rules_json_string=dq_rules_json_string
+    )
+
+    for table in dq_rules_dict["tables"]:
+        for rule in table["rules"]:
+            for parameter in rule["parameters"]:
+                if "row_condition" in parameter:
+                    #  GX requires this statement for conditional rules when
+                    #  using spark
+                    parameter[
+                        "condition_parser"
+                    ] = "great_expectations__experimental__"
+
+    return generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
+
+
+def get_validation_dict(file_path: str) -> DataQualityRulesDict:
+    dq_rules_json_string = read_data_quality_rules_from_json(
+        file_path=file_path
+    )
+    dq_rules_dict = validate_and_load_dqrules(
+        dq_rules_json_string=dq_rules_json_string
+    )
+    return dq_rules_dict
+
+
 def get_batch_request_and_validator(
     df: DataFrame,
     expectation_suite_name: str,
-    validation_settings_obj: ValidationSettings
+    validation_settings_obj: ValidationSettings,
 ) -> Tuple[Any, Validator]:
-
     dataframe_datasource = (
         validation_settings_obj.data_context.sources.add_or_update_spark(
-            name="my_spark_in_memory_datasource_" +
-                 validation_settings_obj.check_name
-        ))
+            name="my_spark_in_memory_datasource_"
+            + validation_settings_obj.check_name
+        )
+    )
 
     df_asset = dataframe_datasource.add_dataframe_asset(
         name=validation_settings_obj.check_name, dataframe=df
@@ -97,82 +163,65 @@ def run_validation(
 ):
     """
     read_dq_rules from json_path
-    
-    for table_path in table_paths:
-        read_dataframe from table_path
-        
-        validate_dataframe
-    
-        write_results_and_metadata to unity catalog
-    """
-    dq_rules_json_string = read_data_quality_rules_from_json(
-        file_path=json_path
-    )
-    dq_rules_dict = validate_and_load_dqrules(
-        dq_rules_json_string=dq_rules_json_string
-    )
 
-    # TODO: remove use of list; replace use of json_string with dict; replace
-    #  catalog/check/spark parameters with validation_settings object
+    read_dataframe from table_path
+
+    validate_dataframe
+
+    write_results_and_metadata to unity catalog
+    """
+    dq_rules_dict = get_validation_dict(file_path=json_path)
+
+    # TODO: remove use of list
     validate_dataframes(
         dataframe_list=[df],
-        dq_rules_json_string=dq_rules_json_string,
+        dq_rules_dict=dq_rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
 
     write_non_validation_tables_to_unity_catalog(
         dq_rules_dict=dq_rules_dict,
-        validation_settings_obj=validation_settings_obj
+        validation_settings_obj=validation_settings_obj,
     )
 
 
 def validate_dataframes(
     dataframe_list: List[DataFrame],
-    dq_rules_json_string: str,
+    dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
     """
-    Function takes DataFrame instances with specified Data Quality rules.
-    and returns a JSON string with the DQ results with different dataframes
-    in results dict, and returns different dataframe_list as specified using
-    Data Quality rules
+    [explanation goes here]
 
     :param dataframe_list: A list of DataFrame instances to process.
-    :param dq_rules_json_string: JSON string containing the Data Quality
-    rules to be evaluated.
+    :param dq_rules_dict: a DataQualityRulesDict object containing the data
+    quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
     """
-    # TODO/check: use file path instead of JSON string?
-    # dq_rules_json_string = read_data_quality_rules_from_json(
-    #     file_path=json_file_path)
-    # dq_rules_dict = validate_and_load_dqrules(
-    # dq_rules_json_string=dq_rules_json_string)
-
-    dq_rules_dict = dq_rules_json_string_to_dict(
-        dq_rules_json_string=dq_rules_json_string
-    )
 
     write_non_validation_tables_to_unity_catalog(
         dq_rules_dict=dq_rules_dict,
-        validation_settings_obj=validation_settings_obj
+        validation_settings_obj=validation_settings_obj,
     )
 
-    expectation_suite_name = (validation_settings_obj.check_name +
-                              "_expectation_suite")
+    expectation_suite_name = (
+        validation_settings_obj.check_name + "_expectation_suite"
+    )
 
     validation_settings_obj.data_context.add_or_update_expectation_suite(
         expectation_suite_name=expectation_suite_name
     )
 
     checkpoint_name = validation_settings_obj.check_name + "_checkpoint"
-    run_name_template = ("%Y%m%d-%H%M%S-" + validation_settings_obj.check_name +
-                         "-template")
+    run_name_template = (
+        "%Y%m%d-%H%M%S-" + validation_settings_obj.check_name + "-template"
+    )
 
     for df in dataframe_list:
         batch_request, validator = get_batch_request_and_validator(
             df=df,
             expectation_suite_name=expectation_suite_name,
-            validation_settings_obj=validation_settings_obj
+            validation_settings_obj=validation_settings_obj,
         )
 
         # to compare table_name in dq_rules and given table_names by data teams
@@ -213,14 +262,17 @@ def validate_dataframes(
             )
 
             validation_settings_obj.data_context.add_or_update_checkpoint(
-                checkpoint=checkpoint)
+                checkpoint=checkpoint
+            )
             checkpoint_result = checkpoint.run()
             output = checkpoint_result["run_results"]
             for key, value in output.items():
                 result = value["validation_result"]
                 extract_dq_validatie_data(
-                    df_name, result, validation_settings_obj.catalog_name,
-                    validation_settings_obj.spark_session
+                    df_name,
+                    result,
+                    validation_settings_obj.catalog_name,
+                    validation_settings_obj.spark_session,
                 )
                 extract_dq_afwijking_data(
                     df_name,

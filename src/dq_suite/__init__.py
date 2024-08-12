@@ -1,7 +1,7 @@
 """DQ API."""
 
-from src.dq_suite.common import export_schema, validate_and_load_dqrules
-from src.dq_suite.df_checker import validate_dataframes
+from src.dq_suite.common import export_schema
+from src.dq_suite.df_checker import get_validation_dict, validate_dataframes
 
 # Use __all__ to let developers know what is part of the public API.
-__all__ = ["validate_and_load_dqrules", "validate_dataframes", "export_schema"]
+__all__ = ["export_schema", "get_validation_dict", "validate_dataframes"]

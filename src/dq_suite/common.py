@@ -68,61 +68,6 @@ class Validation:
     expectation_suite_name: str
 
 
-def validate_and_load_dqrules(dq_rules_json_string: str) -> Any | None:
-    """
-    Function validates the input JSON
-
-    :param dq_rules_json_string: A JSON string with all DQ configuration.
-    """
-
-    try:
-        return json.loads(dq_rules_json_string)
-
-    except json.JSONDecodeError as e:
-        error_message = str(e)
-        print(f"Data quality check failed: {error_message}")
-        if "Invalid control character at:" in error_message:
-            print("Quota is missing in the JSON.")
-        if "Expecting ',' delimiter:" in error_message:
-            print(
-                "Square brackets, Comma or curly brackets can be missing in "
-                "the JSON."
-            )
-        if "Expecting ':' delimiter:" in error_message:
-            print("Colon is missing in the JSON.")
-        if "Expecting value:" in error_message:
-            print("Rules's Value is missing in the JSON.")
-
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-
-
-def dq_rules_json_string_to_dict(
-    dq_rules_json_string: str,
-) -> DataQualityRulesDict:
-    """
-    Function adds a mandatory line in case of a conditional rule
-
-    :param dq_rules_json_string: A JSON string with all DQ configuration.
-    :return: rule_json: A dictionary with all DQ configuration.
-    """
-    dq_rules_dict: DataQualityRulesDict = validate_and_load_dqrules(
-        dq_rules_json_string=dq_rules_json_string
-    )
-
-    for table in dq_rules_dict["tables"]:
-        for rule in table["rules"]:
-            for parameter in rule["parameters"]:
-                if "row_condition" in parameter:
-                    #  GX requires this statement for conditional rules when
-                    #  using spark
-                    parameter[
-                        "condition_parser"
-                    ] = "great_expectations__experimental__"
-
-    return generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
-
-
 def export_schema(dataset: str, spark: SparkSession) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
