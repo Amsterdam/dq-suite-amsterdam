@@ -7,17 +7,17 @@ DISCLAIMER: The package is in MVP phase
 # Getting started
 Install the dq suite on your compute, for example by running the following code in your workspace:
 
-```
+```python
 pip install dq-suite-amsterdam
 ```
 
-```
+```python
 import dq_suite
 ```
 
 Load your data in dataframes, give them a table_name, and create a list of all dataframes:
 
-```
+```python
 df = spark.read.csv(csv_path+file_name, header=True, inferSchema=True) #example using csv
 df.table_name = "showcase_table"
 dataframe_list = [df]
@@ -25,7 +25,7 @@ dataframe_list = [df]
 
 - Define 'dataframe_list' as a list of Pyspark dataframes that require a dq check
 - Define 'json_path' as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
-```
+```python
 dq_rules_json_string = read_data_quality_rules_from_json(file_path=json_path)
 validation_settings = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev", check_name="showcase")
 dq_suite.validate_dataframes(dataframe_list, dq_rules_json_string, validation_settings)
