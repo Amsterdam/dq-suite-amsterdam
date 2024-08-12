@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 
 import requests
-from great_expectations.core.batch import RuntimeBatchRequest
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
@@ -62,12 +61,6 @@ class DataQualityRulesDict:
         raise KeyError(key)
 
 
-@dataclass
-class Validation:
-    batch_request: RuntimeBatchRequest
-    expectation_suite_name: str
-
-
 def export_schema(dataset: str, spark: SparkSession) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
@@ -118,7 +111,7 @@ def export_schema(dataset: str, spark: SparkSession) -> str:
 
 def fetch_schema_from_github(
     dq_rules_dict: DataQualityRulesDict,
-) -> (Dict)[str, Any]:
+) -> Dict[str, Any]:
     """
     Function fetches a schema from the GitHub Amsterdam schema using the
     dq_rules.
@@ -191,7 +184,7 @@ def generate_dq_rules_from_schema(
 
 
 def get_full_table_name(
-    catalog_name: str, table_name: str, schema_name: str = "dataquality"
+    catalog_name: str, table_name: str, schema_name: str = "data_quality"
 ) -> str:
     return f"{catalog_name}.{schema_name}.{table_name}"
 
