@@ -241,7 +241,7 @@ def create_and_run_checkpoint(
             {
                 "name": "store_validation_result",
                 "action": {"class_name": "StoreValidationResultAction"},
-            },
+            },  # TODO: add more options via parameters, e.g. Slack output
         ],
     )
 
@@ -268,7 +268,6 @@ def validate(
     # Make sure all attributes are aligned before validating
     validation_settings_obj.initialise_or_update_attributes()
 
-    ############### Previous start of loop over list of dataframes
     batch_request, validator = get_batch_request_and_validator(
         df=df,
         validation_settings_obj=validation_settings_obj,
