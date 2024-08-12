@@ -24,13 +24,13 @@ dataframe_list = [df]
 ```
 
 - Define 'dataframe_list' as a list of Pyspark dataframes that require a dq check
-- Define 'dq_rules_json_string' as a JSON string as shown in dq_rules_example.json in this repo
-- Define a name for your dq check, in this case "showcase"
-
+- Define 'json_path' as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
 ```
-dq_suite.validate_dataframes(dataframe_list, dq_rules_json_string, "dpxx_dev", "showcase", spark)
+dq_rules_json_string = read_data_quality_rules_from_json(file_path=json_path)
+validation_settings = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev", check_name="showcase")
+dq_suite.validate_dataframes(dataframe_list, dq_rules_json_string, validation_settings)
 ```
-# Create dataquality schema and tables (in respective catalog of data team)
+# Create data quality schema and tables (in respective catalog of data team)
 
 for the first time installation create data quality schema and tables from the notebook from repo path scripts/data_quality_tables.sql
 - open the notebook, connect to a cluster
