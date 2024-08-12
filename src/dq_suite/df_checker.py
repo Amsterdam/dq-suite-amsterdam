@@ -160,7 +160,7 @@ def get_batch_request_and_validator(
 #  setting df.table_name and creating a ValidationSettings object
 def run_validation(
     json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
-):
+) -> None:
     """
     read_dq_rules from json_path
 
@@ -172,9 +172,8 @@ def run_validation(
     """
     dq_rules_dict = get_validation_dict(file_path=json_path)
 
-    # TODO: remove use of list
-    validate_dataframes(
-        dataframe_list=[df],
+    validate(
+        df=df,
         dq_rules_dict=dq_rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
@@ -185,15 +184,15 @@ def run_validation(
     )
 
 
-def validate_dataframes(
-    dataframe_list: List[DataFrame],
+def validate(
+    df: DataFrame,
     dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
     """
     [explanation goes here]
 
-    :param dataframe_list: A list of DataFrame instances to process.
+    :param df: A list of DataFrame instances to process.
     :param dq_rules_dict: a DataQualityRulesDict object containing the data
     quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
@@ -217,68 +216,68 @@ def validate_dataframes(
         "%Y%m%d-%H%M%S-" + validation_settings_obj.check_name + "-template"
     )
 
-    for df in dataframe_list:
-        batch_request, validator = get_batch_request_and_validator(
-            df=df,
+    ############### Previous start of loop over list of dataframes
+    batch_request, validator = get_batch_request_and_validator(
+        df=df,
+        expectation_suite_name=expectation_suite_name,
+        validation_settings_obj=validation_settings_obj,
+    )
+
+    # to compare table_name in dq_rules and given table_names by data teams
+    matching_rules: RulesDictList = [
+        rules_dict
+        for rules_dict in dq_rules_dict["tables"]
+        if rules_dict["table_name"] == df.table_name
+    ]
+
+    if not matching_rules:
+        return
+
+    for rules_dict in matching_rules:
+        df_name = rules_dict["table_name"]
+        unique_identifier = rules_dict["unique_identifier"]
+        for rule_param in rules_dict["rules"]:
+            check = getattr(validator, rule_param["rule_name"])
+            for param_set in rule_param["parameters"]:
+                kwargs = {}
+                for param in param_set.keys():
+                    kwargs[param] = param_set[param]
+                check(**kwargs)
+
+        validator.save_expectation_suite(discard_failed_expectations=False)
+
+        checkpoint = Checkpoint(
+            name=checkpoint_name,
+            run_name_template=run_name_template,
+            data_context=validation_settings_obj.data_context,
+            batch_request=batch_request,
             expectation_suite_name=expectation_suite_name,
-            validation_settings_obj=validation_settings_obj,
+            action_list=[
+                {
+                    "name": "store_validation_result",
+                    "action": {"class_name": "StoreValidationResultAction"},
+                },
+            ],
         )
 
-        # to compare table_name in dq_rules and given table_names by data teams
-        matching_rules: RulesDictList = [
-            rules_dict
-            for rules_dict in dq_rules_dict["tables"]
-            if rules_dict["table_name"] == df.table_name
-        ]
-
-        if not matching_rules:
-            continue
-
-        for rules_dict in matching_rules:
-            df_name = rules_dict["table_name"]
-            unique_identifier = rules_dict["unique_identifier"]
-            for rule_param in rules_dict["rules"]:
-                check = getattr(validator, rule_param["rule_name"])
-                for param_set in rule_param["parameters"]:
-                    kwargs = {}
-                    for param in param_set.keys():
-                        kwargs[param] = param_set[param]
-                    check(**kwargs)
-
-            validator.save_expectation_suite(discard_failed_expectations=False)
-
-            checkpoint = Checkpoint(
-                name=checkpoint_name,
-                run_name_template=run_name_template,
-                data_context=validation_settings_obj.data_context,
-                batch_request=batch_request,
-                expectation_suite_name=expectation_suite_name,
-                action_list=[
-                    {
-                        "name": "store_validation_result",
-                        "action": {"class_name": "StoreValidationResultAction"},
-                    },
-                ],
+        validation_settings_obj.data_context.add_or_update_checkpoint(
+            checkpoint=checkpoint
+        )
+        checkpoint_result = checkpoint.run()
+        output = checkpoint_result["run_results"]
+        for key, value in output.items():
+            result = value["validation_result"]
+            extract_dq_validatie_data(
+                df_name,
+                result,
+                validation_settings_obj.catalog_name,
+                validation_settings_obj.spark_session,
             )
-
-            validation_settings_obj.data_context.add_or_update_checkpoint(
-                checkpoint=checkpoint
+            extract_dq_afwijking_data(
+                df_name,
+                result,
+                df,
+                unique_identifier,
+                validation_settings_obj.catalog_name,
+                validation_settings_obj.spark_session,
             )
-            checkpoint_result = checkpoint.run()
-            output = checkpoint_result["run_results"]
-            for key, value in output.items():
-                result = value["validation_result"]
-                extract_dq_validatie_data(
-                    df_name,
-                    result,
-                    validation_settings_obj.catalog_name,
-                    validation_settings_obj.spark_session,
-                )
-                extract_dq_afwijking_data(
-                    df_name,
-                    result,
-                    df,
-                    unique_identifier,
-                    validation_settings_obj.catalog_name,
-                    validation_settings_obj.spark_session,
-                )
