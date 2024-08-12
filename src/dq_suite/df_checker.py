@@ -35,9 +35,36 @@ class ValidationSettings:
     table_name: str
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
-    data_context: AbstractDataContext = get_data_context(
-        data_context_root_dir=data_context_root_dir
-    )
+    data_context: AbstractDataContext | None = None
+    expectation_suite_name: str | None = None
+    checkpoint_name: str | None = None
+    run_name: str | None = None
+
+    def initialise_or_update_attributes(self):
+        self._set_data_context()
+
+        # TODO/check: do we want to allow for custom names?
+        self._set_expectation_suite_name()
+        self._set_checkpoint_name()
+        self._set_run_name()
+
+        # Finally, apply the suite name to the data context
+        self.data_context.add_or_update_expectation_suite(
+            expectation_suite_name=self.expectation_suite_name)
+
+    def _set_data_context(self):
+        self.data_context = get_data_context(
+            data_context_root_dir=self.data_context_root_dir
+        )
+
+    def _set_expectation_suite_name(self):
+        self.expectation_suite_name = f"{self.check_name}_expectation_suite"
+
+    def _set_checkpoint_name(self):
+        self.checkpoint_name = f"{self.check_name}_checkpoint"
+
+    def _set_run_name(self):
+        self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}-template"
 
 
 def write_non_validation_tables_to_unity_catalog(
@@ -69,11 +96,11 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
 
 def validate_and_load_dqrules(dq_rules_json_string: str) -> Any | None:
     """
-    Function validates the input JSON
+    Deserializes a JSON document in string format, and prints one or more error
+    messages in case a JSONDecodeError is raised.
 
     :param dq_rules_json_string: A JSON string with all DQ configuration.
     """
-
     try:
         return json.loads(dq_rules_json_string)
 
@@ -160,15 +187,6 @@ def get_batch_request_and_validator(
 def run_validation(
     json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
 ) -> None:
-    """
-    read_dq_rules from json_path
-
-    read_dataframe from table_path
-
-    validate_dataframe
-
-    write_results_and_metadata to unity catalog
-    """
     if not hasattr(df, "table_name"):
         df.table_name = validation_settings_obj.table_name
 
@@ -199,29 +217,13 @@ def validate(
     quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
     """
-
-    write_non_validation_tables_to_unity_catalog(
-        dq_rules_dict=dq_rules_dict,
-        validation_settings_obj=validation_settings_obj,
-    )
-
-    expectation_suite_name = (
-        validation_settings_obj.check_name + "_expectation_suite"
-    )
-
-    validation_settings_obj.data_context.add_or_update_expectation_suite(
-        expectation_suite_name=expectation_suite_name
-    )
-
-    checkpoint_name = validation_settings_obj.check_name + "_checkpoint"
-    run_name_template = (
-        "%Y%m%d-%H%M%S-" + validation_settings_obj.check_name + "-template"
-    )
+    # Make sure all attributes are aligned before validating
+    validation_settings_obj.initialise_or_update_attributes()
 
     ############### Previous start of loop over list of dataframes
     batch_request, validator = get_batch_request_and_validator(
         df=df,
-        expectation_suite_name=expectation_suite_name,
+        expectation_suite_name=validation_settings_obj.expectation_suite_name,
         validation_settings_obj=validation_settings_obj,
     )
 
@@ -249,11 +251,12 @@ def validate(
         validator.save_expectation_suite(discard_failed_expectations=False)
 
         checkpoint = Checkpoint(
-            name=checkpoint_name,
-            run_name_template=run_name_template,
+            name=validation_settings_obj.checkpoint_name,
+            run_name_template=validation_settings_obj.run_name,
             data_context=validation_settings_obj.data_context,
             batch_request=batch_request,
-            expectation_suite_name=expectation_suite_name,
+            expectation_suite_name=validation_settings_obj
+            .expectation_suite_name,
             action_list=[
                 {
                     "name": "store_validation_result",
