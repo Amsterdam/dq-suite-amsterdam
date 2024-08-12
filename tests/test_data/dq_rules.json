@@ -1,0 +1,19 @@
+{
+    "tables": [
+        {   
+            "unique_identifier": "id",
+            "table_name": "the_table",
+            "rules": [
+                {
+                    "rule_name": "expect_column_distinct_values_to_equal_set",
+                    "parameters": [
+                        {
+                            "column": "the_column",
+                            "value_set": [1, 2, 3]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
