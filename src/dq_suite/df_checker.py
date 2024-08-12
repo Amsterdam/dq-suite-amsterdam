@@ -218,46 +218,6 @@ def get_batch_request_and_validator(
     return batch_request, validator
 
 
-def run_validation(
-    json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
-) -> None:
-    if not hasattr(df, "table_name"):
-        df.table_name = validation_settings_obj.table_name
-
-    # 1) extract the data quality rules to be applied...
-    validation_dict = get_validation_dict(file_path=json_path)
-    rules_dict = filter_validation_dict_by_table_name(
-        validation_dict=validation_dict,
-        table_name=validation_settings_obj.table_name,
-    )
-    if rules_dict is None:
-        print(
-            f"No validations found for table_name "
-            f"'{validation_settings_obj.table_name}' in JSON file at '"
-            f"{json_path}'."
-        )
-        return
-
-    # 2) perform the validation on the dataframe
-    validation_output = validate(
-        df=df,
-        rules_dict=rules_dict,
-        validation_settings_obj=validation_settings_obj,
-    )
-
-    # 3) write results to unity catalog
-    write_non_validation_tables(
-        dq_rules_dict=validation_dict,
-        validation_settings_obj=validation_settings_obj,
-    )
-    write_validation_table(
-        validation_output=validation_output,
-        validation_settings_obj=validation_settings_obj,
-        df=df,
-        unique_identifier=rules_dict["unique_identifier"],
-    )
-
-
 def create_and_run_checkpoint(
     validation_settings_obj: ValidationSettings, batch_request: Any
 ) -> Any:
@@ -331,3 +291,43 @@ def validate(
     )
 
     return checkpoint_output
+
+
+def run_validation(
+    json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
+) -> None:
+    if not hasattr(df, "table_name"):
+        df.table_name = validation_settings_obj.table_name
+
+    # 1) extract the data quality rules to be applied...
+    validation_dict = get_validation_dict(file_path=json_path)
+    rules_dict = filter_validation_dict_by_table_name(
+        validation_dict=validation_dict,
+        table_name=validation_settings_obj.table_name,
+    )
+    if rules_dict is None:
+        print(
+            f"No validations found for table_name "
+            f"'{validation_settings_obj.table_name}' in JSON file at '"
+            f"{json_path}'."
+        )
+        return
+
+    # 2) perform the validation on the dataframe
+    validation_output = validate(
+        df=df,
+        rules_dict=rules_dict,
+        validation_settings_obj=validation_settings_obj,
+    )
+
+    # 3) write results to unity catalog
+    write_non_validation_tables(
+        dq_rules_dict=validation_dict,
+        validation_settings_obj=validation_settings_obj,
+    )
+    write_validation_table(
+        validation_output=validation_output,
+        validation_settings_obj=validation_settings_obj,
+        df=df,
+        unique_identifier=rules_dict["unique_identifier"],
+    )
