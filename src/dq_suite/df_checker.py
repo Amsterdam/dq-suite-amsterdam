@@ -293,7 +293,7 @@ def validate(
     return checkpoint_output
 
 
-def run_validation(
+def run(
     json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
 ) -> None:
     if not hasattr(df, "table_name"):

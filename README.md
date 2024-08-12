@@ -18,9 +18,9 @@ To validate your first table:
 ```python
 import dq_suite
 
-validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev", 
-                                                  table_name="showcase_table", check_name="showcase_check")
-dq_suite.run_validation(json_path=json_path, df=df, validation_settings_obj=validation_settings_obj)
+validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev",
+                                                      table_name="showcase_table", check_name="showcase_check")
+dq_suite.run(json_path=json_path, df=df, validation_settings_obj=validation_settings_obj)
 ```
 Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
