@@ -31,6 +31,7 @@ def get_data_context(
 @dataclass()
 class ValidationSettings:
     spark_session: SparkSession
+    table_name: str
     catalog_name: str
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
@@ -156,8 +157,6 @@ def get_batch_request_and_validator(
     return batch_request, validator
 
 
-# TODO: use this as main entry point for library? - after reading a dataframe,
-#  setting df.table_name and creating a ValidationSettings object
 def run_validation(
     json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
 ) -> None:
@@ -170,6 +169,9 @@ def run_validation(
 
     write_results_and_metadata to unity catalog
     """
+    if not hasattr(df, "table_name"):
+        df.table_name = validation_settings_obj.table_name
+
     dq_rules_dict = get_validation_dict(file_path=json_path)
 
     validate(
