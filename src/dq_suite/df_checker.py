@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, List, Tuple
+from typing import Any, Tuple
 
 from great_expectations import get_context
 from great_expectations.checkpoint import Checkpoint
