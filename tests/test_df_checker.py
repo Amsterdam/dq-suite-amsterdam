@@ -1,6 +1,9 @@
 import pytest
 
-from src.dq_suite.df_checker import read_data_quality_rules_from_json, ValidationSettings
+from src.dq_suite.df_checker import (
+    ValidationSettings,
+    read_data_quality_rules_from_json,
+)
 
 
 class TestValidationSettings:
@@ -12,17 +15,39 @@ class TestValidationSettings:
     )
 
     def test_initialise_or_update_attributes_updates_as_expected(self):
-        expected_suite_name = "the_check_expectation_suite"
+        expected_expectation_suite_name = (
+            f"{self.validation_settings_obj.check_name}_expectation_suite"
+        )
+        expected_checkpoint_name = (
+            f"{self.validation_settings_obj.check_name}_checkpoint"
+        )
+        expected_run_name = (
+            f"%Y%m%d-%H%M%S-{self.validation_settings_obj.check_name}"
+        )
 
         assert self.validation_settings_obj.expectation_suite_name is None
         assert self.validation_settings_obj.checkpoint_name is None
         assert self.validation_settings_obj.run_name is None
+
         self.validation_settings_obj.initialise_or_update_attributes()
-        assert (self.validation_settings_obj.expectation_suite_name ==
-                expected_suite_name)
-        assert (expected_suite_name in
-                self.validation_settings_obj.data_context
-                .list_expectation_suites()[0].__getstate__().values())
+        assert (
+            self.validation_settings_obj.expectation_suite_name
+            == expected_expectation_suite_name
+        )
+        assert (
+            self.validation_settings_obj.checkpoint_name
+            == expected_checkpoint_name
+        )
+        assert self.validation_settings_obj.run_name == expected_run_name
+
+        assert (
+            expected_expectation_suite_name
+            in self.validation_settings_obj.data_context.list_expectation_suites()[
+                0
+            ]
+            .__getstate__()
+            .values()
+        )
 
 
 class TestReadDataQualityRulesFromJson:
@@ -30,13 +55,14 @@ class TestReadDataQualityRulesFromJson:
     real_file_path = "test_data/dq_rules.json"
 
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
-            self):
+        self,
+    ):
         with pytest.raises(FileNotFoundError):
             read_data_quality_rules_from_json(file_path=self.dummy_file_path)
 
-    def test_read_data_quality_rules_from_json_returns_json_string(
-            self):
+    def test_read_data_quality_rules_from_json_returns_json_string(self):
         dq_rules_json_string = read_data_quality_rules_from_json(
-            file_path=self.real_file_path)
+            file_path=self.real_file_path
+        )
         assert type(dq_rules_json_string) is str
         assert "tables" in dq_rules_json_string

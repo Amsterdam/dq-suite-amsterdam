@@ -65,7 +65,7 @@ class ValidationSettings:
         self.checkpoint_name = f"{self.check_name}_checkpoint"
 
     def _set_run_name(self):
-        self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}-template"
+        self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
 
 
 def write_non_validation_tables_to_unity_catalog(
