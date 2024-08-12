@@ -161,7 +161,6 @@ def get_validation_dict(file_path: str) -> DataQualityRulesDict:
 
 def get_batch_request_and_validator(
     df: DataFrame,
-    expectation_suite_name: str,
     validation_settings_obj: ValidationSettings,
 ) -> Tuple[Any, Validator]:
     dataframe_datasource = (
@@ -178,7 +177,7 @@ def get_batch_request_and_validator(
 
     validator = validation_settings_obj.data_context.get_validator(
         batch_request=batch_request,
-        expectation_suite_name=expectation_suite_name,
+        expectation_suite_name=validation_settings_obj.expectation_suite_name,
     )
 
     return batch_request, validator
@@ -204,6 +203,30 @@ def run_validation(
     )
 
 
+def create_and_run_checkpoint(validation_settings_obj: ValidationSettings,
+                              batch_request: Any) -> Any:
+    checkpoint = Checkpoint(
+        name=validation_settings_obj.checkpoint_name,
+        run_name_template=validation_settings_obj.run_name,
+        data_context=validation_settings_obj.data_context,
+        batch_request=batch_request,
+        expectation_suite_name=validation_settings_obj
+        .expectation_suite_name,
+        action_list=[
+            {
+                "name": "store_validation_result",
+                "action": {"class_name": "StoreValidationResultAction"},
+            },
+        ],
+    )
+
+    validation_settings_obj.data_context.add_or_update_checkpoint(
+        checkpoint=checkpoint
+    )
+    checkpoint_result = checkpoint.run()
+    return checkpoint_result["run_results"]
+
+
 def validate(
     df: DataFrame,
     dq_rules_dict: DataQualityRulesDict,
@@ -223,7 +246,6 @@ def validate(
     ############### Previous start of loop over list of dataframes
     batch_request, validator = get_batch_request_and_validator(
         df=df,
-        expectation_suite_name=validation_settings_obj.expectation_suite_name,
         validation_settings_obj=validation_settings_obj,
     )
 
@@ -250,30 +272,14 @@ def validate(
 
         validator.save_expectation_suite(discard_failed_expectations=False)
 
-        checkpoint = Checkpoint(
-            name=validation_settings_obj.checkpoint_name,
-            run_name_template=validation_settings_obj.run_name,
-            data_context=validation_settings_obj.data_context,
-            batch_request=batch_request,
-            expectation_suite_name=validation_settings_obj
-            .expectation_suite_name,
-            action_list=[
-                {
-                    "name": "store_validation_result",
-                    "action": {"class_name": "StoreValidationResultAction"},
-                },
-            ],
-        )
+        output = create_and_run_checkpoint(
+            validation_settings_obj=validation_settings_obj,
+            batch_request=batch_request)
 
-        validation_settings_obj.data_context.add_or_update_checkpoint(
-            checkpoint=checkpoint
-        )
-        checkpoint_result = checkpoint.run()
-        output = checkpoint_result["run_results"]
         for key, value in output.items():
             result = value["validation_result"]
             extract_dq_validatie_data(
-                df_name,
+                df_name,  # Note: equals ValSet.table_name
                 result,
                 validation_settings_obj.catalog_name,
                 validation_settings_obj.spark_session,
