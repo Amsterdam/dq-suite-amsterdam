@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 
 from great_expectations import get_context
 from great_expectations.checkpoint import Checkpoint
@@ -10,7 +10,8 @@ from pyspark.sql import DataFrame, SparkSession
 
 from src.dq_suite.common import (
     DataQualityRulesDict,
-    RulesDictList,
+    Rule,
+    RulesDict,
     generate_dq_rules_from_schema,
 )
 from src.dq_suite.output_transformations import (
@@ -162,15 +163,11 @@ def get_validation_dict(file_path: str) -> DataQualityRulesDict:
 
 def filter_validation_dict_by_table_name(
     validation_dict: DataQualityRulesDict, table_name: str
-) -> RulesDictList:
-    # to compare table_name in dq_rules and given table_names by data teams
-    matching_rules: RulesDictList = [
-        rules_dict
-        for rules_dict in validation_dict["tables"]
-        if rules_dict["table_name"] == table_name
-    ]
-
-    return matching_rules
+) -> RulesDict | None:
+    for rules_dict in validation_dict["tables"]:
+        if rules_dict["table_name"] == table_name:
+            return rules_dict  # Return only the first match
+    return None
 
 
 def get_batch_request_and_validator(
@@ -204,11 +201,11 @@ def run_validation(
         df.table_name = validation_settings_obj.table_name
 
     validation_dict = get_validation_dict(file_path=json_path)
-    validation_dict_list = filter_validation_dict_by_table_name(
+    rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=validation_settings_obj.table_name,
     )
-    if not validation_dict_list:
+    if rules_dict is None:
         print(
             f"No validations found for table_name "
             f"'{validation_settings_obj.table_name}' in JSON file at '"
@@ -218,7 +215,7 @@ def run_validation(
 
     validate(
         df=df,
-        validation_dict_list=validation_dict_list,
+        rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
 
@@ -252,16 +249,34 @@ def create_and_run_checkpoint(
     return checkpoint_result["run_results"]
 
 
+def create_and_configure_expectations(
+    validation_rules_list: List[Rule], validator: Validator
+) -> None:
+    for validation_rule in validation_rules_list:
+        # Get the name of expectation as defined by GX
+        gx_expectation_name = validation_rule["rule_name"]
+
+        # Get the actual expectation as defined by GX
+        gx_expectation = getattr(validator, gx_expectation_name)
+        for validation_parameter_dict in validation_rule["parameters"]:
+            kwargs = {}
+            for par_name, par_value in validation_parameter_dict.items():
+                kwargs[par_name] = par_value
+            gx_expectation(**kwargs)
+
+    validator.save_expectation_suite(discard_failed_expectations=False)
+
+
 def validate(
     df: DataFrame,
-    validation_dict_list: RulesDictList,
+    rules_dict: RulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
     """
     [explanation goes here]
 
     :param df: A list of DataFrame instances to process.
-    :param validation_dict_list: a DataQualityRulesDict object containing the
+    :param rules_dict: a RulesDict object containing the
     data quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
     """
@@ -273,37 +288,27 @@ def validate(
         validation_settings_obj=validation_settings_obj,
     )
 
-    for rules_dict in validation_dict_list:
-        df_name = rules_dict["table_name"]
-        unique_identifier = rules_dict["unique_identifier"]
-        for rule_param in rules_dict["rules"]:
-            check = getattr(validator, rule_param["rule_name"])
-            for param_set in rule_param["parameters"]:
-                kwargs = {}
-                for param in param_set.keys():
-                    kwargs[param] = param_set[param]
-                check(**kwargs)
+    create_and_configure_expectations(validation_rules_list=rules_dict[
+        "rules"], validator=validator)
 
-        validator.save_expectation_suite(discard_failed_expectations=False)
+    checkpoint_output = create_and_run_checkpoint(
+        validation_settings_obj=validation_settings_obj,
+        batch_request=batch_request,
+    )
 
-        output = create_and_run_checkpoint(
-            validation_settings_obj=validation_settings_obj,
-            batch_request=batch_request,
+    for key, value in checkpoint_output.items():
+        result = value["validation_result"]
+        extract_dq_validatie_data(
+            validation_settings_obj.table_name,
+            result,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
         )
-
-        for key, value in output.items():
-            result = value["validation_result"]
-            extract_dq_validatie_data(
-                df_name,  # Note: equals ValSet.table_name
-                result,
-                validation_settings_obj.catalog_name,
-                validation_settings_obj.spark_session,
-            )
-            extract_dq_afwijking_data(
-                df_name,
-                result,
-                df,
-                unique_identifier,
-                validation_settings_obj.catalog_name,
-                validation_settings_obj.spark_session,
-            )
+        extract_dq_afwijking_data(
+            validation_settings_obj.table_name,
+            result,
+            df,
+            rules_dict["unique_identifier"],
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
