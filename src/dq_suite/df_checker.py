@@ -69,7 +69,7 @@ class ValidationSettings:
         self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
 
 
-def write_non_validation_tables_to_unity_catalog(
+def write_non_validation_tables(
     dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
@@ -88,6 +88,30 @@ def write_non_validation_tables_to_unity_catalog(
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
     )
+
+
+def write_validation_table(
+    validation_output: Any,
+    validation_settings_obj: ValidationSettings,
+    df: DataFrame,
+    unique_identifier: str,
+):
+    for results in validation_output.values():
+        result = results["validation_result"]
+        extract_dq_validatie_data(
+            validation_settings_obj.table_name,
+            result,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
+        extract_dq_afwijking_data(
+            validation_settings_obj.table_name,
+            result,
+            df,
+            unique_identifier,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
 
 
 def read_data_quality_rules_from_json(file_path: str) -> str:
@@ -200,6 +224,7 @@ def run_validation(
     if not hasattr(df, "table_name"):
         df.table_name = validation_settings_obj.table_name
 
+    # 1) extract the data quality rules to be applied...
     validation_dict = get_validation_dict(file_path=json_path)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
@@ -213,15 +238,23 @@ def run_validation(
         )
         return
 
-    validate(
+    # 2) perform the validation on the dataframe
+    validation_output = validate(
         df=df,
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
 
-    write_non_validation_tables_to_unity_catalog(
+    # 3) write results to unity catalog
+    write_non_validation_tables(
         dq_rules_dict=validation_dict,
         validation_settings_obj=validation_settings_obj,
+    )
+    write_validation_table(
+        validation_output=validation_output,
+        validation_settings_obj=validation_settings_obj,
+        df=df,
+        unique_identifier=rules_dict["unique_identifier"],
     )
 
 
@@ -271,7 +304,7 @@ def validate(
     df: DataFrame,
     rules_dict: RulesDict,
     validation_settings_obj: ValidationSettings,
-) -> None:
+) -> Any:
     """
     [explanation goes here]
 
@@ -288,27 +321,13 @@ def validate(
         validation_settings_obj=validation_settings_obj,
     )
 
-    create_and_configure_expectations(validation_rules_list=rules_dict[
-        "rules"], validator=validator)
+    create_and_configure_expectations(
+        validation_rules_list=rules_dict["rules"], validator=validator
+    )
 
     checkpoint_output = create_and_run_checkpoint(
         validation_settings_obj=validation_settings_obj,
         batch_request=batch_request,
     )
 
-    for key, value in checkpoint_output.items():
-        result = value["validation_result"]
-        extract_dq_validatie_data(
-            validation_settings_obj.table_name,
-            result,
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
-        extract_dq_afwijking_data(
-            validation_settings_obj.table_name,
-            result,
-            df,
-            rules_dict["unique_identifier"],
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
+    return checkpoint_output
