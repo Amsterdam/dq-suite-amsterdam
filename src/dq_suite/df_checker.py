@@ -8,12 +8,8 @@ from great_expectations.data_context import AbstractDataContext
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame, SparkSession
 
-from src.dq_suite.common import (
-    DataQualityRulesDict,
-    Rule,
-    RulesDict,
-    generate_dq_rules_from_schema,
-)
+from src.dq_suite.common import DataQualityRulesDict, Rule, RulesDict
+from src.dq_suite.input_helpers import generate_dq_rules_from_schema
 from src.dq_suite.output_transformations import (
     create_bronattribute,
     create_brontabel,
