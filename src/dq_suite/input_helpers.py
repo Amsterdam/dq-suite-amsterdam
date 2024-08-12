@@ -176,3 +176,76 @@ def schema_to_json_string(dataset: str, spark: SparkSession) -> str:
     output_dict = {"dataset": dataset, "tables": columns_list}
 
     return json.dumps(output_dict)
+
+
+def read_data_quality_rules_from_json(file_path: str) -> str:
+    with open(file_path, "r") as json_file:
+        dq_rules_json_string = json_file.read()
+    return dq_rules_json_string
+
+
+def validate_and_load_data_quality_rules(
+    dq_rules_json_string: str,
+) -> Any | None:
+    """
+    Deserializes a JSON document in string format, and prints one or more error
+    messages in case a JSONDecodeError is raised.
+
+    :param dq_rules_json_string: A JSON string with all DQ configuration.
+    """
+    try:
+        return json.loads(dq_rules_json_string)
+
+    except json.JSONDecodeError as e:
+        error_message = str(e)
+        print(f"Data quality check failed: {error_message}")
+        if "Invalid control character at:" in error_message:
+            print("Quota is missing in the JSON.")
+        if "Expecting ',' delimiter:" in error_message:
+            print(
+                "Square brackets, Comma or curly brackets can be missing in "
+                "the JSON."
+            )
+        if "Expecting ':' delimiter:" in error_message:
+            print("Colon is missing in the JSON.")
+        if "Expecting value:" in error_message:
+            print("Rules' Value is missing in the JSON.")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+def data_quality_rules_json_string_to_dict(
+    json_string: str,
+) -> DataQualityRulesDict:
+    """
+    Function adds a mandatory line in case of a conditional rule
+
+    :param json_string: A JSON string with all DQ configuration.
+    :return: rule_json: A dictionary with all DQ configuration.
+    """
+    dq_rules_dict: DataQualityRulesDict = validate_and_load_data_quality_rules(
+        dq_rules_json_string=json_string
+    )
+
+    for table in dq_rules_dict["tables"]:
+        for rule in table["rules"]:
+            for parameter in rule["parameters"]:
+                if "row_condition" in parameter:
+                    #  GX requires this statement for conditional rules when
+                    #  using spark
+                    parameter[
+                        "condition_parser"
+                    ] = "great_expectations__experimental__"
+
+    return generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
+
+
+def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
+    dq_rules_json_string = read_data_quality_rules_from_json(
+        file_path=file_path
+    )
+    data_quality_rules_dict = validate_and_load_data_quality_rules(
+        dq_rules_json_string=dq_rules_json_string
+    )
+    return data_quality_rules_dict

@@ -1,7 +1,10 @@
+from typing import Any
+
 import pandas as pd
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
+from src.dq_suite import ValidationSettings
 from src.dq_suite.common import DataQualityRulesDict
 
 
@@ -228,3 +231,48 @@ def create_dqRegel(
     spark_session.createDataFrame(df_dqRegel).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.regel")
+
+
+def write_non_validation_tables(
+    dq_rules_dict: DataQualityRulesDict,
+    validation_settings_obj: ValidationSettings,
+) -> None:
+    create_brontabel(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+    create_bronattribute(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+    create_dqRegel(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+
+
+def write_validation_table(
+    validation_output: Any,
+    validation_settings_obj: ValidationSettings,
+    df: DataFrame,
+    unique_identifier: str,
+):
+    for results in validation_output.values():
+        result = results["validation_result"]
+        extract_dq_validatie_data(
+            validation_settings_obj.table_name,
+            result,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
+        extract_dq_afwijking_data(
+            validation_settings_obj.table_name,
+            result,
+            df,
+            unique_identifier,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
