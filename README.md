@@ -15,21 +15,18 @@ pip install dq-suite-amsterdam
 import dq_suite
 ```
 
-Load your data in dataframes, give them a table_name, and create a list of all dataframes:
+To validate your first table:
+- define `json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
+- load the table requiring a data quality check into a PySpark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
 
 ```python
-df = spark.read.csv(csv_path+file_name, header=True, inferSchema=True) #example using csv
-```
-
-- Define `df` as a PySpark dataframe that requires a data quality check
-- Define `json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
-
-```python
-dq_rules_json_string = read_data_quality_rules_from_json(file_path=json_path)
 validation_settings = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev", 
-                                                  table_name="showcase_table", check_name="showcase")
-dq_suite.validate(dataframe_list, dq_rules_json_string, validation_settings)
+                                                  table_name="showcase_table", check_name="showcase_check")
+dq_suite.run_validation(json_path=json_path, df=df, validation_settings_obj=validation_settings)
 ```
+Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
+
+
 # Create data quality schema and tables (in respective catalog of data team)
 
 for the first time installation create data quality schema and tables from the notebook from repo path scripts/data_quality_tables.sql

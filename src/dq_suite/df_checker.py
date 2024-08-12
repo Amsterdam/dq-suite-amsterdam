@@ -31,8 +31,8 @@ def get_data_context(
 @dataclass()
 class ValidationSettings:
     spark_session: SparkSession
-    table_name: str
     catalog_name: str
+    table_name: str
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
     data_context: AbstractDataContext = get_data_context(
