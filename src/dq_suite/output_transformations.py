@@ -126,8 +126,10 @@ def extract_dq_afwijking_data(
 
 
 def create_brontabel(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark_session:
-        SparkSession) -> None:
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
+) -> None:
     """
     Function takes the table name and their unique identifier from the provided
     Data Quality rules to create a DataFrame containing this metadata.
@@ -151,8 +153,10 @@ def create_brontabel(
 
 
 def create_bronattribute(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark_session:
-        SparkSession) -> None:
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
+) -> None:
     """
     This function takes attributes/columns for each table specified in the Data
     Quality rules and creates a DataFrame containing these attribute details.
@@ -190,8 +194,10 @@ def create_bronattribute(
 
 
 def create_dqRegel(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark_session:
-        SparkSession) -> None:
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
+) -> None:
     """
     Function extracts information about Data Quality rules applied to each
     attribute/column for tables specified in the Data Quality rules and creates
