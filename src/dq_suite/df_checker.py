@@ -85,6 +85,42 @@ def get_batch_request_and_validator(data_context: AbstractDataContext,
     return batch_request, validator
 
 
+# TODO: use this as main entry point for library? - after reading a dataframe,
+#  setting df.table_name and creating a ValidationSettings object
+def run_validation(
+    json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
+):
+    """
+    read_dq_rules from json_path
+    
+    for table_path in table_paths:
+        read_dataframe from table_path
+        
+        validate_dataframe
+    
+        write_results_and_metadata to unity catalog
+    """
+    dq_rules_json_string = read_data_quality_rules_from_json(
+        file_path=json_path
+    )
+    dq_rules_dict = validate_and_load_dqrules(
+        dq_rules_json_string=dq_rules_json_string
+    )
+
+    # TODO: remove use of list; replace use of json_string with dict; replace
+    #  catalog/check/spark parameters with validation_settings object
+    validate_dataframes(
+        dataframe_list=[df],
+        dq_rules_json_string=dq_rules_json_string,
+        validation_settings_obj=validation_settings_obj,
+    )
+
+    write_non_validation_tables_to_unity_catalog(
+        dq_rules_dict=dq_rules_dict,
+        validation_settings_obj=validation_settings_obj
+    )
+
+
 def validate_dataframes(
     dataframe_list: List[DataFrame],
     dq_rules_json_string: str,
