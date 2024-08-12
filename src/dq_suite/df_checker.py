@@ -48,9 +48,10 @@ class ValidationSettings:
         self._set_checkpoint_name()
         self._set_run_name()
 
-        # Finally, apply the suite name to the data context
+        # Finally, apply the (new) suite name to the data context
         self.data_context.add_or_update_expectation_suite(
-            expectation_suite_name=self.expectation_suite_name)
+            expectation_suite_name=self.expectation_suite_name
+        )
 
     def _set_data_context(self):
         self.data_context = get_data_context(
@@ -117,7 +118,7 @@ def validate_and_load_dqrules(dq_rules_json_string: str) -> Any | None:
         if "Expecting ':' delimiter:" in error_message:
             print("Colon is missing in the JSON.")
         if "Expecting value:" in error_message:
-            print("Rules's Value is missing in the JSON.")
+            print("Rules' Value is missing in the JSON.")
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
@@ -153,10 +154,23 @@ def get_validation_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(
         file_path=file_path
     )
-    dq_rules_dict = validate_and_load_dqrules(
+    validation_dict = validate_and_load_dqrules(
         dq_rules_json_string=dq_rules_json_string
     )
-    return dq_rules_dict
+    return validation_dict
+
+
+def filter_validation_dict_by_table_name(
+    validation_dict: DataQualityRulesDict, table_name: str
+) -> RulesDictList:
+    # to compare table_name in dq_rules and given table_names by data teams
+    matching_rules: RulesDictList = [
+        rules_dict
+        for rules_dict in validation_dict["tables"]
+        if rules_dict["table_name"] == table_name
+    ]
+
+    return matching_rules
 
 
 def get_batch_request_and_validator(
@@ -189,29 +203,40 @@ def run_validation(
     if not hasattr(df, "table_name"):
         df.table_name = validation_settings_obj.table_name
 
-    dq_rules_dict = get_validation_dict(file_path=json_path)
+    validation_dict = get_validation_dict(file_path=json_path)
+    validation_dict_list = filter_validation_dict_by_table_name(
+        validation_dict=validation_dict,
+        table_name=validation_settings_obj.table_name,
+    )
+    if not validation_dict_list:
+        print(
+            f"No validations found for table_name "
+            f"'{validation_settings_obj.table_name}' in JSON file at '"
+            f"{json_path}'."
+        )
+        return
 
     validate(
         df=df,
-        dq_rules_dict=dq_rules_dict,
+        validation_dict_list=validation_dict_list,
         validation_settings_obj=validation_settings_obj,
     )
 
     write_non_validation_tables_to_unity_catalog(
-        dq_rules_dict=dq_rules_dict,
+        dq_rules_dict=validation_dict,
         validation_settings_obj=validation_settings_obj,
     )
 
 
-def create_and_run_checkpoint(validation_settings_obj: ValidationSettings,
-                              batch_request: Any) -> Any:
+def create_and_run_checkpoint(
+    validation_settings_obj: ValidationSettings, batch_request: Any
+) -> Any:
     checkpoint = Checkpoint(
         name=validation_settings_obj.checkpoint_name,
         run_name_template=validation_settings_obj.run_name,
         data_context=validation_settings_obj.data_context,
         batch_request=batch_request,
-        expectation_suite_name=validation_settings_obj
-        .expectation_suite_name,
+        expectation_suite_name=validation_settings_obj.expectation_suite_name,
         action_list=[
             {
                 "name": "store_validation_result",
@@ -229,15 +254,15 @@ def create_and_run_checkpoint(validation_settings_obj: ValidationSettings,
 
 def validate(
     df: DataFrame,
-    dq_rules_dict: DataQualityRulesDict,
+    validation_dict_list: RulesDictList,
     validation_settings_obj: ValidationSettings,
 ) -> None:
     """
     [explanation goes here]
 
     :param df: A list of DataFrame instances to process.
-    :param dq_rules_dict: a DataQualityRulesDict object containing the data
-    quality rules to be evaluated.
+    :param validation_dict_list: a DataQualityRulesDict object containing the
+    data quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
     """
     # Make sure all attributes are aligned before validating
@@ -249,17 +274,7 @@ def validate(
         validation_settings_obj=validation_settings_obj,
     )
 
-    # to compare table_name in dq_rules and given table_names by data teams
-    matching_rules: RulesDictList = [
-        rules_dict
-        for rules_dict in dq_rules_dict["tables"]
-        if rules_dict["table_name"] == df.table_name
-    ]
-
-    if not matching_rules:
-        return
-
-    for rules_dict in matching_rules:
+    for rules_dict in validation_dict_list:
         df_name = rules_dict["table_name"]
         unique_identifier = rules_dict["unique_identifier"]
         for rule_param in rules_dict["rules"]:
@@ -274,7 +289,8 @@ def validate(
 
         output = create_and_run_checkpoint(
             validation_settings_obj=validation_settings_obj,
-            batch_request=batch_request)
+            batch_request=batch_request,
+        )
 
         for key, value in output.items():
             result = value["validation_result"]
