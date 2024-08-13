@@ -78,3 +78,5 @@ Version 0.4: Added schema validation with Amsterdam Schema per table
 Version 0.5: Export schema from Unity Catalog
 
 Version 0.6: The results are written to tables in the "dataquality" schema
+
+Version 0.7: Refactored the solution
