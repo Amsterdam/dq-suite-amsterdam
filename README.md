@@ -11,26 +11,22 @@ Install the dq suite on your compute, for example by running the following code 
 pip install dq-suite-amsterdam
 ```
 
-```
+To validate your first table:
+- define `json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
+- load the table requiring a data quality check into a PySpark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
+
+```python
 import dq_suite
-```
 
-Load your data in dataframes, give them a table_name, and create a list of all dataframes:
+validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev",
+                                                                 table_name="showcase_table",
+                                                                 check_name="showcase_check")
+dq_suite.run(json_path=json_path, df=df, validation_settings_obj=validation_settings_obj)
+```
+Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
-```
-df = spark.read.csv(csv_path+file_name, header=True, inferSchema=True) #example using csv
-df.table_name = "showcase_table"
-dfs = [df]
-```
 
-- Define 'dfs' as a list of dataframes that require a dq check
-- Define 'dq_rules' as a JSON as shown in dq_rules_example.json in this repo
-- Define a name for your dq check, in this case "showcase"
-
-```
-dq_suite.df_check(dfs, dq_rules, "dpxx_dev", "showcase", spark)
-```
-# Create dataquality schema and tables (in respective catalog of data team)
+# Create data quality schema and tables (in respective catalog of data team)
 
 for the first time installation create data quality schema and tables from the notebook from repo path scripts/data_quality_tables.sql
 - open the notebook, connect to a cluster
@@ -82,3 +78,5 @@ Version 0.4: Added schema validation with Amsterdam Schema per table
 Version 0.5: Export schema from Unity Catalog
 
 Version 0.6: The results are written to tables in the "dataquality" schema
+
+Version 0.7: Refactored the solution

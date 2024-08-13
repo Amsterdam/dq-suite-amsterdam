@@ -1,8 +1,11 @@
+from typing import Any
+
 import pandas as pd
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
-from src.dq_suite.input_helpers import DataQualityRulesDict
+from src.dq_suite import ValidationSettings
+from src.dq_suite.common import DataQualityRulesDict
 
 
 def extract_dq_validatie_data(
@@ -126,7 +129,9 @@ def extract_dq_afwijking_data(
 
 
 def create_brontabel(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark: SparkSession
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
 ) -> None:
     """
     Function takes the table name and their unique identifier from the provided
@@ -134,7 +139,7 @@ def create_brontabel(
 
     :param dq_rules_dict:
     :param catalog_name:
-    :param spark:
+    :param spark_session:
     """
     extracted_data = []
     for param in dq_rules_dict["tables"]:
@@ -145,13 +150,15 @@ def create_brontabel(
         )
 
     df_brontable = pd.DataFrame(extracted_data)
-    spark.createDataFrame(df_brontable).write.mode("append").option(
+    spark_session.createDataFrame(df_brontable).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.brontabel")
 
 
 def create_bronattribute(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark: SparkSession
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
 ) -> None:
     """
     This function takes attributes/columns for each table specified in the Data
@@ -159,7 +166,7 @@ def create_bronattribute(
 
     :param dq_rules_dict:
     :param catalog_name:
-    :param spark:
+    :param spark_session:
     """
     extracted_data = []
     used_ids = set()  # To keep track of used IDs
@@ -184,13 +191,15 @@ def create_bronattribute(
                         )
 
     df_bronattribuut = pd.DataFrame(extracted_data)
-    spark.createDataFrame(df_bronattribuut).write.mode("append").option(
+    spark_session.createDataFrame(df_bronattribuut).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.bronattribuut")
 
 
 def create_dqRegel(
-    dq_rules_dict: DataQualityRulesDict, catalog_name: str, spark: SparkSession
+    dq_rules_dict: DataQualityRulesDict,
+    catalog_name: str,
+    spark_session: SparkSession,
 ) -> None:
     """
     Function extracts information about Data Quality rules applied to each
@@ -199,7 +208,7 @@ def create_dqRegel(
 
     :param dq_rules_dict:
     :param catalog_name:
-    :param spark:
+    :param spark_session:
     """
     extracted_data = []
     for param in dq_rules_dict["tables"]:
@@ -219,6 +228,51 @@ def create_dqRegel(
                     )
 
     df_dqRegel = pd.DataFrame(extracted_data)
-    spark.createDataFrame(df_dqRegel).write.mode("append").option(
+    spark_session.createDataFrame(df_dqRegel).write.mode("append").option(
         "overwriteSchema", "true"
     ).saveAsTable(f"{catalog_name}.dataquality.regel")
+
+
+def write_non_validation_tables(
+    dq_rules_dict: DataQualityRulesDict,
+    validation_settings_obj: ValidationSettings,
+) -> None:
+    create_brontabel(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+    create_bronattribute(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+    create_dqRegel(
+        dq_rules_dict=dq_rules_dict,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
+    )
+
+
+def write_validation_table(
+    validation_output: Any,
+    validation_settings_obj: ValidationSettings,
+    df: DataFrame,
+    unique_identifier: str,
+):
+    for results in validation_output.values():
+        result = results["validation_result"]
+        extract_dq_validatie_data(
+            validation_settings_obj.table_name,
+            result,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )
+        extract_dq_afwijking_data(
+            validation_settings_obj.table_name,
+            result,
+            df,
+            unique_identifier,
+            validation_settings_obj.catalog_name,
+            validation_settings_obj.spark_session,
+        )

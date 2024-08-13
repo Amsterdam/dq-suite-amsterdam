@@ -1,118 +1,17 @@
 import json
-from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import requests
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
-
-@dataclass()
-class Rule:
-    """
-    Groups the name of the GX validation rule together with the
-    parameters required to apply this rule.
-    """
-
-    rule_name: str  # Name of the GX expectation
-    parameters: List[Dict[str, Any]]  # Collection of parameters required for
-    # evaluating the expectation
-
-    def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
-        if key == "rule_name":
-            return self.rule_name
-        elif key == "parameters":
-            return self.parameters
-        raise KeyError(key)
-
-
-@dataclass()
-class RulesDict:
-    """
-    Groups a list of Rule-objects together with the name of the table
-    these rules are to be applied to, as well as a unique identifier used for
-    identifying outliers.
-    """
-
-    unique_identifier: str  # TODO: List[str] for more complex keys?
-    table_name: str
-    rules_list: List[Rule]
-
-    def __getitem__(self, key) -> str | List[Rule] | None:
-        if key == "unique_identifier":
-            return self.unique_identifier
-        elif key == "table_name":
-            return self.table_name
-        elif key == "rules_list":
-            return self.rules_list
-        raise KeyError(key)
-
-
-RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
-
-
-@dataclass()
-class DataQualityRulesDict:
-    tables: RulesDictList
-
-    def __getitem__(self, key) -> RulesDictList | None:
-        if key == "tables":
-            return self.tables
-        raise KeyError(key)
-
-
-def validate_and_load_dqrules(dq_rules: str) -> Any | None:
-    """
-    Function validates the input JSON
-
-    :param dq_rules: A string with all DQ configuration.
-    """
-
-    try:
-        return json.loads(dq_rules)
-
-    except json.JSONDecodeError as e:
-        error_message = str(e)
-        print(f"Data quality check failed: {error_message}")
-        if "Invalid control character at:" in error_message:
-            print("Quota is missing in the JSON.")
-        if "Expecting ',' delimiter:" in error_message:
-            print(
-                "Square brackets, Comma or curly brackets can be missing in "
-                "the JSON."
-            )
-        if "Expecting ':' delimiter:" in error_message:
-            print("Colon is missing in the JSON.")
-        if "Expecting value:" in error_message:
-            print("Rules's Value is missing in the JSON.")
-
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-
-
-def expand_input(rule_json: DataQualityRulesDict) -> DataQualityRulesDict:
-    """
-    Function adds a mandatory line in case of a conditional rule
-
-    :param rule_json: A dictionary with all DQ configuration.
-    :return: rule_json: A dictionary with all DQ configuration.
-    """
-
-    for table in rule_json["tables"]:
-        for rule in table["rules"]:
-            for parameter in rule["parameters"]:
-                if "row_condition" in parameter:
-                    #  GX requires this statement for conditional rules when
-                    #  using spark
-                    parameter[
-                        "condition_parser"
-                    ] = "great_expectations__experimental__"
-
-    return rule_json
+from src.dq_suite.common import DataQualityRulesDict, Rule
 
 
 def export_schema(dataset: str, spark: SparkSession) -> str:
     """
-    Function exports a schema from Unity Catalog to be used by the Excel input form
+    Function exports a schema from Unity Catalog to be used by the Excel
+    input form
 
     :param dataset: The name of the required dataset
     :param spark: The current SparkSession required for querying
@@ -144,7 +43,7 @@ def export_schema(dataset: str, spark: SparkSession) -> str:
     columns_list = []
     for table in tables:
         columns_table = (
-            columns.filter(columns.table_name == table)
+            columns.filter(col("table_name") == table)
             .select("column_name")
             .rdd.flatMap(lambda x: x)
             .collect()
@@ -157,16 +56,19 @@ def export_schema(dataset: str, spark: SparkSession) -> str:
     return json.dumps(output_dict)
 
 
-def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> Dict[str, Any]:
+def fetch_schema_from_github(
+    dq_rules_dict: DataQualityRulesDict,
+) -> Dict[str, Any]:
     """
-    Function fetches a schema from the Github Amsterdam schema using the dq_rules.
+    Function fetches a schema from the GitHub Amsterdam schema using the
+    dq_rules.
 
-    :param dq_rules: A dictionary with all DQ configuration.
+    :param dq_rules_dict: A dictionary with all DQ configuration.
     :return: schema_dict: A dictionary with the schema of the required tables.
     """
 
     schema_dict = {}
-    for table in dq_rules["tables"]:
+    for table in dq_rules_dict["tables"]:
         if "validate_table_schema_url" in table:
             url = table["validate_table_schema_url"]  # TODO: validate URL
             r = requests.get(url)
@@ -177,16 +79,16 @@ def fetch_schema_from_github(dq_rules: DataQualityRulesDict) -> Dict[str, Any]:
 
 
 def generate_dq_rules_from_schema(
-    dq_rules_dict: DataQualityRulesDict, schema_dict: Dict[str, Any]
+    dq_rules_dict: DataQualityRulesDict,
 ) -> DataQualityRulesDict:
     """
     Function adds expect_column_values_to_be_of_type rule for each column of
     tables having schema_id and schema_url in dq_rules.
 
     :param dq_rules_dict: A dictionary with all DQ configuration.
-    :param schema_dict: A dictionary with the schemas of the required tables.
     :return: A dictionary with all DQ configuration.
     """
+    schema_dict = fetch_schema_from_github(dq_rules_dict=dq_rules_dict)
 
     for table in dq_rules_dict["tables"]:
         if "validate_table_schema" in table:
@@ -195,6 +97,8 @@ def generate_dq_rules_from_schema(
 
             if table_name in schema_dict:
                 schema = schema_dict[table_name]
+                schema_columns = dict()
+
                 if "schema" in schema and "properties" in schema["schema"]:
                     schema_columns = schema["schema"][
                         "properties"
@@ -208,7 +112,6 @@ def generate_dq_rules_from_schema(
                             break
 
                 if "schema" in schema_columns:
-                    # TODO/check: what if schema_columns does not exist?
                     del schema_columns["schema"]
 
                 for column, properties in schema_columns.items():
@@ -225,3 +128,124 @@ def generate_dq_rules_from_schema(
                         table["rules"].append(rule)
 
     return dq_rules_dict
+
+
+def schema_to_json_string(dataset: str, spark: SparkSession) -> str:
+    """
+    Function exports a schema from Unity Catalog to be used by the Excel
+    input form
+
+    :param dataset: The name of the required dataset
+    :param spark: The current SparkSession required for querying
+    :return: schema_json: A JSON string with the schema of the required dataset
+    """
+
+    table_query = """
+        SELECT table_name
+        FROM system.information_schema.tables
+        WHERE table_schema = {dataset}
+    """
+    tables = (
+        spark.sql(table_query, dataset=dataset)
+        .select("table_name")
+        .rdd.flatMap(lambda x: x)
+        .collect()
+    )
+    table_list = (
+        "'" + "', '".join(tables) + "'"
+    )  # creates a list of all tables, is used by the next query
+
+    column_query = f"""
+            SELECT column_name, table_name
+            FROM system.information_schema.columns
+            WHERE table_name IN ({table_list})
+        """
+    columns = spark.sql(column_query).select("column_name", "table_name")
+
+    columns_list = []
+    for table in tables:
+        columns_table = (
+            columns.filter(col("table_name") == table)
+            .select("column_name")
+            .rdd.flatMap(lambda x: x)
+            .collect()
+        )
+        columns_dict = {"table_name": table, "attributes": columns_table}
+        columns_list.append(columns_dict)
+
+    output_dict = {"dataset": dataset, "tables": columns_list}
+
+    return json.dumps(output_dict)
+
+
+def read_data_quality_rules_from_json(file_path: str) -> str:
+    with open(file_path, "r") as json_file:
+        dq_rules_json_string = json_file.read()
+    return dq_rules_json_string
+
+
+def validate_and_load_data_quality_rules(
+    dq_rules_json_string: str,
+) -> Any | None:
+    """
+    Deserializes a JSON document in string format, and prints one or more error
+    messages in case a JSONDecodeError is raised.
+
+    :param dq_rules_json_string: A JSON string with all DQ configuration.
+    """
+    try:
+        return json.loads(dq_rules_json_string)
+
+    except json.JSONDecodeError as e:
+        error_message = str(e)
+        print(f"Data quality check failed: {error_message}")
+        if "Invalid control character at:" in error_message:
+            print("Quota is missing in the JSON.")
+        if "Expecting ',' delimiter:" in error_message:
+            print(
+                "Square brackets, Comma or curly brackets can be missing in "
+                "the JSON."
+            )
+        if "Expecting ':' delimiter:" in error_message:
+            print("Colon is missing in the JSON.")
+        if "Expecting value:" in error_message:
+            print("Rules' Value is missing in the JSON.")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+def data_quality_rules_json_string_to_dict(
+    json_string: str,
+) -> DataQualityRulesDict:
+    """
+    Function adds a mandatory line in case of a conditional rule
+
+    :param json_string: A JSON string with all DQ configuration.
+    :return: rule_json: A dictionary with all DQ configuration.
+    """
+    dq_rules_dict: DataQualityRulesDict = validate_and_load_data_quality_rules(
+        dq_rules_json_string=json_string
+    )
+
+    for table in dq_rules_dict["tables"]:
+        for rule in table["rules"]:
+            for parameter in rule["parameters"]:
+                if "row_condition" in parameter:
+                    #  GX requires this statement for conditional rules when
+                    #  using spark
+                    parameter[
+                        "condition_parser"
+                    ] = "great_expectations__experimental__"
+
+    return generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)
+
+
+def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
+    dq_rules_json_string = read_data_quality_rules_from_json(
+        file_path=file_path
+    )
+    data_quality_rules_dict = validate_and_load_data_quality_rules(
+        dq_rules_json_string=dq_rules_json_string
+    )
+    return data_quality_rules_dict
