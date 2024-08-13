@@ -4,8 +4,8 @@ from great_expectations.checkpoint import Checkpoint
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
 
-from src.dq_suite import ValidationSettings
-from src.dq_suite.common import DataQualityRulesDict, Rule, RulesDict
+from src.dq_suite.common import (DataQualityRulesDict, Rule, RulesDict,
+                                 ValidationSettings)
 from src.dq_suite.input_helpers import get_data_quality_rules_dict
 from src.dq_suite.output_transformations import (
     write_non_validation_tables,
@@ -18,7 +18,8 @@ def filter_validation_dict_by_table_name(
 ) -> RulesDict | None:
     for rules_dict in validation_dict["tables"]:
         if rules_dict["table_name"] == table_name:
-            return rules_dict  # Return only the first match
+            # Only one RulesDict per table expected, so return the first match
+            return rules_dict
     return None
 
 
