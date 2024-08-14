@@ -1,4 +1,69 @@
-from src.dq_suite.common import ValidationSettings
+from typing import Any
+
+import pytest
+
+from src.dq_suite.common import (
+    Rule,
+    RulesDict,
+    RulesList,
+    ValidationSettings,
+    get_full_table_name,
+)
+
+
+class TestRule:
+    rule_obj = Rule(rule_name="the_rule", parameters=[{"q": 42}])
+
+    def test_get_value_from_rule_by_existing_key(self):
+        rule_name = self.rule_obj["rule_name"]
+        parameters = self.rule_obj["parameters"]
+
+        assert rule_name == "the_rule"
+        assert type(rule_name) is str
+
+        assert parameters == [{"q": 42}]
+        assert type(parameters) is list[dict[str, Any]]  # TODO: fix
+
+    def test_get_value_from_rule_by_non_existing_key(self):
+        with pytest.raises(KeyError):
+            self.rule_obj["wrong_key"]
+
+
+class TestRulesDict:
+    rule_obj = Rule(rule_name="the_rule", parameters=[{"q": 42}])
+    rules_dict_obj = RulesDict(
+        unique_identifier="id", table_name="the_table", rules_list=[rule_obj]
+    )
+
+    def test_get_value_from_rule_dict_by_existing_key(self):
+        unique_identifier = self.rules_dict_obj["unique_identifier"]
+        table_name = self.rules_dict_obj["table_name"]
+        rules_list = self.rules_dict_obj["rules_list"]
+
+        assert unique_identifier == "id"
+        assert type(unique_identifier) is str
+
+        assert table_name == "the_table"
+        assert type(table_name) is str
+
+        assert rules_list == [self.rule_obj]
+        assert type(rules_list) is RulesList  # TODO: fix
+        assert type(rules_list[0]) is Rule
+
+    def test_get_value_from_rule_dict_by_non_existing_key(self):
+        with pytest.raises(KeyError):
+            self.rules_dict_obj["wrong_key"]
+
+
+def test_get_full_table_name():
+    name = get_full_table_name(
+        catalog_name="catalog_dev", table_name="the_table"
+    )
+    assert name == f"catalog_dev.data_quality.the_table"
+    with pytest.raises(ValueError):
+        get_full_table_name(
+            catalog_name="catalog_wrong_suffix", table_name="the_table"
+        )
 
 
 class TestValidationSettings:
