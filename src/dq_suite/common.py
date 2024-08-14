@@ -25,6 +25,9 @@ class Rule:
         raise KeyError(key)
 
 
+RulesList = list[Rule]  # a list of DQ rules
+
+
 @dataclass()
 class RulesDict:
     """
@@ -35,9 +38,9 @@ class RulesDict:
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
     table_name: str
-    rules_list: List[Rule]
+    rules_list: RulesList
 
-    def __getitem__(self, key) -> str | List[Rule] | None:
+    def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
             return self.unique_identifier
         elif key == "table_name":
