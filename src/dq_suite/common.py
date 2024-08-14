@@ -63,6 +63,11 @@ class DataQualityRulesDict:
 def get_full_table_name(
     catalog_name: str, table_name: str, schema_name: str = "data_quality"
 ) -> str:
+    if not (catalog_name.endswith("_dev") | catalog_name.endswith("_prd")):
+        raise ValueError(
+            f"Incorrect catalog name '{catalog_name}', should "
+            f"end with '_dev' or '_prd'."
+        )
     return f"{catalog_name}.{schema_name}.{table_name}"
 
 
