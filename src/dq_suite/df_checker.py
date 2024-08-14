@@ -4,8 +4,12 @@ from great_expectations.checkpoint import Checkpoint
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
 
-from src.dq_suite.common import (DataQualityRulesDict, Rule, RulesDict,
-                                 ValidationSettings)
+from src.dq_suite.common import (
+    DataQualityRulesDict,
+    Rule,
+    RulesDict,
+    ValidationSettings,
+)
 from src.dq_suite.input_helpers import get_data_quality_rules_dict
 from src.dq_suite.output_transformations import (
     write_non_validation_tables,
@@ -57,7 +61,7 @@ def create_and_run_checkpoint(
         batch_request=batch_request,
         expectation_suite_name=validation_settings_obj.expectation_suite_name,
         action_list=[
-            {
+            {  # TODO/check: do we really have to store the validation results?
                 "name": "store_validation_result",
                 "action": {"class_name": "StoreValidationResultAction"},
             },  # TODO: add more options via parameters, e.g. Slack output

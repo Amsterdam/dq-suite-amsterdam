@@ -43,6 +43,7 @@ def extract_dq_validatie_data(
             }
         )
     # Create a DataFrame
+    # TODO: create a PySpark dataframe directly, without use of pandas
     df_dq_validatie = pd.DataFrame(extracted_data)
     if not df_dq_validatie.empty:
         spark.createDataFrame(df_dq_validatie).write.mode("append").option(
@@ -118,6 +119,7 @@ def extract_dq_afwijking_data(
                     )
 
     # Create a DataFrame
+    # TODO: create a PySpark dataframe directly, without use of pandas
     df_dq_afwijking = pd.DataFrame(extracted_data)
     if not df_dq_afwijking.empty:
         spark.createDataFrame(df_dq_afwijking).write.mode("append").option(
@@ -149,6 +151,7 @@ def create_brontabel(
             {"bronTabelId": name, "uniekeSleutel": unique_identifier}
         )
 
+    # TODO: create a PySpark dataframe directly, without use of pandas
     df_brontable = pd.DataFrame(extracted_data)
     spark_session.createDataFrame(df_brontable).write.mode("append").option(
         "overwriteSchema", "true"
@@ -190,6 +193,7 @@ def create_bronattribute(
                             }
                         )
 
+    # TODO: create a PySpark dataframe directly, without use of pandas
     df_bronattribuut = pd.DataFrame(extracted_data)
     spark_session.createDataFrame(df_bronattribuut).write.mode("append").option(
         "overwriteSchema", "true"
@@ -227,6 +231,7 @@ def create_dqRegel(
                         }
                     )
 
+    # TODO: create a PySpark dataframe directly, without use of pandas
     df_dqRegel = pd.DataFrame(extracted_data)
     spark_session.createDataFrame(df_dqRegel).write.mode("append").option(
         "overwriteSchema", "true"
