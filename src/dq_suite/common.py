@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Literal
 from great_expectations import get_context
 from great_expectations.data_context import AbstractDataContext
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col
+from pyspark.sql.types import StructType
 
 
 @dataclass()
@@ -60,6 +62,10 @@ class DataQualityRulesDict:
         raise KeyError(key)
 
 
+def is_empty_dataframe(df: DataFrame) -> bool:
+    return len(df.take(1)) == 0
+
+
 def get_full_table_name(
     catalog_name: str, table_name: str, schema_name: str = "data_quality"
 ) -> str:
@@ -71,15 +77,35 @@ def get_full_table_name(
     return f"{catalog_name}.{schema_name}.{table_name}"
 
 
+def enforce_column_order(df: DataFrame, schema: StructType) -> DataFrame:
+    return df.select(schema.names)
+
+
+def enforce_schema(df: DataFrame, schema_to_enforce: StructType) -> DataFrame:
+    df = enforce_column_order(df=df, schema=schema_to_enforce)
+
+    for column_name in df.columns:
+        df = df.withColumn(
+            column_name,
+            col(column_name).cast(schema_to_enforce[column_name].dataType),
+        )
+
+    for column_name in df.columns:
+        if column_name not in schema_to_enforce.names:
+            # remove all columns not present in schema_to_enforce
+            df = df.drop(column_name)
+
+    return df
+
+
 def write_to_unity_catalog(
     df: DataFrame,
     catalog_name: str,
     table_name: str,
-    # schema: StructType,
+    schema: StructType,
     mode: Literal["append", "overwrite"] = "append",
 ) -> None:
-    # TODO: enforce schema?
-    # df = enforce_schema(df=df, schema_to_enforce=schema)
+    df = enforce_schema(df=df, schema_to_enforce=schema)
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
