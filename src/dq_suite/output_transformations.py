@@ -5,7 +5,22 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
 from src.dq_suite import ValidationSettings
-from src.dq_suite.common import DataQualityRulesDict
+from src.dq_suite.common import (
+    DataQualityRulesDict,
+    is_empty_dataframe,
+    write_to_unity_catalog,
+)
+from src.schemas.afwijking import SCHEMA as afwijking_schema
+from src.schemas.bronattribuut import SCHEMA as bronattribuut_schema
+from src.schemas.brontabel import SCHEMA as brontabel_schema
+from src.schemas.regel import SCHEMA as regel_schema
+from src.schemas.validatie import SCHEMA as validatie_schema
+
+
+def list_of_dicts_to_df(
+    list_of_dicts: List[dict], spark_session: SparkSession
+) -> DataFrame:
+    return spark_session.createDataFrame(Row(**x) for x in list_of_dicts)
 
 
 def extract_dq_validatie_data(
