@@ -9,11 +9,11 @@ from src.dq_suite.common import (
     is_empty_dataframe,
     write_to_unity_catalog,
 )
-from src.schemas.afwijking import SCHEMA as afwijking_schema
-from src.schemas.bronattribuut import SCHEMA as bronattribuut_schema
-from src.schemas.brontabel import SCHEMA as brontabel_schema
-from src.schemas.regel import SCHEMA as regel_schema
-from src.schemas.validatie import SCHEMA as validatie_schema
+from src.schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
+from src.schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
+from src.schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
+from src.schemas.regel import SCHEMA as REGEL_SCHEMA
+from src.schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
 def list_of_dicts_to_df(
@@ -68,7 +68,7 @@ def extract_dq_validatie_data(
             df=df_validatie,
             catalog_name=catalog_name,
             table_name="validatie",
-            schema=validatie_schema,
+            schema=VALIDATIE_SCHEMA,
         )
     else:
         # TODO: implement (raise error?)
@@ -147,7 +147,7 @@ def extract_dq_afwijking_data(
             df=df_afwijking,
             catalog_name=catalog_name,
             table_name="afwijking",
-            schema=afwijking_schema,
+            schema=AFWIJKING_SCHEMA,
         )
     else:
         # TODO: implement (raise error?)
@@ -182,7 +182,7 @@ def create_brontabel(
         df=df_brontabel,
         catalog_name=catalog_name,
         table_name="brontabel",
-        schema=brontabel_schema,
+        schema=BRONTABEL_SCHEMA,
     )
 
 
@@ -228,11 +228,11 @@ def create_bronattribute(
         df=df_bronattribuut,
         catalog_name=catalog_name,
         table_name="bronattribuut",
-        schema=bronattribuut_schema,
+        schema=BRONATTRIBUUT_SCHEMA,
     )
 
 
-def create_dqRegel(
+def create_dq_regel(
     dq_rules_dict: DataQualityRulesDict,
     catalog_name: str,
     spark_session: SparkSession,
@@ -257,7 +257,8 @@ def create_dqRegel(
                     attribute_name = parameter["column"]
                     extracted_data.append(
                         {
-                            "regelId": f"{bron_tabel}_{rule_name}_{attribute_name}",
+                            "regelId": f"{bron_tabel}_{rule_name}_"
+                            f"{attribute_name}",
                             "bronAttribuutId": f"{bron_tabel}_{attribute_name}",
                             "bronTabelId": bron_tabel,
                         }
@@ -270,7 +271,7 @@ def create_dqRegel(
         df=df_regel,
         catalog_name=catalog_name,
         table_name="regel",
-        schema=regel_schema,
+        schema=REGEL_SCHEMA,
     )
 
 
@@ -288,7 +289,7 @@ def write_non_validation_tables(
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
     )
-    create_dqRegel(
+    create_dq_regel(
         dq_rules_dict=dq_rules_dict,
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
