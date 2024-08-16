@@ -17,6 +17,15 @@ class Rule:
     parameters: List[Dict[str, Any]]  # Collection of parameters required for
     # evaluating the expectation
 
+    def __post_init__(self):
+        if not isinstance(self.rule_name, str):
+            raise TypeError("'rule_name' should be of type str")
+
+        if not isinstance(self.parameters, list):
+            raise TypeError(
+                "'parameters' should be of type List[Dict[str, " "Any]]"
+            )
+
     def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
         if key == "rule_name":
             return self.rule_name
@@ -40,6 +49,16 @@ class RulesDict:
     table_name: str
     rules_list: RulesList
 
+    def __post_init__(self):
+        if not isinstance(self.unique_identifier, str):
+            raise TypeError("'unique_identifier' should be of type str")
+
+        if not isinstance(self.unique_identifier, str):
+            raise TypeError("'table_name' should be of type str")
+
+        if not isinstance(self.rules_list, list):
+            raise TypeError("'rules_list' should be RulesList")
+
     def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
             return self.unique_identifier
@@ -56,6 +75,10 @@ RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 @dataclass()
 class DataQualityRulesDict:
     tables: RulesDictList
+
+    def __post_init__(self):
+        if not isinstance(self.tables, list):
+            raise TypeError("'tables' should be RulesDictList")
 
     def __getitem__(self, key) -> RulesDictList | None:
         if key == "tables":
@@ -108,6 +131,16 @@ class ValidationSettings:
     expectation_suite_name: str | None = None
     checkpoint_name: str | None = None
     run_name: str | None = None
+
+    def __post_init__(self):
+        if not isinstance(self.spark_session, SparkSession):
+            raise TypeError("'spark_session' should be of type SparkSession")
+        if not isinstance(self.catalog_name, str):
+            raise TypeError("'catalog_name' should be of type str")
+        if not isinstance(self.table_name, str):
+            raise TypeError("'table_name' should be of type str")
+        if not isinstance(self.check_name, str):
+            raise TypeError("'check_name' should be of type str")
 
     def initialise_or_update_attributes(self):
         self._set_data_context()
