@@ -23,7 +23,7 @@ class Rule:
 
         if not isinstance(self.parameters, list):
             raise TypeError(
-                "'parameters' should be of type List[Dict[str, " "Any]]"
+                "'parameters' should be of type List[Dict[str, Any]]"
             )
 
     def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
