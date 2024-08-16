@@ -59,13 +59,15 @@ class TestRulesDict:
 
 
 def test_get_full_table_name():
-    name = get_full_table_name(
-        catalog_name="catalog_dev", table_name="the_table"
-    )
-    assert name == f"catalog_dev.data_quality.the_table"
+    catalog_name = "catalog_dev"
+    table_name = "the_table"
+    expected_catalog_name = f"{catalog_name}.data_quality.{table_name}"
+
+    name = get_full_table_name(catalog_name=catalog_name, table_name=table_name)
+    assert name == expected_catalog_name
     with pytest.raises(ValueError):
         get_full_table_name(
-            catalog_name="catalog_wrong_suffix", table_name="the_table"
+            catalog_name="catalog_wrong_suffix", table_name=table_name
         )
 
 
