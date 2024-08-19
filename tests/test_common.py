@@ -26,7 +26,7 @@ class TestRule:
         assert self.rule_obj["rule_name"] == self.expected_rule_name
         assert self.rule_obj["parameters"] == self.expected_parameters
 
-    def test_get_value_from_rule_by_non_existing_key(self):
+    def test_get_value_from_rule_by_non_existing_key_raises_key_error(self):
         with pytest.raises(KeyError):
             self.rule_obj["wrong_key"]
 
@@ -53,7 +53,7 @@ class TestRulesDict:
         assert self.rules_dict_obj["table_name"] == self.expected_table_name
         assert self.rules_dict_obj["rules_list"] == self.expected_rules_list
 
-    def test_get_value_from_rule_dict_by_non_existing_key(self):
+    def test_get_value_from_rule_dict_by_non_existing_key_raises_key_error(self):
         with pytest.raises(KeyError):
             self.rules_dict_obj["wrong_key"]
 
