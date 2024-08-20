@@ -31,9 +31,10 @@ from the terminal.
 The `coverage` library can be used for measuring code coverage of our unit tests. Since we're using `pytest`, 
 the coverage can be measured with 
 ```shell
-coverage run -m pytest
+coverage run -m pytest (path)
 ```
-and subsequently displayed with
+where `(path)` is an optional parameter, e.g. `tests/test_common.py`. Omitting `(path)` would run all discoverable 
+unit tests. The results can subsequently displayed with
 ```shell
 coverage report -m
 ```
