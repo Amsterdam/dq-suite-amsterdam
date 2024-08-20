@@ -3,17 +3,18 @@ from typing import Any, List
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col
 
-from src.dq_suite import ValidationSettings
-from src.dq_suite.common import (
-    DataQualityRulesDict,
-    is_empty_dataframe,
-    write_to_unity_catalog,
-)
 from src.schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from src.schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
 from src.schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from src.schemas.regel import SCHEMA as REGEL_SCHEMA
 from src.schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+
+from .common import (
+    DataQualityRulesDict,
+    ValidationSettings,
+    is_empty_dataframe,
+    write_to_unity_catalog,
+)
 
 
 def list_of_dicts_to_df(
