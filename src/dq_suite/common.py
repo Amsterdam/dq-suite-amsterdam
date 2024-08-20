@@ -53,7 +53,7 @@ class RulesDict:
         if not isinstance(self.unique_identifier, str):
             raise TypeError("'unique_identifier' should be of type str")
 
-        if not isinstance(self.unique_identifier, str):
+        if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
 
         if not isinstance(self.rules_list, list):
@@ -116,7 +116,7 @@ def write_to_unity_catalog(
 
 def get_data_context(
     data_context_root_dir: str = "/dbfs/great_expectations/",
-) -> AbstractDataContext:
+) -> AbstractDataContext:  # pragma: no cover - part of GX
     return get_context(context_root_dir=data_context_root_dir)
 
 
@@ -142,7 +142,8 @@ class ValidationSettings:
         if not isinstance(self.check_name, str):
             raise TypeError("'check_name' should be of type str")
 
-    def initialise_or_update_attributes(self):
+    def initialise_or_update_attributes(self):  # pragma: no cover - complex
+        # function
         self._set_data_context()
 
         # TODO/check: do we want to allow for custom names?
@@ -155,7 +156,7 @@ class ValidationSettings:
             expectation_suite_name=self.expectation_suite_name
         )
 
-    def _set_data_context(self):
+    def _set_data_context(self):  # pragma: no cover - uses part of GX
         self.data_context = get_data_context(
             data_context_root_dir=self.data_context_root_dir
         )
