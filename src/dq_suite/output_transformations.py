@@ -26,7 +26,8 @@ def create_empty_dataframe(
 def list_of_dicts_to_df(
     list_of_dicts: List[dict], spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
-    if (len(list_of_dicts) == 1) & (not list_of_dicts[0]):  # Empty dictionary
+    if ((len(list_of_dicts) == 0) | (len(list_of_dicts) == 1) &
+            (not list_of_dicts[0])):  # Empty li
         return create_empty_dataframe(
             spark_session=spark_session, schema=schema
         )
