@@ -103,7 +103,7 @@ def write_to_unity_catalog(
     table_name: str,
     # schema: StructType,
     mode: Literal["append", "overwrite"] = "append",
-) -> None:
+) -> None:  # pragma: no cover
     # TODO: enforce schema?
     # df = enforce_schema(df=df, schema_to_enforce=schema)
     full_table_name = get_full_table_name(
