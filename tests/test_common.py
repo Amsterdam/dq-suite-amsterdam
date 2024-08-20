@@ -135,7 +135,7 @@ def test_get_full_table_name():
     name = get_full_table_name(catalog_name=catalog_name, table_name=table_name)
     assert name == expected_catalog_name
     with pytest.raises(ValueError):
-        get_full_table_name(
+        assert get_full_table_name(
             catalog_name="catalog_wrong_suffix", table_name=table_name
         )
 
