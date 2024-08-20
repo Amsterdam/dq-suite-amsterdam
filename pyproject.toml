@@ -29,6 +29,7 @@ dev = [
     'mypy~=1.4.1',
     'pylint ~= 2.16',
     'autoflake ~= 2.0.1',
+    'coverage ~= 7.6.1',
 ]
 
 [tool.isort]

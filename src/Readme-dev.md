@@ -24,3 +24,16 @@ and finally
 autoflake src  # removes unused imports and unused variables
 ```
 from the terminal. 
+
+
+
+# Code coverage
+The `coverage` library can be used for measuring code coverage of our unit tests. Since we're using `pytest`, 
+the coverage can be measured with 
+```shell
+coverage run -m pytest
+```
+and subsequently displayed with
+```shell
+coverage report -m
+```
