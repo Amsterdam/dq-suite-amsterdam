@@ -12,16 +12,18 @@ pip install dq-suite-amsterdam
 ```
 
 To validate your first table:
-- define `json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
+- define `dq_rule_json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
+- define `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
 - load the table requiring a data quality check into a PySpark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
 
 ```python
 import dq_suite
 
-validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, catalog_name="dpxx_dev",
-                                                                 table_name="showcase_table",
-                                                                 check_name="showcase_check")
-dq_suite.run(json_path=json_path, df=df, validation_settings_obj=validation_settings_obj)
+validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, 
+                                                      catalog_name="dpxx_dev",
+                                                      table_name=table_name,
+                                                      check_name="name_of_check_goes_here")
+dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validation_settings_obj)
 ```
 Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
