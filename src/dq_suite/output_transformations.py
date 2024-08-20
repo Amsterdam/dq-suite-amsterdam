@@ -1,15 +1,32 @@
-from typing import Any
+from typing import Any, List
 
-import pandas as pd
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col
 
 from src.dq_suite import ValidationSettings
-from src.dq_suite.common import DataQualityRulesDict
+from src.dq_suite.common import (
+    DataQualityRulesDict,
+    is_empty_dataframe,
+    write_to_unity_catalog,
+)
+from src.schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
+from src.schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
+from src.schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
+from src.schemas.regel import SCHEMA as REGEL_SCHEMA
+from src.schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+
+
+def list_of_dicts_to_df(
+    list_of_dicts: List[dict], spark_session: SparkSession
+) -> DataFrame:
+    return spark_session.createDataFrame(Row(**x) for x in list_of_dicts)
 
 
 def extract_dq_validatie_data(
-    df_name: str, dq_result: dict, catalog_name: str, spark: SparkSession
+    df_name: str,
+    dq_result: dict,
+    catalog_name: str,
+    spark_session: SparkSession,
 ) -> None:
     """
     [insert explanation here]
@@ -17,7 +34,7 @@ def extract_dq_validatie_data(
     :param df_name: Name of the tables
     :param dq_result:  # TODO: add dataclass?
     :param catalog_name:
-    :param spark:
+    :param spark_session:
     """
 
     # Access run_time attribute
@@ -42,12 +59,17 @@ def extract_dq_validatie_data(
                 "dqResultaat": output_text,
             }
         )
-    # Create a DataFrame
-    df_dq_validatie = pd.DataFrame(extracted_data)
-    if not df_dq_validatie.empty:
-        spark.createDataFrame(df_dq_validatie).write.mode("append").option(
-            "overwriteSchema", "true"
-        ).saveAsTable(f"{catalog_name}.dataquality.validatie")
+
+    df_validatie = list_of_dicts_to_df(
+        list_of_dicts=extracted_data, spark_session=spark_session
+    )
+    if not is_empty_dataframe(df=df_validatie):
+        write_to_unity_catalog(
+            df=df_validatie,
+            catalog_name=catalog_name,
+            table_name="validatie",
+            schema=VALIDATIE_SCHEMA,
+        )
     else:
         # TODO: implement (raise error?)
         pass
@@ -59,7 +81,7 @@ def extract_dq_afwijking_data(
     df: DataFrame,
     unique_identifier: str,
     catalog_name: str,
-    spark: SparkSession,
+    spark_session: SparkSession,
 ) -> None:
     """
     [insert explanation here]
@@ -69,7 +91,7 @@ def extract_dq_afwijking_data(
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
     :param catalog_name:
-    :param spark:
+    :param spark_session:
     """
     # Extracting information from the JSON
     run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
@@ -117,12 +139,16 @@ def extract_dq_afwijking_data(
                         }
                     )
 
-    # Create a DataFrame
-    df_dq_afwijking = pd.DataFrame(extracted_data)
-    if not df_dq_afwijking.empty:
-        spark.createDataFrame(df_dq_afwijking).write.mode("append").option(
-            "overwriteSchema", "true"
-        ).saveAsTable(f"{catalog_name}.dataquality.afwijking")
+    df_afwijking = list_of_dicts_to_df(
+        list_of_dicts=extracted_data, spark_session=spark_session
+    )
+    if not is_empty_dataframe(df=df_afwijking):
+        write_to_unity_catalog(
+            df=df_afwijking,
+            catalog_name=catalog_name,
+            table_name="afwijking",
+            schema=AFWIJKING_SCHEMA,
+        )
     else:
         # TODO: implement (raise error?)
         pass
@@ -149,10 +175,15 @@ def create_brontabel(
             {"bronTabelId": name, "uniekeSleutel": unique_identifier}
         )
 
-    df_brontable = pd.DataFrame(extracted_data)
-    spark_session.createDataFrame(df_brontable).write.mode("append").option(
-        "overwriteSchema", "true"
-    ).saveAsTable(f"{catalog_name}.dataquality.brontabel")
+    df_brontabel = list_of_dicts_to_df(
+        list_of_dicts=extracted_data, spark_session=spark_session
+    )
+    write_to_unity_catalog(
+        df=df_brontabel,
+        catalog_name=catalog_name,
+        table_name="brontabel",
+        schema=BRONTABEL_SCHEMA,
+    )
 
 
 def create_bronattribute(
@@ -190,13 +221,18 @@ def create_bronattribute(
                             }
                         )
 
-    df_bronattribuut = pd.DataFrame(extracted_data)
-    spark_session.createDataFrame(df_bronattribuut).write.mode("append").option(
-        "overwriteSchema", "true"
-    ).saveAsTable(f"{catalog_name}.dataquality.bronattribuut")
+    df_bronattribuut = list_of_dicts_to_df(
+        list_of_dicts=extracted_data, spark_session=spark_session
+    )
+    write_to_unity_catalog(
+        df=df_bronattribuut,
+        catalog_name=catalog_name,
+        table_name="bronattribuut",
+        schema=BRONATTRIBUUT_SCHEMA,
+    )
 
 
-def create_dqRegel(
+def create_dq_regel(
     dq_rules_dict: DataQualityRulesDict,
     catalog_name: str,
     spark_session: SparkSession,
@@ -221,16 +257,22 @@ def create_dqRegel(
                     attribute_name = parameter["column"]
                     extracted_data.append(
                         {
-                            "regelId": f"{bron_tabel}_{rule_name}_{attribute_name}",
+                            "regelId": f"{bron_tabel}_{rule_name}_"
+                            f"{attribute_name}",
                             "bronAttribuutId": f"{bron_tabel}_{attribute_name}",
                             "bronTabelId": bron_tabel,
                         }
                     )
 
-    df_dqRegel = pd.DataFrame(extracted_data)
-    spark_session.createDataFrame(df_dqRegel).write.mode("append").option(
-        "overwriteSchema", "true"
-    ).saveAsTable(f"{catalog_name}.dataquality.regel")
+    df_regel = list_of_dicts_to_df(
+        list_of_dicts=extracted_data, spark_session=spark_session
+    )
+    write_to_unity_catalog(
+        df=df_regel,
+        catalog_name=catalog_name,
+        table_name="regel",
+        schema=REGEL_SCHEMA,
+    )
 
 
 def write_non_validation_tables(
@@ -247,7 +289,7 @@ def write_non_validation_tables(
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
     )
-    create_dqRegel(
+    create_dq_regel(
         dq_rules_dict=dq_rules_dict,
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
