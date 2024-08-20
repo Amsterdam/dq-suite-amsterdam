@@ -3,11 +3,11 @@ from typing import Any, List
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col
 
-from src.schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
-from src.schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
-from src.schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
-from src.schemas.regel import SCHEMA as REGEL_SCHEMA
-from src.schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+from ..schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
+from ..schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
+from ..schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
+from ..schemas.regel import SCHEMA as REGEL_SCHEMA
+from ..schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 from .common import (
     DataQualityRulesDict,
