@@ -2,23 +2,34 @@ from typing import Any, List
 
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col
+from pyspark.sql.types import StructType
 
-from src.dq_suite import ValidationSettings
-from src.dq_suite.common import (
+from .common import (
     DataQualityRulesDict,
+    ValidationSettings,
     is_empty_dataframe,
     write_to_unity_catalog,
 )
-from src.schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
-from src.schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
-from src.schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
-from src.schemas.regel import SCHEMA as REGEL_SCHEMA
-from src.schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
+from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
+from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
+from .schemas.regel import SCHEMA as REGEL_SCHEMA
+from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+
+
+def create_empty_dataframe(
+    spark_session: SparkSession, schema: StructType
+) -> DataFrame:
+    return spark_session.sparkContext.parallelize([]).toDF(schema)
 
 
 def list_of_dicts_to_df(
-    list_of_dicts: List[dict], spark_session: SparkSession
+    list_of_dicts: List[dict], spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
+    if len(list_of_dicts) == 0:
+        return create_empty_dataframe(
+            spark_session=spark_session, schema=schema
+        )
     return spark_session.createDataFrame(Row(**x) for x in list_of_dicts)
 
 
@@ -61,7 +72,9 @@ def extract_dq_validatie_data(
         )
 
     df_validatie = list_of_dicts_to_df(
-        list_of_dicts=extracted_data, spark_session=spark_session
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=VALIDATIE_SCHEMA,
     )
     if not is_empty_dataframe(df=df_validatie):
         write_to_unity_catalog(
@@ -140,7 +153,9 @@ def extract_dq_afwijking_data(
                     )
 
     df_afwijking = list_of_dicts_to_df(
-        list_of_dicts=extracted_data, spark_session=spark_session
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=AFWIJKING_SCHEMA,
     )
     if not is_empty_dataframe(df=df_afwijking):
         write_to_unity_catalog(
@@ -176,7 +191,9 @@ def create_brontabel(
         )
 
     df_brontabel = list_of_dicts_to_df(
-        list_of_dicts=extracted_data, spark_session=spark_session
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=BRONTABEL_SCHEMA,
     )
     write_to_unity_catalog(
         df=df_brontabel,
@@ -222,7 +239,9 @@ def create_bronattribute(
                         )
 
     df_bronattribuut = list_of_dicts_to_df(
-        list_of_dicts=extracted_data, spark_session=spark_session
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=BRONATTRIBUUT_SCHEMA,
     )
     write_to_unity_catalog(
         df=df_bronattribuut,
@@ -265,7 +284,9 @@ def create_dq_regel(
                     )
 
     df_regel = list_of_dicts_to_df(
-        list_of_dicts=extracted_data, spark_session=spark_session
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=REGEL_SCHEMA,
     )
     write_to_unity_catalog(
         df=df_regel,

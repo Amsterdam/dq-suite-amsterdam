@@ -4,14 +4,9 @@ from great_expectations.checkpoint import Checkpoint
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
 
-from src.dq_suite.common import (
-    DataQualityRulesDict,
-    Rule,
-    RulesDict,
-    ValidationSettings,
-)
-from src.dq_suite.input_helpers import get_data_quality_rules_dict
-from src.dq_suite.output_transformations import (
+from .common import DataQualityRulesDict, Rule, RulesDict, ValidationSettings
+from .input_helpers import get_data_quality_rules_dict
+from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
 )
