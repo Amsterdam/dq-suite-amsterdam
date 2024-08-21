@@ -5,7 +5,7 @@ import requests
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
-from src.dq_suite.common import DataQualityRulesDict, Rule
+from .common import DataQualityRulesDict, Rule
 
 
 def export_schema(dataset: str, spark: SparkSession) -> str:

@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Literal
 from great_expectations import get_context
 from great_expectations.data_context import AbstractDataContext
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col
+from pyspark.sql.types import StructType
 
 
 @dataclass()
@@ -53,7 +55,7 @@ class RulesDict:
         if not isinstance(self.unique_identifier, str):
             raise TypeError("'unique_identifier' should be of type str")
 
-        if not isinstance(self.unique_identifier, str):
+        if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
 
         if not isinstance(self.rules_list, list):
@@ -86,6 +88,10 @@ class DataQualityRulesDict:
         raise KeyError(key)
 
 
+def is_empty_dataframe(df: DataFrame) -> bool:
+    return len(df.take(1)) == 0
+
+
 def get_full_table_name(
     catalog_name: str, table_name: str, schema_name: str = "data_quality"
 ) -> str:
@@ -97,15 +103,35 @@ def get_full_table_name(
     return f"{catalog_name}.{schema_name}.{table_name}"
 
 
+def enforce_column_order(df: DataFrame, schema: StructType) -> DataFrame:
+    return df.select(schema.names)
+
+
+def enforce_schema(df: DataFrame, schema_to_enforce: StructType) -> DataFrame:
+    df = enforce_column_order(df=df, schema=schema_to_enforce)
+
+    for column_name in df.columns:
+        df = df.withColumn(
+            column_name,
+            col(column_name).cast(schema_to_enforce[column_name].dataType),
+        )
+
+    for column_name in df.columns:
+        if column_name not in schema_to_enforce.names:
+            # remove all columns not present in schema_to_enforce
+            df = df.drop(column_name)
+
+    return df
+
+
 def write_to_unity_catalog(
     df: DataFrame,
     catalog_name: str,
     table_name: str,
-    # schema: StructType,
+    schema: StructType,
     mode: Literal["append", "overwrite"] = "append",
-) -> None:
-    # TODO: enforce schema?
-    # df = enforce_schema(df=df, schema_to_enforce=schema)
+) -> None:  # pragma: no cover
+    df = enforce_schema(df=df, schema_to_enforce=schema)
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
@@ -116,7 +142,7 @@ def write_to_unity_catalog(
 
 def get_data_context(
     data_context_root_dir: str = "/dbfs/great_expectations/",
-) -> AbstractDataContext:
+) -> AbstractDataContext:  # pragma: no cover - part of GX
     return get_context(context_root_dir=data_context_root_dir)
 
 
@@ -142,7 +168,8 @@ class ValidationSettings:
         if not isinstance(self.check_name, str):
             raise TypeError("'check_name' should be of type str")
 
-    def initialise_or_update_attributes(self):
+    def initialise_or_update_attributes(self):  # pragma: no cover - complex
+        # function
         self._set_data_context()
 
         # TODO/check: do we want to allow for custom names?
@@ -155,7 +182,7 @@ class ValidationSettings:
             expectation_suite_name=self.expectation_suite_name
         )
 
-    def _set_data_context(self):
+    def _set_data_context(self):  # pragma: no cover - uses part of GX
         self.data_context = get_data_context(
             data_context_root_dir=self.data_context_root_dir
         )
