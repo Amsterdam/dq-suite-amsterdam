@@ -19,12 +19,24 @@ class Rule:
     parameters: List[Dict[str, Any]]  # Collection of parameters required for
     # evaluating the expectation
 
+    def __post_init__(self):
+        if not isinstance(self.rule_name, str):
+            raise TypeError("'rule_name' should be of type str")
+
+        if not isinstance(self.parameters, list):
+            raise TypeError(
+                "'parameters' should be of type List[Dict[str, Any]]"
+            )
+
     def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
         if key == "rule_name":
             return self.rule_name
         elif key == "parameters":
             return self.parameters
         raise KeyError(key)
+
+
+RulesList = list[Rule]  # a list of DQ rules
 
 
 @dataclass()
@@ -37,9 +49,19 @@ class RulesDict:
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
     table_name: str
-    rules_list: List[Rule]
+    rules_list: RulesList
 
-    def __getitem__(self, key) -> str | List[Rule] | None:
+    def __post_init__(self):
+        if not isinstance(self.unique_identifier, str):
+            raise TypeError("'unique_identifier' should be of type str")
+
+        if not isinstance(self.table_name, str):
+            raise TypeError("'table_name' should be of type str")
+
+        if not isinstance(self.rules_list, list):
+            raise TypeError("'rules_list' should be RulesList")
+
+    def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
             return self.unique_identifier
         elif key == "table_name":
@@ -55,6 +77,10 @@ RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 @dataclass()
 class DataQualityRulesDict:
     tables: RulesDictList
+
+    def __post_init__(self):
+        if not isinstance(self.tables, list):
+            raise TypeError("'tables' should be RulesDictList")
 
     def __getitem__(self, key) -> RulesDictList | None:
         if key == "tables":
@@ -104,7 +130,7 @@ def write_to_unity_catalog(
     table_name: str,
     schema: StructType,
     mode: Literal["append", "overwrite"] = "append",
-) -> None:
+) -> None:  # pragma: no cover
     df = enforce_schema(df=df, schema_to_enforce=schema)
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
@@ -116,7 +142,7 @@ def write_to_unity_catalog(
 
 def get_data_context(
     data_context_root_dir: str = "/dbfs/great_expectations/",
-) -> AbstractDataContext:
+) -> AbstractDataContext:  # pragma: no cover - part of GX
     return get_context(context_root_dir=data_context_root_dir)
 
 
@@ -132,7 +158,18 @@ class ValidationSettings:
     checkpoint_name: str | None = None
     run_name: str | None = None
 
-    def initialise_or_update_attributes(self):
+    def __post_init__(self):
+        if not isinstance(self.spark_session, SparkSession):
+            raise TypeError("'spark_session' should be of type SparkSession")
+        if not isinstance(self.catalog_name, str):
+            raise TypeError("'catalog_name' should be of type str")
+        if not isinstance(self.table_name, str):
+            raise TypeError("'table_name' should be of type str")
+        if not isinstance(self.check_name, str):
+            raise TypeError("'check_name' should be of type str")
+
+    def initialise_or_update_attributes(self):  # pragma: no cover - complex
+        # function
         self._set_data_context()
 
         # TODO/check: do we want to allow for custom names?
@@ -145,7 +182,7 @@ class ValidationSettings:
             expectation_suite_name=self.expectation_suite_name
         )
 
-    def _set_data_context(self):
+    def _set_data_context(self):  # pragma: no cover - uses part of GX
         self.data_context = get_data_context(
             data_context_root_dir=self.data_context_root_dir
         )
