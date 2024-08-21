@@ -4,11 +4,11 @@
 
 -- COMMAND ----------
 
-create schema if not exists ${catalog}.dataquality
+create schema if not exists ${catalog}.data_quality
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.dataquality.regel (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
   `regelId` STRING,
   `bronTabelId` STRING,
   `bronAttribuutId` STRING)
@@ -24,7 +24,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.dataquality.bronattribuut (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.bronattribuut (
   name STRING,
   `bronAttribuutId` STRING,
   `bronTabelId` STRING,
@@ -41,7 +41,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.dataquality.validatie (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
   regelId STRING,
   aantalValideRecords BIGINT,
   aantalReferentieRecords BIGINT,
@@ -60,7 +60,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.dataquality.afwijking (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.afwijking (
   regelId STRING,
   identifierVeldWaarde STRING,
   afwijkendeAttribuutWaarde STRING,
@@ -77,7 +77,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.dataquality.brontabel (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
   bronTabelId STRING,
   uniekeSleutel STRING)
 USING delta
