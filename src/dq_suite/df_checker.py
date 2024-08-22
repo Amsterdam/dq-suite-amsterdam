@@ -46,21 +46,60 @@ def get_batch_request_and_validator(
     return batch_request, validator
 
 
+def create_action_list(
+    validation_settings_obj: ValidationSettings,
+) -> List[dict[str, Any]]:
+    action_list = [
+        {  # TODO/check: do we really have to store the validation results?
+            "name": "store_validation_result",
+            "action": {"class_name": "StoreValidationResultAction"},
+        },
+    ]
+
+    if validation_settings_obj.send_slack_notification & (
+        validation_settings_obj.slack_webhook is not None
+    ):
+        action_list.append(
+            {
+                "name": "send_slack_notification",
+                "action": {
+                    "class_name": "SlackNotificationAction",
+                    "slack_webhook": validation_settings_obj.slack_webhook,
+                    "notify_on": validation_settings_obj.notify_on,
+                },
+            }
+        )
+
+    if validation_settings_obj.send_ms_teams_notification & (
+        validation_settings_obj.ms_teams_webhook is not None
+    ):
+        action_list.append(
+            {
+                "name": "send_ms_teams_notification",
+                "action": {
+                    "class_name": "MicrosoftTeamsNotificationAction",
+                    "slack_webhook": validation_settings_obj.ms_teams_webhook,
+                    "notify_on": validation_settings_obj.notify_on,
+                },
+            }
+        )
+
+    return action_list
+
+
 def create_and_run_checkpoint(
     validation_settings_obj: ValidationSettings, batch_request: Any
 ) -> Any:
+    action_list = create_action_list(
+        validation_settings_obj=validation_settings_obj
+    )
     checkpoint = Checkpoint(
         name=validation_settings_obj.checkpoint_name,
         run_name_template=validation_settings_obj.run_name,
         data_context=validation_settings_obj.data_context,
         batch_request=batch_request,
         expectation_suite_name=validation_settings_obj.expectation_suite_name,
-        action_list=[
-            {  # TODO/check: do we really have to store the validation results?
-                "name": "store_validation_result",
-                "action": {"class_name": "StoreValidationResultAction"},
-            },  # TODO: add more options via parameters, e.g. Slack output
-        ],
+        action_list=action_list,
     )
 
     validation_settings_obj.data_context.add_or_update_checkpoint(
