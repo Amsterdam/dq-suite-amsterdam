@@ -157,6 +157,11 @@ class ValidationSettings:
     expectation_suite_name: str | None = None
     checkpoint_name: str | None = None
     run_name: str | None = None
+    send_slack_notification: bool = False
+    slack_webhook: str | None = None
+    send_ms_teams_notification: bool = False
+    ms_teams_webhook: str | None = None
+    notify_on: Literal["all", "success", "failure"] = "failure"
 
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
