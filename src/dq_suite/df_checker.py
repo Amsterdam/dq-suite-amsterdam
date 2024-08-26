@@ -78,7 +78,8 @@ def create_action_list(
                 "name": "send_ms_teams_notification",
                 "action": {
                     "class_name": "MicrosoftTeamsNotificationAction",
-                    "slack_webhook": validation_settings_obj.ms_teams_webhook,
+                    "microsoft_teams_webhook":
+                        validation_settings_obj.ms_teams_webhook,
                     "notify_on": validation_settings_obj.notify_on,
                 },
             }
