@@ -68,12 +68,10 @@ def create_action_list(
                     "class_name": "SlackNotificationAction",
                     "slack_webhook": validation_settings_obj.slack_webhook,
                     "notify_on": validation_settings_obj.notify_on,
-                    "renderer":
-                        {
-                            "module_name":
-                                "great_expectations.render.renderer.slack_renderer",
-                            "class_name": "SlackRenderer",
-                        },
+                    "renderer": {
+                        "module_name": "great_expectations.render.renderer.slack_renderer",
+                        "class_name": "SlackRenderer",
+                    },
                 },
             }
         )
@@ -86,15 +84,12 @@ def create_action_list(
                 "name": "send_ms_teams_notification",
                 "action": {
                     "class_name": "MicrosoftTeamsNotificationAction",
-                    "microsoft_teams_webhook":
-                        validation_settings_obj.ms_teams_webhook,
+                    "microsoft_teams_webhook": validation_settings_obj.ms_teams_webhook,
                     "notify_on": validation_settings_obj.notify_on,
-                    "renderer":
-                        {
-                            "module_name":
-                                "great_expectations.render.renderer.microsoft_teams_renderer",
-                            "class_name": "MicrosoftTeamsRenderer",
-                        },
+                    "renderer": {
+                        "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
+                        "class_name": "MicrosoftTeamsRenderer",
+                    },
                 },
             }
         )
