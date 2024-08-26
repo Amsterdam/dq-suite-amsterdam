@@ -49,12 +49,14 @@ def get_batch_request_and_validator(
 def create_action_list(
     validation_settings_obj: ValidationSettings,
 ) -> List[dict[str, Any]]:
-    action_list = [
-        {  # TODO/check: do we really have to store the validation results?
-            "name": "store_validation_result",
-            "action": {"class_name": "StoreValidationResultAction"},
-        },
-    ]
+    action_list = list()
+
+    # action_list.append(
+    #     {  # TODO/check: do we really have to store the validation results?
+    #         "name": "store_validation_result",
+    #         "action": {"class_name": "StoreValidationResultAction"},
+    #     }
+    # )
 
     if validation_settings_obj.send_slack_notification & (
         validation_settings_obj.slack_webhook is not None
