@@ -66,6 +66,12 @@ def create_action_list(
                     "class_name": "SlackNotificationAction",
                     "slack_webhook": validation_settings_obj.slack_webhook,
                     "notify_on": validation_settings_obj.notify_on,
+                    "renderer":
+                        {
+                            "module_name":
+                                "great_expectations.render.renderer.slack_renderer",
+                            "class_name": "SlackRenderer",
+                        },
                 },
             }
         )
