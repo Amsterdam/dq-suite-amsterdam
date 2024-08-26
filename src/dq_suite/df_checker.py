@@ -87,6 +87,12 @@ def create_action_list(
                     "microsoft_teams_webhook":
                         validation_settings_obj.ms_teams_webhook,
                     "notify_on": validation_settings_obj.notify_on,
+                    "renderer":
+                        {
+                            "module_name":
+                                "great_expectations.render.renderer.microsoft_teams_renderer",
+                            "class_name": "MicrosoftTeamsRenderer",
+                        },
                 },
             }
         )
