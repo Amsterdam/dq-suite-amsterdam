@@ -149,7 +149,7 @@ def get_data_context(
 @dataclass()
 class ValidationSettings:
     """
-    spark_session: Spark session object
+    spark_session: SparkSession object
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
     check_name: name of data quality check
