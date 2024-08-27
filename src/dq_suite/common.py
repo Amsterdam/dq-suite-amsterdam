@@ -148,6 +148,26 @@ def get_data_context(
 
 @dataclass()
 class ValidationSettings:
+    """
+    spark_session: Spark session object
+    catalog_name: name of unity catalog
+    table_name: name of table in unity catalog
+    check_name: name of data quality check
+    data_context_root_dir: path to write GX data
+    context - default "/dbfs/great_expectations/"
+    data_context: a data context object
+    expectation_suite_name: name of the GX expectation suite
+    checkpoint_name: name of the GX checkpoint
+    run_name: name of the data quality run
+    send_slack_notification: indicator to use GX's built-in Slack
+    notification action
+    slack_webhook: webhook, recommended to store in key vault
+    send_ms_teams_notification: indicator to use GX's built-in Microsoft
+    Teams notification action
+    ms_teams_webhook: webhook, recommended to store in key vault
+    notify_on: when to send notifications, can be equal to "all",
+    "success" or "failure"
+    """
     spark_session: SparkSession
     catalog_name: str
     table_name: str
