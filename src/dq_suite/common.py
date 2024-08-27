@@ -168,6 +168,7 @@ class ValidationSettings:
     notify_on: when to send notifications, can be equal to "all",
     "success" or "failure"
     """
+
     spark_session: SparkSession
     catalog_name: str
     table_name: str
@@ -209,7 +210,7 @@ class ValidationSettings:
         self._set_run_name()
 
         # Finally, apply the (new) suite name to the data context
-        self.data_context.add_or_update_expectation_suite(
+        self.data_context.suites.add(
             expectation_suite_name=self.expectation_suite_name
         )
 

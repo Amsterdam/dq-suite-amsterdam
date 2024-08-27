@@ -27,7 +27,7 @@ def get_batch_request_and_validator(
     validation_settings_obj: ValidationSettings,
 ) -> Tuple[Any, Validator]:
     dataframe_datasource = (
-        validation_settings_obj.data_context.sources.add_or_update_spark(
+        validation_settings_obj.data_context.data_sources.add_or_update_spark(
             name="my_spark_in_memory_datasource_"
             + validation_settings_obj.check_name
         )
@@ -112,8 +112,10 @@ def create_and_run_checkpoint(
         action_list=action_list,
     )
 
-    validation_settings_obj.data_context.add_or_update_checkpoint(
-        checkpoint=checkpoint
+    (
+        validation_settings_obj.data_context.checkpoints.add(
+            checkpoint=checkpoint
+        )
     )
     checkpoint_result = checkpoint.run()
     return checkpoint_result["run_results"]
