@@ -27,6 +27,9 @@ dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validat
 ```
 Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
+See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation (e.g. Slack 
+or MS Teams webhooks for notifications, location for storing GX, etc). 
+
 
 # Create data quality schema and tables (in respective catalog of data team)
 
