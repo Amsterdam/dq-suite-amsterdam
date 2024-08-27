@@ -30,7 +30,9 @@ def list_of_dicts_to_df(
         return create_empty_dataframe(
             spark_session=spark_session, schema=schema
         )
-    return spark_session.createDataFrame((Row(**x) for x in list_of_dicts), schema=schema)
+    return spark_session.createDataFrame(
+        (Row(**x) for x in list_of_dicts), schema=schema
+    )
 
 
 def extract_dq_validatie_data(
