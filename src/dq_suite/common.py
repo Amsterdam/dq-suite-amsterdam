@@ -172,6 +172,12 @@ class ValidationSettings:
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.check_name, str):
             raise TypeError("'check_name' should be of type str")
+        if not isinstance(self.data_context_root_dir, str):
+            raise TypeError("'data_context_root_dir' should be of type str")
+        if self.notify_on not in ["all", "success", "failure"]:
+            raise ValueError(
+                "'notify_on' should be equal to 'all', 'success' or 'failure'"
+            )
 
     def initialise_or_update_attributes(self):  # pragma: no cover - complex
         # function
