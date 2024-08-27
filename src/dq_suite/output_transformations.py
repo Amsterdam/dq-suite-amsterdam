@@ -152,7 +152,6 @@ def extract_dq_afwijking_data(
                         }
                     )
 
-    print(extracted_data)
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
