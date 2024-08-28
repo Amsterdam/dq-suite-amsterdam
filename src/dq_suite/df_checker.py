@@ -1,6 +1,7 @@
 from typing import Any, List, Tuple
 
 from great_expectations.checkpoint import Checkpoint
+from great_expectations.exceptions import DataContextError
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
 
@@ -144,7 +145,10 @@ def create_and_configure_expectations(
                 kwargs[par_name] = par_value
             gx_expectation(**kwargs)
 
-    validator.save_expectation_suite(discard_failed_expectations=False)
+    try:
+        validator.save_expectation_suite(discard_failed_expectations=False)
+    except DataContextError:
+        return
 
 
 def validate(
