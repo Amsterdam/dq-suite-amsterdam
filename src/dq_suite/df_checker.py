@@ -28,22 +28,30 @@ def get_batch_request_and_validator(
 ) -> Tuple[Any, Validator]:
     dataframe_datasource = (
         validation_settings_obj.data_context.data_sources.add_or_update_spark(
-            name="my_spark_in_memory_datasource_"
-            + validation_settings_obj.check_name
+            name=f"spark_datasource_"
+                 f"{validation_settings_obj.check_name}"
         )
     )
 
     df_asset = dataframe_datasource.add_dataframe_asset(
-        name=validation_settings_obj.check_name, dataframe=df
+        name=validation_settings_obj.check_name)
+    batch_definition = df_asset.add_batch_definition_whole_dataframe(
+        name=f"{validation_settings_obj.check_name}_batch_definition"
     )
-    batch_request = df_asset.build_batch_request()
+    batch_params = {"dataframe": df}
+
+    # df_asset = dataframe_datasource.add_dataframe_asset(
+    #     name=validation_settings_obj.check_name, dataframe=df
+    # )
+    # batch_request = df_asset.build_batch_request()
+    batch = batch_definition.get_batch(batch_parameters=batch_params)
 
     validator = validation_settings_obj.data_context.get_validator(
-        batch_request=batch_request,
+        batch=batch,
         expectation_suite_name=validation_settings_obj.expectation_suite_name,
     )
 
-    return batch_request, validator
+    return batch, validator
 
 
 def create_action_list(
@@ -98,7 +106,7 @@ def create_action_list(
 
 
 def create_and_run_checkpoint(
-    validation_settings_obj: ValidationSettings, batch_request: Any
+    validation_settings_obj: ValidationSettings, batch: Any
 ) -> Any:
     action_list = create_action_list(
         validation_settings_obj=validation_settings_obj
@@ -107,7 +115,7 @@ def create_and_run_checkpoint(
         name=validation_settings_obj.checkpoint_name,
         run_name_template=validation_settings_obj.run_name,
         data_context=validation_settings_obj.data_context,
-        batch_request=batch_request,
+        batch=batch,
         expectation_suite_name=validation_settings_obj.expectation_suite_name,
         action_list=action_list,
     )
@@ -155,7 +163,7 @@ def validate(
     # Make sure all attributes are aligned before validating
     validation_settings_obj.initialise_or_update_attributes()
 
-    batch_request, validator = get_batch_request_and_validator(
+    batch, validator = get_batch_request_and_validator(
         df=df,
         validation_settings_obj=validation_settings_obj,
     )
@@ -166,7 +174,7 @@ def validate(
 
     checkpoint_output = create_and_run_checkpoint(
         validation_settings_obj=validation_settings_obj,
-        batch_request=batch_request,
+        batch=batch,
     )
 
     return checkpoint_output
