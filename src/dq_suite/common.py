@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 
-from great_expectations import get_context
+from great_expectations import get_context, ExpectationSuite
 from great_expectations.data_context import AbstractDataContext
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
@@ -209,9 +209,9 @@ class ValidationSettings:
         self._set_checkpoint_name()
         self._set_run_name()
 
-        # Finally, apply the (new) suite name to the data context
+        # Finally, add the (new) suite to the data context
         self.data_context.suites.add(
-            expectation_suite_name=self.expectation_suite_name
+            suite=ExpectationSuite(name=self.expectation_suite_name)
         )
 
     def _set_data_context(self):  # pragma: no cover - uses part of GX
