@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Literal
 
 from great_expectations import get_context, ExpectationSuite
 from great_expectations.data_context import AbstractDataContext
+from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
@@ -209,10 +210,13 @@ class ValidationSettings:
         self._set_checkpoint_name()
         self._set_run_name()
 
-        # Finally, add the (new) suite to the data context
-        self.data_context.suites.add(
-            suite=ExpectationSuite(name=self.expectation_suite_name)
-        )
+        # Finally, add/retrieve the suite to/from the data context
+        try:
+            self.data_context.suites.get(name=self.expectation_suite_name)
+        except DataContextError:
+            self.data_context.suites.add(
+                suite=ExpectationSuite(name=self.expectation_suite_name)
+            )
 
     def _set_data_context(self):  # pragma: no cover - uses part of GX
         self.data_context = get_data_context(
