@@ -34,7 +34,7 @@ or MS Teams webhooks for notifications, location for storing GX, etc).
 # Create data quality schema and tables (in respective catalog of data team)
 Before running your first dq check, create the data quality schema and tables from the notebook from repo path: scripts/data_quality_tables.sql
 - Open the notebook, connect to a cluster.
-- Select the catalog of the data team and execute the notebook. It will create xthe schema and tables if they are not yet there.
+- Select the catalog of the data team and execute the notebook. It will create the schema and tables if they are not yet there.
 
 
 # Export the schema from Unity Catalog to the Input Form
