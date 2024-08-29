@@ -51,12 +51,12 @@ def create_action_list(
 ) -> List[dict[str, Any]]:
     action_list = list()
 
-    # action_list.append(
-    #     {  # TODO/check: do we really have to store the validation results?
-    #         "name": "store_validation_result",
-    #         "action": {"class_name": "StoreValidationResultAction"},
-    #     }
-    # )
+    action_list.append(
+        {  # TODO/check: do we really have to store the validation results?
+            "name": "store_validation_result",
+            "action": {"class_name": "StoreValidationResultAction"},
+        }
+    )
 
     if validation_settings_obj.send_slack_notification & (
         validation_settings_obj.slack_webhook is not None
