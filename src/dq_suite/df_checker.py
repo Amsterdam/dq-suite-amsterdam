@@ -152,24 +152,31 @@ def get_or_add_checkpoint(
 
 
 def create_and_configure_expectations(
-    validation_rules_list: List[Rule], validator: Validator
+    validation_rules_list: List[Rule],
+    validation_settings_obj: ValidationSettings,
 ) -> None:
+    # The suite should exist by now
+    suite = validation_settings_obj.data_context.suites.get(
+        name=validation_settings_obj.expectation_suite_name)
+
     for validation_rule in validation_rules_list:
         # Get the name of expectation as defined by GX
         gx_expectation_name = validation_rule["rule_name"]
 
         # Get the actual expectation as defined by GX
-        gx_expectation = getattr(validator, gx_expectation_name)
+        gx_expectation = getattr(great_expectations.expectations.core,
+                                 humps.pascalize(gx_expectation_name))
+        # TODO: drop pascalization, and require this as input check when
+        #  ingesting JSON? Could be done via humps.is_pascalcase()
+
         for validation_parameter_dict in validation_rule["parameters"]:
             kwargs = {}
+            # TODO/check: is this loop really necessary? Intuitively, I added
+            #  the same expectation for each column - I didn't consider using
+            #  the same expectation with different parameters
             for par_name, par_value in validation_parameter_dict.items():
                 kwargs[par_name] = par_value
-            gx_expectation(**kwargs)
-
-    try:
-        validator.save_expectation_suite(discard_failed_expectations=False)
-    except DataContextError:
-        return
+            suite.add_expectation(gx_expectation(**kwargs))
 
 
 def validate(
