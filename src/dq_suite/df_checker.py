@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List
 
 import great_expectations
 import humps
@@ -6,7 +6,6 @@ from great_expectations import ValidationDefinition
 from great_expectations.checkpoint import Checkpoint
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
-from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
 
 from .common import DataQualityRulesDict, Rule, RulesDict, ValidationSettings
@@ -32,13 +31,13 @@ def get_or_add_validation_definition(
 ) -> ValidationDefinition:
     dataframe_datasource = (
         validation_settings_obj.data_context.data_sources.add_or_update_spark(
-            name=f"spark_datasource_"
-                 f"{validation_settings_obj.check_name}"
+            name=f"spark_datasource_" f"{validation_settings_obj.check_name}"
         )
     )
 
     df_asset = dataframe_datasource.add_dataframe_asset(
-        name=validation_settings_obj.check_name)
+        name=validation_settings_obj.check_name
+    )
     batch_definition = df_asset.add_batch_definition_whole_dataframe(
         name=f"{validation_settings_obj.check_name}_batch_definition"
     )
@@ -54,12 +53,15 @@ def get_or_add_validation_definition(
     #     expectation_suite_name=validation_settings_obj.expectation_suite_name,
     # )
 
-    validation_definition_name = (f"{validation_settings_obj.check_name}"
-                                  f"_validation_definition")
+    validation_definition_name = (
+        f"{validation_settings_obj.check_name}" f"_validation_definition"
+    )
     try:
         validation_definition = (
             validation_settings_obj.data_context.validation_definitions.get(
-                name=validation_definition_name))
+                name=validation_definition_name
+            )
+        )
     except DataContextError:
         validation_definition = ValidationDefinition(
             name=validation_definition_name,
@@ -69,7 +71,9 @@ def get_or_add_validation_definition(
         # expectations
         validation_definition = (
             validation_settings_obj.data_context.validation_definitions.add(
-                validation=validation_definition))
+                validation=validation_definition
+            )
+        )
 
     return validation_definition
 
@@ -127,11 +131,12 @@ def create_action_list(
 
 def get_or_add_checkpoint(
     validation_settings_obj: ValidationSettings,
-        validation_definitions_list: List[ValidationDefinition],
+    validation_definitions_list: List[ValidationDefinition],
 ) -> Checkpoint:
     try:
         checkpoint = validation_settings_obj.data_context.checkpoints.get(
-            name=validation_settings_obj.checkpoint_name)
+            name=validation_settings_obj.checkpoint_name
+        )
     except DataContextError:
         action_list = create_action_list(
             validation_settings_obj=validation_settings_obj
@@ -157,15 +162,18 @@ def create_and_configure_expectations(
 ) -> None:
     # The suite should exist by now
     suite = validation_settings_obj.data_context.suites.get(
-        name=validation_settings_obj.expectation_suite_name)
+        name=validation_settings_obj.expectation_suite_name
+    )
 
     for validation_rule in validation_rules_list:
         # Get the name of expectation as defined by GX
         gx_expectation_name = validation_rule["rule_name"]
 
         # Get the actual expectation as defined by GX
-        gx_expectation = getattr(great_expectations.expectations.core,
-                                 humps.pascalize(gx_expectation_name))
+        gx_expectation = getattr(
+            great_expectations.expectations.core,
+            humps.pascalize(gx_expectation_name),
+        )
         # TODO: drop pascalization, and require this as input check when
         #  ingesting JSON? Could be done via humps.is_pascalcase()
 

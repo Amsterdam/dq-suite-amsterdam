@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 
-from great_expectations import get_context, ExpectationSuite
+from great_expectations import ExpectationSuite, get_context
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
