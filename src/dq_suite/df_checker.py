@@ -1,5 +1,8 @@
 from typing import Any, List, Tuple
 
+import great_expectations
+import humps
+from great_expectations import ValidationDefinition
 from great_expectations.checkpoint import Checkpoint
 from great_expectations.exceptions import DataContextError
 from great_expectations.validator.validator import Validator
@@ -23,10 +26,9 @@ def filter_validation_dict_by_table_name(
     return None
 
 
-def get_batch_request_and_validator(
-    df: DataFrame,
+def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
-) -> Tuple[Any, Validator]:
+) -> ValidationDefinition:
     dataframe_datasource = (
         validation_settings_obj.data_context.data_sources.add_or_update_spark(
             name=f"spark_datasource_"
@@ -39,20 +41,36 @@ def get_batch_request_and_validator(
     batch_definition = df_asset.add_batch_definition_whole_dataframe(
         name=f"{validation_settings_obj.check_name}_batch_definition"
     )
-    batch_params = {"dataframe": df}
 
     # df_asset = dataframe_datasource.add_dataframe_asset(
     #     name=validation_settings_obj.check_name, dataframe=df
     # )
     # batch_request = df_asset.build_batch_request()
-    batch = batch_definition.get_batch(batch_parameters=batch_params)
+    # batch = batch_definition.get_batch(batch_parameters=batch_params)
 
-    validator = validation_settings_obj.data_context.get_validator(
-        batch=batch,
-        expectation_suite_name=validation_settings_obj.expectation_suite_name,
-    )
+    # validator = validation_settings_obj.data_context.get_validator(
+    #     batch=batch,
+    #     expectation_suite_name=validation_settings_obj.expectation_suite_name,
+    # )
 
-    return batch, validator
+    validation_definition_name = (f"{validation_settings_obj.check_name}"
+                                  f"_validation_definition")
+    try:
+        validation_definition = (
+            validation_settings_obj.data_context.validation_definitions.get(
+                name=validation_definition_name))
+    except DataContextError:
+        validation_definition = ValidationDefinition(
+            name=validation_definition_name,
+            data=batch_definition,
+            suite=validation_settings_obj.expectation_suite_name,
+        )  # Note: a validation definition combines data with a suite of
+        # expectations
+        validation_definition = (
+            validation_settings_obj.data_context.validation_definitions.add(
+                validation=validation_definition))
+
+    return validation_definition
 
 
 def create_action_list(
