@@ -234,11 +234,12 @@ def run(
         return
 
     # 2) perform the validation on the dataframe
-    validation_output = validate(
+    checkpoint_result = validate(
         df=df,
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
+    validation_output = checkpoint_result["run_results"]
 
     # 3) write results to unity catalog
     write_non_validation_tables(
