@@ -183,7 +183,7 @@ def validate(
     df: DataFrame,
     rules_dict: RulesDict,
     validation_settings_obj: ValidationSettings,
-) -> Any:
+) -> CheckpointResult:
     """
     [explanation goes here]
 
@@ -195,21 +195,22 @@ def validate(
     # Make sure all attributes are aligned before validating
     validation_settings_obj.initialise_or_update_attributes()
 
-    batch, validator = get_batch_request_and_validator(
-        df=df,
-        validation_settings_obj=validation_settings_obj,
-    )
-
     create_and_configure_expectations(
-        validation_rules_list=rules_dict["rules"], validator=validator
-    )
-
-    checkpoint_output = create_and_run_checkpoint(
+        validation_rules_list=rules_dict["rules"],
         validation_settings_obj=validation_settings_obj,
-        batch=batch,
     )
 
-    return checkpoint_output
+    validation_definition = get_or_add_validation_definition(
+        validation_settings_obj=validation_settings_obj,
+    )
+
+    checkpoint = get_or_add_checkpoint(
+        validation_settings_obj=validation_settings_obj,
+        validation_definitions_list=[validation_definition],
+    )
+
+    batch_params = {"dataframe": df}
+    return checkpoint.run(batch_parameters=batch_params)
 
 
 def run(
