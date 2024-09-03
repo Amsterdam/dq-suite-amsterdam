@@ -205,7 +205,7 @@ class ValidationSettings:
         # function
         self._set_data_context()
 
-        # TODO/check: do we want to allow for custom names?
+        # TODO/check: do we want to allow for custom names via parameters?
         self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
