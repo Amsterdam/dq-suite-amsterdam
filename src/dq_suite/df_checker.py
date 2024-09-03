@@ -4,6 +4,7 @@ import great_expectations
 import humps
 from great_expectations import ValidationDefinition
 from great_expectations.checkpoint import Checkpoint
+from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
 from great_expectations.validator.validator import Validator
 from pyspark.sql import DataFrame
@@ -124,28 +125,30 @@ def create_action_list(
     return action_list
 
 
-def create_and_run_checkpoint(
-    validation_settings_obj: ValidationSettings, batch: Any
-) -> Any:
-    action_list = create_action_list(
-        validation_settings_obj=validation_settings_obj
-    )
-    checkpoint = Checkpoint(
-        name=validation_settings_obj.checkpoint_name,
-        run_name_template=validation_settings_obj.run_name,
-        data_context=validation_settings_obj.data_context,
-        batch=batch,
-        expectation_suite_name=validation_settings_obj.expectation_suite_name,
-        action_list=action_list,
-    )
-
-    (
-        validation_settings_obj.data_context.checkpoints.add(
-            checkpoint=checkpoint
+def get_or_add_checkpoint(
+    validation_settings_obj: ValidationSettings,
+        validation_definitions_list: List[ValidationDefinition],
+) -> Checkpoint:
+    try:
+        checkpoint = validation_settings_obj.data_context.checkpoints.get(
+            name=validation_settings_obj.checkpoint_name)
+    except DataContextError:
+        action_list = create_action_list(
+            validation_settings_obj=validation_settings_obj
         )
-    )
-    checkpoint_result = checkpoint.run()
-    return checkpoint_result["run_results"]
+        checkpoint = Checkpoint(
+            name=validation_settings_obj.checkpoint_name,
+            validation_definitions=validation_definitions_list,
+            action_list=action_list,
+        )  # Note: a checkpoint combines validations with actions
+
+        # Add checkpoint to data context for future use
+        (
+            validation_settings_obj.data_context.checkpoints.add(
+                checkpoint=checkpoint
+            )
+        )
+    return checkpoint
 
 
 def create_and_configure_expectations(
