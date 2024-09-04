@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 
-from great_expectations import ExpectationSuite, get_context
+from great_expectations import get_context, ExpectationSuite
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
@@ -212,10 +212,9 @@ class ValidationSettings:
 
         # Finally, add/retrieve the suite to/from the data context
         try:
-            self.get_data_context().suites.get(
-                name=self.expectation_suite_name)
+            self.data_context.suites.get(name=self.expectation_suite_name)
         except DataContextError:
-            self.get_data_context().suites.add(
+            self.data_context.suites.add(
                 suite=ExpectationSuite(name=self.expectation_suite_name)
             )
 
@@ -232,6 +231,3 @@ class ValidationSettings:
 
     def _set_run_name(self):
         self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
-
-    def get_data_context(self):
-        return self.data_context
