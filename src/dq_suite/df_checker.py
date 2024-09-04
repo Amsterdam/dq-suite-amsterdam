@@ -213,7 +213,8 @@ def validate(
     validation_definition = get_or_add_validation_definition(
         validation_settings_obj=validation_settings_obj,
     )
-
+    print("***Starting validation definition run***")
+    print(validation_definition.run())
     checkpoint = get_or_add_checkpoint(
         validation_settings_obj=validation_settings_obj,
         validation_definitions_list=[validation_definition],
