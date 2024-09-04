@@ -4,6 +4,7 @@ import great_expectations
 import humps
 from great_expectations import ValidationDefinition
 from great_expectations.checkpoint import Checkpoint
+from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
@@ -81,7 +82,7 @@ def get_or_add_validation_definition(
 
 def create_action_list(
     validation_settings_obj: ValidationSettings,
-) -> List[dict[str, Any]]:
+) -> List[CheckpointAction]:
     action_list = list()
 
     # action_list.append(
