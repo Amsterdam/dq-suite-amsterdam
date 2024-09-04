@@ -43,17 +43,6 @@ def get_or_add_validation_definition(
         name=f"{validation_settings_obj.check_name}_batch_definition"
     )
 
-    # df_asset = dataframe_datasource.add_dataframe_asset(
-    #     name=validation_settings_obj.check_name, dataframe=df
-    # )
-    # batch_request = df_asset.build_batch_request()
-    # batch = batch_definition.get_batch(batch_parameters=batch_params)
-
-    # validator = validation_settings_obj.data_context.get_validator(
-    #     batch=batch,
-    #     expectation_suite_name=validation_settings_obj.expectation_suite_name,
-    # )
-
     validation_definition_name = (
         f"{validation_settings_obj.check_name}" f"_validation_definition"
     )
@@ -214,7 +203,7 @@ def validate(
         validation_settings_obj=validation_settings_obj,
     )
     print("***Starting validation definition run***")
-    print(validation_definition.run())
+    print(validation_definition.run(batch_parameters={"dataframe": df}))
     checkpoint = get_or_add_checkpoint(
         validation_settings_obj=validation_settings_obj,
         validation_definitions_list=[validation_definition],
