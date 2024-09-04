@@ -66,7 +66,8 @@ def get_or_add_validation_definition(
         validation_definition = ValidationDefinition(
             name=validation_definition_name,
             data=batch_definition,
-            suite=validation_settings_obj.expectation_suite_name,
+            suite=validation_settings_obj.data_context.suites.get(
+                validation_settings_obj.expectation_suite_name),
         )  # Note: a validation definition combines data with a suite of
         # expectations
         validation_definition = (
