@@ -212,9 +212,10 @@ class ValidationSettings:
 
         # Finally, add/retrieve the suite to/from the data context
         try:
-            self.data_context.suites.get(name=self.expectation_suite_name)
+            self.get_data_context().suites.get(
+                name=self.expectation_suite_name)
         except DataContextError:
-            self.data_context.suites.add(
+            self.get_data_context().suites.add(
                 suite=ExpectationSuite(name=self.expectation_suite_name)
             )
 
@@ -231,3 +232,6 @@ class ValidationSettings:
 
     def _set_run_name(self):
         self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
+
+    def get_data_context(self):
+        return self.data_context

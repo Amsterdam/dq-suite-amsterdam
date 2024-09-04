@@ -30,7 +30,7 @@ def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
 ) -> ValidationDefinition:
     dataframe_datasource = (
-        validation_settings_obj.data_context.data_sources.add_or_update_spark(
+        validation_settings_obj.get_data_context().data_sources.add_or_update_spark(
             name=f"spark_datasource_" f"{validation_settings_obj.check_name}"
         )
     )
@@ -48,7 +48,7 @@ def get_or_add_validation_definition(
     # batch_request = df_asset.build_batch_request()
     # batch = batch_definition.get_batch(batch_parameters=batch_params)
 
-    # validator = validation_settings_obj.data_context.get_validator(
+    # validator = validation_settings_obj.get_data_context().get_validator(
     #     batch=batch,
     #     expectation_suite_name=validation_settings_obj.expectation_suite_name,
     # )
@@ -58,7 +58,7 @@ def get_or_add_validation_definition(
     )
     try:
         validation_definition = (
-            validation_settings_obj.data_context.validation_definitions.get(
+            validation_settings_obj.get_data_context().validation_definitions.get(
                 name=validation_definition_name
             )
         )
@@ -70,7 +70,7 @@ def get_or_add_validation_definition(
         )  # Note: a validation definition combines data with a suite of
         # expectations
         validation_definition = (
-            validation_settings_obj.data_context.validation_definitions.add(
+            validation_settings_obj.get_data_context().validation_definitions.add(
                 validation=validation_definition
             )
         )
@@ -134,7 +134,7 @@ def get_or_add_checkpoint(
     validation_definitions_list: List[ValidationDefinition],
 ) -> Checkpoint:
     try:
-        checkpoint = validation_settings_obj.data_context.checkpoints.get(
+        checkpoint = validation_settings_obj.get_data_context().checkpoints.get(
             name=validation_settings_obj.checkpoint_name
         )
     except DataContextError:
@@ -149,7 +149,7 @@ def get_or_add_checkpoint(
 
         # Add checkpoint to data context for future use
         (
-            validation_settings_obj.data_context.checkpoints.add(
+            validation_settings_obj.get_data_context().checkpoints.add(
                 checkpoint=checkpoint
             )
         )
@@ -161,7 +161,7 @@ def create_and_configure_expectations(
     validation_settings_obj: ValidationSettings,
 ) -> None:
     # The suite should exist by now
-    suite = validation_settings_obj.data_context.suites.get(
+    suite = validation_settings_obj.get_data_context().suites.get(
         name=validation_settings_obj.expectation_suite_name
     )
 
