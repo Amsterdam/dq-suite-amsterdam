@@ -183,3 +183,161 @@ def convert_to_string(df):
     for col in df.columns:
         df = df.withColumn(col, df[col].astype("string"))
     return df
+
+
+def extract_dq_profilingtabel_data(df_name, validation_results_dict):
+    """
+    Extracts relevant profiling data from the validation results dictionary and returns a DataFrame.
+    
+    : df_name (str): The name of the DataFrame.
+    : validation_results_dict (dict): The dictionary containing validation results.
+    
+    : Return
+    : pd.DataFrame: A DataFrame containing the extracted profiling data.
+    """
+    # Access run_time attribute
+    run_time = validation_results_dict["meta"]["run_id"]["run_time"]
+    
+    # Extracted data
+    extracted_data = []
+    
+    # Access the column keys
+    attributes = validation_results_dict["meta"]["expectation_suite_meta"]['columns']
+    attributes_list = list(attributes.keys())
+    
+    extracted_data.append({ 
+        "id": f"profiling_{df_name}",
+        "bronTabelId": df_name,
+        "aantalRecords": validation_results_dict["results"][0]["result"]["observed_value"],
+        # "aantalNietUniekeRecords" : non_unique_count,
+        "aantalAttributen": len(attributes_list),
+        "dqDatum": run_time
+    })
+
+    # Create a DataFrame
+    df_dq_profilingtabel = pd.DataFrame(extracted_data)
+
+    return df_dq_profilingtabel
+
+
+def extract_dq_profilingattribuut_data(df_name, validation_results_dict):
+    """
+    Extract data quality profiling information from validation results.
+    """
+    run_time = validation_results_dict["meta"]["run_id"]["run_time"]
+    extracted_data = []
+    column_data = {}
+    
+    for result in validation_results_dict["results"]:
+        attribute = result["expectation_config"]["kwargs"].get("column", None)
+        if attribute is None:
+            continue
+
+        if attribute not in column_data:
+            column_data[attribute] = {
+                "id": f"profiling_{df_name}_{attribute}",
+                "bronAttribuutId": f"{df_name}_{attribute}",
+                "vulgraad": None,
+                "aantalUniekeWaardes": None,
+                "minWaarde": None,
+                "maxWaarde": None,
+                "dqDatum": run_time
+            }
+        
+        if result["expectation_config"]["expectation_type"] == "expect_column_unique_value_count_to_be_between":
+            unique_values = result["result"].get("observed_value", None)
+            missing_values = result["result"].get("missing_count", 0)
+            column_data[attribute].update({
+                "vulgraad": missing_values,
+                "aantalUniekeWaardes": unique_values
+            })
+        
+        elif result["expectation_config"]["expectation_type"] == "expect_column_min_to_be_between":
+            min_value = result["result"].get("observed_value", None)
+            column_data[attribute]["minWaarde"] = min_value
+
+        elif result["expectation_config"]["expectation_type"] == "expect_column_max_to_be_between":
+            max_value = result["result"].get("observed_value", None)
+            column_data[attribute]["maxWaarde"] = max_value
+
+    # Convert the dictionary to a DataFrame
+    df_dq_profilingattribuut = pd.DataFrame(column_data.values())
+    return df_dq_profilingattribuut
+
+
+
+# def extract_dq_profilingattribuut_data(df_name, validation_results_dict):
+#     """
+#     Extract data quality profiling information from validation results.
+#     """
+#     # Access run_time attribute
+#     run_time = validation_results_dict["meta"]["run_id"]["run_time"]
+    
+#     # Extracted data
+#     extracted_data = []
+#     processed_columns = set() 
+    
+#     # Initialize default values for min and max
+#     min_value = None
+#     max_value = None
+    
+#     # Loop through the results
+#     for result in validation_results_dict["results"]:
+        
+#         # Get the attribute name
+#         attribute = result["expectation_config"]["kwargs"].get("column", None)
+#         if attribute is None:
+#             continue  # Skip if no column is specified
+            
+#         # Handle the unique value count expectation
+#         if result["expectation_config"]["expectation_type"] == "expect_column_unique_value_count_to_be_between":
+#             if attribute not in processed_columns:
+#                 unique_values = result["result"]["observed_value"]
+#                 missing_values = result["result"].get("missing_count", 0)
+#                 processed_columns.add(attribute)
+                
+#                 # Append the extracted data
+#                 extracted_data.append({ 
+#                     "id": f"profiling_{df_name}_{attribute}",
+#                     "bronAttribuutId": f"{df_name}_{attribute}",
+#                     "vulgraad": missing_values,
+#                     "aantalUniekeWaardes": unique_values,
+#                     "minWaarde": min_value,
+#                     "maxWaarde": max_value,
+#                     "dqDatum": run_time
+#                 })
+
+#         # Handle min value expectation
+#         elif result["expectation_config"]["expectation_type"] == "expect_column_min_to_be_between":
+#             min_value = result["result"].get("observed_value", None)
+#             # Append the extracted data
+#             extracted_data.append({ 
+#                     "id": f"profiling_{df_name}_{attribute}",
+#                     "bronAttribuutId": f"{df_name}_{attribute}",
+#                     "vulgraad": missing_values,
+#                     "aantalUniekeWaardes": unique_values,
+#                     "minWaarde": min_value,
+#                     "maxWaarde": max_value,
+#                     "dqDatum": run_time
+#                 })
+#             min_value = None
+#         # Handle max value expectation
+#         elif result["expectation_config"]["expectation_type"] == "expect_column_max_to_be_between":
+#             max_value = result["result"].get("observed_value", None)
+#             # Append the extracted data
+#             extracted_data.append({ 
+#                     "id": f"profiling_{df_name}_{attribute}",
+#                     "bronAttribuutId": f"{df_name}_{attribute}",
+#                     "vulgraad": missing_values,
+#                     "aantalUniekeWaardes": unique_values,
+#                     "minWaarde": min_value,
+#                     "maxWaarde": max_value,
+#                     "dqDatum": run_time
+#                 })
+#             max_value = None
+
+
+#     # Create a DataFrame
+#     df_dq_profilingattribuut = pd.DataFrame(extracted_data)
+#     return df_dq_profilingattribuut
+

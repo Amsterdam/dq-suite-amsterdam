@@ -11,10 +11,10 @@ from great_expectations.profile.basic_dataset_profiler import BasicDatasetProfil
 from great_expectations.render.renderer import *
 from great_expectations.render.view import DefaultJinjaPageView
 from great_expectations.dataset.sparkdf_dataset import SparkDFDataset
-from IPython.display import HTML, display
+from IPython.display import HTML, display, JSON
 
 from dq_suite.input_validator import validate_dqrules
-from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, create_brontabel, create_bronattribute, create_dqRegel, convert_to_string
+from dq_suite.output_transformations import extract_dq_validatie_data, extract_dq_afwijking_data, extract_dq_profilingtabel_data, extract_dq_profilingattribuut_data, create_brontabel, create_bronattribute, create_dqRegel, convert_to_string
 
 
 def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any], Dict[str, Tuple[Any, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -35,6 +35,7 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
     :rtype: Tuple[Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]
     """
     results = {}
+    profiling = {}
     name = check_name
     validate_dqrules(dq_rules)
     rule_json = json.loads(dq_rules)
@@ -48,15 +49,27 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
         print(f"{df.table_name} profiling result: ")
         df_string = convert_to_string(df)
         gx_df = SparkDFDataset(df_string)
-        # for rule suggesstions
-        profiler = UserConfigurableProfiler(profile_dataset=gx_df)
-        generated_suite = profiler.build_suite()
+
+        ## for rule suggesstions
+        ## profiler = UserConfigurableProfiler(profile_dataset=gx_df)
+        # generated_suite = profiler.build_suite()
+
         #for charactarization
         expectation_suite, validation_result = BasicDatasetProfiler.profile(SparkDFDataset(df))
-        document_model = ProfilingResultsPageRenderer().render(validation_result)
-        # print(DefaultJinjaPageView().render(document_model))
-        display(HTML(DefaultJinjaPageView().render(document_model)))
+        # 3 document_model = ProfilingResultsPageRenderer().render(validation_result)
+
+         
+        # Extract validation results into a JSON-compatible structure
+        validation_results_dict = validation_result.to_json_dict()
         
+        # Print the dictionary structure to verify
+        print("Validation results dictionary structure:")
+        print(json.dumps(validation_results_dict, indent=2))
+        
+        # to visualize 
+        # # display(HTML(DefaultJinjaPageView().render(document_model)))
+       
+       
         context_root_dir = "/dbfs/great_expectations/"
         context = gx.get_context(context_root_dir=context_root_dir)
  
@@ -115,5 +128,64 @@ def df_check(dfs: list, dq_rules: str, check_name: str) -> Tuple[Dict[str, Any],
                 result_dqValidatie = extract_dq_validatie_data(df_name, result)
                 result_dqAfwijking = extract_dq_afwijking_data(df_name, result, df, unique_identifier)
                 results[df_name] = (result_dqValidatie, result_dqAfwijking)
-      
-    return  results ,brontabel_df, bronattribute_df, dqRegel_df
+
+            for key, value in validation_results_dict.items():
+                result_dq_Profilingtabel = extract_dq_profilingtabel_data(df_name, validation_results_dict)
+                profiling[df_name] = (result_dq_Profilingtabel)
+
+    return  results ,brontabel_df, bronattribute_df, dqRegel_df, profiling
+
+
+def profiling(dfs: list) -> Tuple[pd.DataFrame]:
+    """
+    Function takes DataFrame instances with specified Data Quality rules. 
+    and returns a JSON string with the DQ results with different dataframes in results dict, 
+    and returns different dfs as specified using Data Quality rules
+    
+    :param dfs: A list of DataFrame instances to process.
+    :type dfs: list[DataFrame]
+    :param dq_rules: JSON string containing the Data Quality rules to be evaluated.
+    :type dq_rules: str
+    :param check_name: Name of the run for reference purposes.
+    :type check_name: str
+    :return: A dictionary of Data Quality results for each DataFrame, 
+             along with metadata DataFrames:  brontabel_df, bronattribute_df, dqRegel_df .
+             Results contains 'result_dqValidatie' and 'result_dqAfwijking'.
+    :rtype: Tuple[Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    """
+   
+    profiling = {}
+  
+    for df in dfs:
+
+        # #Profiling
+        # Convert datetime columns to string to avoid SerializationError
+        df_name = df.table_name
+        print(f"{df_name} profiling result: ")
+        df_string = convert_to_string(df)
+        gx_df = SparkDFDataset(df_string)
+
+        ## for rule suggesstions
+        ## profiler = UserConfigurableProfiler(profile_dataset=gx_df)
+        # generated_suite = profiler.build_suite()
+
+        #for charactarization
+        expectation_suite, validation_result = BasicDatasetProfiler.profile(SparkDFDataset(df))
+        # 3 document_model = ProfilingResultsPageRenderer().render(validation_result)
+
+         
+        # Extract validation results into a JSON-compatible structure
+        validation_results_dict = validation_result.to_json_dict()
+        
+        # Print the dictionary structure to verify
+        print("Validation results dictionary structure:")
+        print(json.dumps(validation_results_dict, indent=2))
+        
+        # to visualize 
+        # # display(HTML(DefaultJinjaPageView().render(document_model)))
+        for key, value in validation_results_dict.items():
+                result_dq_Profilingtabel = extract_dq_profilingtabel_data(df_name, validation_results_dict)
+                result_dq_Profilingattribuut = extract_dq_profilingattribuut_data(df_name, validation_results_dict)
+                profiling[df_name] = (result_dq_Profilingtabel, result_dq_Profilingattribuut)
+
+    return  profiling
