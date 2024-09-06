@@ -138,7 +138,7 @@ class TestDataQualityRulesDict:
         name=expected_dataset_name,
         layer=expected_layer_name
     )
-    print(dataset_obj)
+    dataset_obj = {"name": "the_dataset", "layer": "brons"}
     data_quality_rules_dict = DataQualityRulesDict(
         dataset=dataset_obj,
         tables=expected_rules_dict_obj_list
