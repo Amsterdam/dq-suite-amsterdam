@@ -103,11 +103,11 @@ class TestDatasetDict:
 
     def test_initialisation_with_wrong_typed_name_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DatasetDict(name=123, layer=expected_layer_name)
+            assert DatasetDict(name=123, layer="brons")
 
     def test_initialisation_with_wrong_typed_layer_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DatasetDict(name=expected_dataset_name, layer=123)
+            assert DatasetDict(name="the_dataset", layer=123)
 
     def test_rule_is_dataclass(self):
         assert is_dataclass(self.dataset_obj)
@@ -146,11 +146,22 @@ class TestDataQualityRulesDict:
 
     def test_initialisation_with_wrong_typed_dataset_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DataQualityRulesDict(dataset=123, tables=expected_rules_dict_obj_list)
+            assert DataQualityRulesDict(
+                dataset=123, [
+                    tables=RulesDict(
+                        unique_identifier=expected_unique_identifier,
+                        table_name=expected_table_name,
+                        rules_list=expected_rules_list,
+                    )
+                ]
+            )
 
     def test_initialisation_with_wrong_typed_tables_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DataQualityRulesDict(dataset=dataset_obj, tables=123)
+            assert DataQualityRulesDict(
+                dataset={"name": "the_dataset", "layer": "brons"},
+                tables=123
+            )
 
     def test_get_value_from_data_quality_rules_dict_by_existing_key(self):
         assert (
