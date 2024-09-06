@@ -6,6 +6,7 @@ from pyspark.sql import SparkSession
 
 from src.dq_suite.common import (
     DataQualityRulesDict,
+    DatasetDict,
     Rule,
     RulesDict,
     ValidationSettings,
@@ -95,6 +96,31 @@ class TestRulesDict:
             assert self.rules_dict_obj["wrong_key"]
 
 
+class TestDatasetDict:
+    expected_dataset_name = "the_rule"
+    expected_layer_name = "brons"
+    dataset_obj = DatasetDict(name=expected_dataset_name, layer=expected_layer_name)
+
+    def test_initialisation_with_wrong_typed_name_raises_type_error(self):
+        with pytest.raises(TypeError):
+            assert DatasetDict(name=123, layer=expected_layer_name)
+
+    def test_initialisation_with_wrong_typed_layer_raises_type_error(self):
+        with pytest.raises(TypeError):
+            assert DatasetDict(name=expected_dataset_name, layer=123)
+
+    def test_rule_is_dataclass(self):
+        assert is_dataclass(self.dataset_obj)
+
+    def test_get_value_from_rule_by_existing_key(self):
+        assert self.dataset_obj["name"] == self.expected_dataset_name
+        assert self.dataset_obj["layer"] == self.expected_layer_name
+
+    def test_get_value_from_dataset_by_non_existing_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            assert self.dataset_obj["wrong_key"]
+
+
 class TestDataQualityRulesDict:
     rule_obj = Rule(rule_name="the_rule", parameters=[{"q": 42}])
     expected_unique_identifier = "id"
@@ -106,13 +132,24 @@ class TestDataQualityRulesDict:
         rules_list=expected_rules_list,
     )
     expected_rules_dict_obj_list = [rules_dict_obj]
+    expected_dataset_name = "the_rule"
+    expected_layer_name = "brons"
+    dataset_obj = DatasetDict(
+        name=expected_dataset_name,
+        layer=expected_layer_name
+    )
     data_quality_rules_dict = DataQualityRulesDict(
+        dataset=dataset_obj,
         tables=expected_rules_dict_obj_list
     )
 
+    def test_initialisation_with_wrong_typed_dataset_raises_type_error(self):
+        with pytest.raises(TypeError):
+            assert DataQualityRulesDict(dataset=123, tables=expected_rules_dict_obj_list)
+
     def test_initialisation_with_wrong_typed_tables_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DataQualityRulesDict(tables=123)
+            assert DataQualityRulesDict(dataset=dataset_obj, tables=123)
 
     def test_get_value_from_data_quality_rules_dict_by_existing_key(self):
         assert (
