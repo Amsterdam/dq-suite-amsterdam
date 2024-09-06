@@ -147,8 +147,9 @@ class TestDataQualityRulesDict:
     def test_initialisation_with_wrong_typed_dataset_raises_type_error(self):
         with pytest.raises(TypeError):
             assert DataQualityRulesDict(
-                dataset=123, [
-                    tables=RulesDict(
+                dataset=123,
+                tables=[
+                    RulesDict(
                         unique_identifier=expected_unique_identifier,
                         table_name=expected_table_name,
                         rules_list=expected_rules_list,
