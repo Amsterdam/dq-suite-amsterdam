@@ -72,19 +72,56 @@ class RulesDict:
         raise KeyError(key)
 
 
+@dataclass()
+class DatasetDict:
+    """
+    Groups a list of Rule-objects together with the name of the table
+    these rules are to be applied to, as well as a unique identifier used for
+    identifying outliers.
+    """
+
+    name: str
+    layer: str
+
+    def __post_init__(self):
+        if not isinstance(self.name, str):
+            raise TypeError("'name' should be of type str")
+
+        if not isinstance(self.layer, str):
+            raise TypeError("'layer' should be of type str")
+
+    def __getitem__(self, key) -> str | RulesList | None:
+        if key == "name":
+            return self.name
+        elif key == "layer":
+            return self.layer
+        raise KeyError(key)
+
+
 RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 
 
 @dataclass()
 class DataQualityRulesDict:
+    """
+    Groups a list of Table-objects together with the definition of the dataset
+    these tables are a part of.
+    """
+
+    dataset: DatasetDict
     tables: RulesDictList
 
     def __post_init__(self):
+        if not isinstance(self.dataset, dict):
+            raise TypeError("'dataset' should be DatasetDict")
+
         if not isinstance(self.tables, list):
             raise TypeError("'tables' should be RulesDictList")
 
-    def __getitem__(self, key) -> RulesDictList | None:
-        if key == "tables":
+    def __getitem__(self, key) -> str | RulesDictList | None:
+        if key == "dataset":
+            return self.dataset
+        elif key == "tables":
             return self.tables
         raise KeyError(key)
 
