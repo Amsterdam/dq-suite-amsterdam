@@ -97,7 +97,7 @@ class TestRulesDict:
 
 
 class TestDatasetDict:
-    expected_dataset_name = "the_rule"
+    expected_dataset_name = "the_dataset"
     expected_layer_name = "brons"
     dataset_obj = DatasetDict(name=expected_dataset_name, layer=expected_layer_name)
 
@@ -132,12 +132,13 @@ class TestDataQualityRulesDict:
         rules_list=expected_rules_list,
     )
     expected_rules_dict_obj_list = [rules_dict_obj]
-    expected_dataset_name = "the_rule"
+    expected_dataset_name = "the_dataset"
     expected_layer_name = "brons"
     dataset_obj = DatasetDict(
         name=expected_dataset_name,
         layer=expected_layer_name
     )
+    print(dataset_obj)
     data_quality_rules_dict = DataQualityRulesDict(
         dataset=dataset_obj,
         tables=expected_rules_dict_obj_list
