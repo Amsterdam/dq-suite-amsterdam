@@ -150,9 +150,11 @@ class TestDataQualityRulesDict:
                 dataset=123,
                 tables=[
                     RulesDict(
-                        unique_identifier=expected_unique_identifier,
-                        table_name=expected_table_name,
-                        rules_list=expected_rules_list,
+                        unique_identifier="id",
+                        table_name="the_table",
+                        rules_list=[
+                            Rule(rule_name="the_rule", parameters=[{"q": 42}])
+                        ],
                     )
                 ]
             )
