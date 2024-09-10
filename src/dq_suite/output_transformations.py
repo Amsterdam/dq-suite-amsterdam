@@ -51,8 +51,22 @@ def create_parameter_list_from_results(result: dict) -> list:
     return [parameters]
 
 
+def get_grouped_ids_per_deviating_value(
+    filtered_df: DataFrame,
+    unique_identifier: list,
+    number_of_unique_ids: int,
+) -> list:
+    ids = (
+        filtered_df.select(unique_identifier)
+        .rdd.flatMap(lambda x: x)
+        .collect()
+    )
+    return [ids[x:x+number_of_unique_ids] for x in range(0, len(ids), number_of_unique_ids)]
+
+
 def extract_dq_validatie_data(
     table_name: str,
+    dataset_name: str,
     dq_result: dict,
     catalog_name: str,
     spark_session: SparkSession,
@@ -65,10 +79,8 @@ def extract_dq_validatie_data(
     :param catalog_name:
     :param spark_session:
     """
-
-    # Access run_time attribute
+    tabel_id = f"{dataset_name}_{table_name}"
     run_time = dq_result["meta"]["run_id"].run_time
-    # Extracted data
     extracted_data = []
     for result in dq_result["results"]:
         element_count = int(result["result"].get("element_count", 0))
@@ -88,7 +100,7 @@ def extract_dq_validatie_data(
                 "dqResultaat": output_text,
                 "regelNaam": expectation_type,
                 "regelParameters": parameter_list,
-                "bronTabelId": table_name,
+                "bronTabelId": tabel_id,
             }
         )
 
@@ -115,6 +127,7 @@ def extract_dq_validatie_data(
 
 def extract_dq_afwijking_data(
     table_name: str,
+    dataset_name: str,
     dq_result: dict,  # TODO: add dataclass?
     df: DataFrame,
     unique_identifier: str,
@@ -131,13 +144,11 @@ def extract_dq_afwijking_data(
     :param catalog_name:
     :param spark_session:
     """
-    # Extracting information from the JSON
-    run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
-    # Extracted data for df
+    tabel_id = f"{dataset_name}_{table_name}"
+    run_time = dq_result["meta"]["run_id"].run_time  # Get the run timestamp
     extracted_data = []
-
-    # To store unique combinations of value and IDs
-    unique_entries = set()
+    if type(unique_identifier) is not list: unique_identifier = [unique_identifier]
+    number_of_unique_ids = len(unique_identifier)
 
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
@@ -146,38 +157,29 @@ def extract_dq_afwijking_data(
         afwijkende_attribuut_waarde = result["result"].get(
             "partial_unexpected_list", []
         )
-        for value in afwijkende_attribuut_waarde:
+        unieke_afwijkende_waardes = set()
+        for waarde in afwijkende_attribuut_waarde:
+            unieke_afwijkende_waardes.add(waarde)
+        for value in unieke_afwijkende_waardes:
             if value is None:
                 filtered_df = df.filter(col(attribute).isNull())
-                ids = (
-                    filtered_df.select(unique_identifier)
-                    .rdd.flatMap(lambda x: x)
-                    .collect()
-                )
             else:
                 filtered_df = df.filter(col(attribute) == value)
-                ids = (
-                    filtered_df.select(unique_identifier)
-                    .rdd.flatMap(lambda x: x)
-                    .collect()
-                )
-
-            for id_value in ids:
-                entry = id_value
-                if (
-                    entry not in unique_entries
-                ):  # Check for uniqueness before appending
-                    unique_entries.add(entry)
-                    extracted_data.append(
-                        {
-                            "identifierVeldWaarde": id_value,
-                            "afwijkendeAttribuutWaarde": value,
-                            "dqDatum": run_time,
-                            "regelNaam": expectation_type,
-                            "regelParameters": parameter_list,
-                            "bronTabelId": table_name,
-                        }
-                    )
+            grouped_ids = get_grouped_ids_per_deviating_value(
+                filtered_df=filtered_df,
+                unique_identifier=unique_identifier,
+                number_of_unique_ids=number_of_unique_ids
+            )
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": grouped_ids,
+                    "afwijkendeAttribuutWaarde": value,
+                    "dqDatum": run_time,
+                    "regelNaam": expectation_type,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": tabel_id,
+                }
+            )
 
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -431,18 +433,21 @@ def write_validation_table(
     validation_output: Any,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
+    dataset_name: str,
     unique_identifier: str,
 ):
     for results in validation_output.values():
         result = results["validation_result"]
         extract_dq_validatie_data(
             validation_settings_obj.table_name,
+            dataset_name,
             result,
             validation_settings_obj.catalog_name,
             validation_settings_obj.spark_session,
         )
         extract_dq_afwijking_data(
             validation_settings_obj.table_name,
+            dataset_name,
             result,
             df,
             unique_identifier,
