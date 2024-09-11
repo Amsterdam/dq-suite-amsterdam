@@ -103,7 +103,7 @@ def extract_dq_validatie_data(
                 "bronTabelId": tabel_id,
             }
         )
-
+    
     df_validatie = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
@@ -153,16 +153,27 @@ def extract_dq_afwijking_data(
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
         parameter_list = create_parameter_list_from_results(result=result)
-        attribute = result["expectation_config"]["kwargs"].get("column")
+        if "column" in result["expectation_config"]["kwargs"]:
+            attribute = result["expectation_config"]["kwargs"].get("column")
+        else:
+            attribute = result["expectation_config"]["kwargs"].get("column_list")
         afwijkende_attribuut_waarde = result["result"].get(
             "partial_unexpected_list", []
         )
         unieke_afwijkende_waardes = set()
         for waarde in afwijkende_attribuut_waarde:
+            if isinstance(waarde, dict):
+                waarde = tuple(waarde.items())
             unieke_afwijkende_waardes.add(waarde)
         for value in unieke_afwijkende_waardes:
             if value is None:
                 filtered_df = df.filter(col(attribute).isNull())
+            elif isinstance(attribute, list):
+                number_of_attrs = len(attribute)
+                filtered_df = df
+                for i in range(number_of_attrs):
+                    filtered_df = filtered_df.filter(col(attribute[i]) == value[i][1])
+                value = str(value)
             else:
                 filtered_df = df.filter(col(attribute) == value)
             grouped_ids = get_grouped_ids_per_deviating_value(
