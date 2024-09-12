@@ -10,8 +10,9 @@ create schema if not exists ${catalog}.data_quality
 
 CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
   `regelId` STRING,
-  `bronTabelId` STRING,
-  `bronAttribuutId` STRING)
+  `regelNaam` STRING,
+  `regelParameters` STRING,
+  `bronTabelId` STRING)
 USING delta
 COMMENT 'Created by the file upload UI'
 TBLPROPERTIES (
@@ -84,9 +85,3 @@ USING delta
 TBLPROPERTIES (
   'delta.minReaderVersion' = '1',
   'delta.minWriterVersion' = '2')
-
--- COMMAND ----------
-
--- MAGIC %environment
--- MAGIC "client": "1"
--- MAGIC "base_environment": ""

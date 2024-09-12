@@ -1,7 +1,7 @@
 from typing import Any, List
 
 from pyspark.sql import DataFrame, Row, SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, xxhash64
 from pyspark.sql.types import StructType
 
 from .common import (
@@ -9,12 +9,15 @@ from .common import (
     ValidationSettings,
     is_empty_dataframe,
     write_to_unity_catalog,
+    merge_df_with_unity_table,
 )
-from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+from .schemas.pre_validatie import SCHEMA as PRE_VALIDATIE_SCHEMA
+from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
+from .schemas.pre_afwijking import SCHEMA as PRE_AFWIJKING_SCHEMA
 
 
 def create_empty_dataframe(
@@ -33,8 +36,22 @@ def list_of_dicts_to_df(
     return spark_session.createDataFrame((Row(**x) for x in list_of_dicts), schema=schema)
 
 
+def construct_regel_id(
+    df: str,
+    output_columns_list: list,
+) -> DataFrame:
+    df_with_id = df.withColumn("regelId", xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")))
+    return df_with_id.select(*output_columns_list)
+    
+
+def create_parameter_list_from_results(result: dict) -> list[dict]:
+    parameters = result["expectation_config"]["kwargs"]
+    parameters.pop("batch_id", None)
+    return [parameters]
+
+
 def extract_dq_validatie_data(
-    df_name: str,
+    table_name: str,
     dq_result: dict,
     catalog_name: str,
     spark_session: SparkSession,
@@ -42,7 +59,7 @@ def extract_dq_validatie_data(
     """
     [insert explanation here]
 
-    :param df_name: Name of the tables
+    :param table_name: Name of the tables
     :param dq_result:  # TODO: add dataclass?
     :param catalog_name:
     :param spark_session:
@@ -57,28 +74,35 @@ def extract_dq_validatie_data(
         unexpected_count = int(result["result"].get("unexpected_count", 0))
         aantal_valide_records = element_count - unexpected_count
         expectation_type = result["expectation_config"]["expectation_type"]
+        parameter_list = create_parameter_list_from_results(result=result)
         attribute = result["expectation_config"]["kwargs"].get("column")
-        dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
+        
         output = result["success"]
         output_text = "success" if output else "failure"
         extracted_data.append(
             {
-                "regelId": dq_regel_id,
                 "aantalValideRecords": aantal_valide_records,
                 "aantalReferentieRecords": element_count,
                 "dqDatum": run_time,
                 "dqResultaat": output_text,
+                "regelNaam": expectation_type,
+                "regelParameters": parameter_list,
+                "bronTabelId": table_name,
             }
         )
 
     df_validatie = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
-        schema=VALIDATIE_SCHEMA,
+        schema=PRE_VALIDATIE_SCHEMA,
     )
-    if not is_empty_dataframe(df=df_validatie):
+    df_validatie_with_id_ordered = construct_regel_id(
+        df=df_validatie,
+        output_columns_list=['regelId','aantalValideRecords','aantalReferentieRecords','dqDatum','dqResultaat']
+    )
+    if not is_empty_dataframe(df=df_validatie_with_id_ordered):
         write_to_unity_catalog(
-            df=df_validatie,
+            df=df_validatie_with_id_ordered,
             catalog_name=catalog_name,
             table_name="validatie",
             schema=VALIDATIE_SCHEMA,
@@ -89,7 +113,7 @@ def extract_dq_validatie_data(
 
 
 def extract_dq_afwijking_data(
-    df_name: str,
+    table_name: str,
     dq_result: dict,  # TODO: add dataclass?
     df: DataFrame,
     unique_identifier: str,
@@ -99,7 +123,7 @@ def extract_dq_afwijking_data(
     """
     [insert explanation here]
 
-    :param df_name: Name of the tables
+    :param table_name: Name of the table
     :param dq_result:
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
@@ -116,8 +140,8 @@ def extract_dq_afwijking_data(
 
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
+        parameter_list = create_parameter_list_from_results(result=result)
         attribute = result["expectation_config"]["kwargs"].get("column")
-        dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
         afwijkende_attribuut_waarde = result["result"].get(
             "partial_unexpected_list", []
         )
@@ -145,21 +169,27 @@ def extract_dq_afwijking_data(
                     unique_entries.add(entry)
                     extracted_data.append(
                         {
-                            "regelId": dq_regel_id,
                             "identifierVeldWaarde": id_value,
                             "afwijkendeAttribuutWaarde": value,
                             "dqDatum": run_time,
+                            "regelNaam": expectation_type,
+                            "regelParameters": parameter_list,
+                            "bronTabelId": table_name,
                         }
                     )
 
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
-        schema=AFWIJKING_SCHEMA,
+        schema=PRE_AFWIJKING_SCHEMA,
+    )
+    df_afwijking_with_id_ordered = construct_regel_id(
+        df=df_afwijking,
+        output_columns_list=['regelId','identifierVeldWaarde','afwijkendeAttribuutWaarde','dqDatum']
     )
     if not is_empty_dataframe(df=df_afwijking):
         write_to_unity_catalog(
-            df=df_afwijking,
+            df=df_afwijking_with_id_ordered,
             catalog_name=catalog_name,
             table_name="afwijking",
             schema=AFWIJKING_SCHEMA,
@@ -195,11 +225,18 @@ def create_brontabel(
         spark_session=spark_session,
         schema=BRONTABEL_SCHEMA,
     )
-    write_to_unity_catalog(
+    merge_dict = {
+        "bronTabelId": "brontabel_df.bronTabelId",
+        "uniekeSleutel": "brontabel_df.uniekeSleutel",
+    }
+    merge_df_with_unity_table(
         df=df_brontabel,
         catalog_name=catalog_name,
         table_name="brontabel",
-        schema=BRONTABEL_SCHEMA,
+        table_merge_id="bronTabelId",
+        df_merge_id="bronTabelId",
+        merge_dict=merge_dict,
+        spark_session=spark_session,
     )
 
 
@@ -243,12 +280,20 @@ def create_bronattribute(
         spark_session=spark_session,
         schema=BRONATTRIBUUT_SCHEMA,
     )
-    write_to_unity_catalog(
+    merge_dict = {
+        "bronAttribuutId": "bronattribuut_df.bronAttribuutId",
+        "attribuutNaam": "bronattribuut_df.attribuutNaam",
+        "bronTabelId": "bronattribuut_df.bronTabelId",
+    }
+    merge_df_with_unity_table(
         df=df_bronattribuut,
         catalog_name=catalog_name,
         table_name="bronattribuut",
-        schema=BRONATTRIBUUT_SCHEMA,
-    )
+        table_merge_id="bronAttribuutId",
+        df_merge_id="bronAttribuutId",
+        merge_dict=merge_dict,
+        spark_session=spark_session,
+    )    
 
 
 def create_dq_regel(
@@ -271,29 +316,38 @@ def create_dq_regel(
         for rule in param["rules"]:
             rule_name = rule["rule_name"]
             parameters = rule.get("parameters", [])
-            for parameter in parameters:
-                if isinstance(parameter, dict) and "column" in parameter:
-                    attribute_name = parameter["column"]
-                    extracted_data.append(
-                        {
-                            "regelId": f"{bron_tabel}_{rule_name}_"
-                            f"{attribute_name}",
-                            "bronAttribuutId": f"{bron_tabel}_{attribute_name}",
-                            "bronTabelId": bron_tabel,
-                        }
-                    )
+            extracted_data.append(
+                {
+                    "regelNaam": rule_name,
+                    "regelParameters": parameters,
+                    "bronTabelId": bron_tabel
+                }
+            )
 
     df_regel = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
         schema=REGEL_SCHEMA,
     )
-    write_to_unity_catalog(
+    df_regel_with_id_ordered = construct_regel_id(
         df=df_regel,
+        output_columns_list=['regelId','regelNaam','regelParameters','bronTabelId']
+    )
+    merge_dict = {
+        "regelId": "regel_df.regelId",
+        "regelNaam": "regel_df.regelNaam",
+        "regelParameters": "regel_df.regelParameters",
+        "bronTabelId": "regel_df.bronTabelId"
+    }
+    merge_df_with_unity_table(
+        df=df_regel_with_id_ordered,
         catalog_name=catalog_name,
         table_name="regel",
-        schema=REGEL_SCHEMA,
-    )
+        table_merge_id="regelId",
+        df_merge_id="regelId",
+        merge_dict=merge_dict,
+        spark_session=spark_session,
+    )    
 
 
 def write_non_validation_tables(
