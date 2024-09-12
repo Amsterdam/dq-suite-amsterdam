@@ -75,9 +75,8 @@ class RulesDict:
 @dataclass()
 class DatasetDict:
     """
-    Groups a list of Rule-objects together with the name of the table
-    these rules are to be applied to, as well as a unique identifier used for
-    identifying outliers.
+    Groups the name and the medallion layer of the dataset where the
+    rules apply to.
     """
 
     name: str
@@ -187,6 +186,11 @@ def merge_df_with_unity_table(
     merge_dict: dict,
     spark_session: SparkSession,
 ) -> None:
+    """
+    This function takes a dataframe with new records to be merged
+    into an existing delta table. The upsert operation is based on
+    the regel_id column.
+    """
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
