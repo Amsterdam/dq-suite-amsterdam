@@ -75,9 +75,8 @@ class RulesDict:
 @dataclass()
 class DatasetDict:
     """
-    Groups a list of Rule-objects together with the name of the table
-    these rules are to be applied to, as well as a unique identifier used for
-    identifying outliers.
+    Groups the name and the medallion layer of the dataset where the
+    rules apply to.
     """
 
     name: str
