@@ -150,6 +150,11 @@ def merge_df_with_unity_table(
     merge_dict: dict,
     spark_session: SparkSession,
 ) -> None:
+    """
+    This function takes a dataframe with new records to be merged
+    into an existing delta table. The upsert operation is based on
+    the regel_id column.
+    """
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
