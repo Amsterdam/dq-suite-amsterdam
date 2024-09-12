@@ -5,4 +5,5 @@ SCHEMA = (
     .add("regelNaam", "string")
     .add("regelParameters", "string")
     .add("bronTabelId", "string")
+    .add("attribuut", "string")
 )

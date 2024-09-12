@@ -1,6 +1,10 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC schema and tables for Dataquality great expectations
+-- MAGIC This script creates the schema and tables for dq-suite-amsterdam
+
+-- COMMAND ----------
+
+CREATE WIDGET TEXT catalog DEFAULT "dpxx_dev"
 
 -- COMMAND ----------
 
@@ -8,13 +12,27 @@ create schema if not exists ${catalog}.data_quality
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
-  `regelId` STRING,
-  `regelNaam` STRING,
-  `regelParameters` STRING,
-  `bronTabelId` STRING)
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brondataset (
+  bronDatasetId STRING,
+  medaillonLaag STRING)
 USING delta
-COMMENT 'Created by the file upload UI'
+COMMENT 'Deployed by dq-suite-amsterdam'
+TBLPROPERTIES (
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
+  bronTabelId STRING,
+  tabelNaam STRING,
+  uniekeSleutel STRING)
+USING delta
+COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
   'delta.columnMapping.mode' = 'name',
   'delta.enableDeletionVectors' = 'true',
@@ -26,12 +44,29 @@ TBLPROPERTIES (
 -- COMMAND ----------
 
 CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.bronattribuut (
-  name STRING,
-  `bronAttribuutId` STRING,
-  `bronTabelId` STRING,
-  `attribuutNaam` STRING)
+  bronAttribuutId STRING,
+  bronTabelId STRING,
+  attribuutNaam STRING)
 USING delta
-COMMENT 'Created by the file upload UI'
+COMMENT 'Deployed by dq-suite-amsterdam'
+TBLPROPERTIES (
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
+  regelId STRING,
+  regelNaam STRING,
+  regelParameters STRING,
+  bronTabelId STRING,
+  attribuut STRING)
+USING delta
+COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
   'delta.columnMapping.mode' = 'name',
   'delta.enableDeletionVectors' = 'true',
@@ -49,7 +84,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
   dqDatum TIMESTAMP,
   dqResultaat STRING)
 USING delta
-COMMENT 'Created by the file upload UI'
+COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
   'delta.checkpoint.writeStatsAsJson' = 'false',
   'delta.checkpoint.writeStatsAsStruct' = 'true',
@@ -67,7 +102,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.afwijking (
   afwijkendeAttribuutWaarde STRING,
   dqDatum TIMESTAMP)
 USING delta
-COMMENT 'Created by the file upload UI'
+COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
   'delta.checkpoint.writeStatsAsJson' = 'false',
   'delta.checkpoint.writeStatsAsStruct' = 'true',
@@ -75,13 +110,3 @@ TBLPROPERTIES (
   'delta.feature.deletionVectors' = 'supported',
   'delta.minReaderVersion' = '3',
   'delta.minWriterVersion' = '7')
-
--- COMMAND ----------
-
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
-  bronTabelId STRING,
-  uniekeSleutel STRING)
-USING delta
-TBLPROPERTIES (
-  'delta.minReaderVersion' = '1',
-  'delta.minWriterVersion' = '2')
