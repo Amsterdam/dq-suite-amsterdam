@@ -44,7 +44,7 @@ def construct_regel_id(
     return df_with_id.select(*output_columns_list)
     
 
-def create_parameter_list_from_results(result: dict) -> list:
+def create_parameter_list_from_results(result: dict) -> list[dict]:
     parameters = result["expectation_config"]["kwargs"]
     parameters.pop("batch_id", None)
     return [parameters]
