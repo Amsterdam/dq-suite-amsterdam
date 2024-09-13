@@ -74,47 +74,37 @@ def create_action_list(
 ) -> List[CheckpointAction]:
     action_list = list()
 
-    # action_list.append(
-    #     {  # TODO/check: do we really have to store the validation results?
-    #         "name": "store_validation_result",
-    #         "action": {"class_name": "StoreValidationResultAction"},
-    #     }
-    # )
+    # action_list.append(great_expectations.checkpoint.UpdateDataDocsAction(
+    #     name="update_data_docs"))
 
     if validation_settings_obj.send_slack_notification & (
         validation_settings_obj.slack_webhook is not None
     ):
         action_list.append(
-            {
-                "name": "send_slack_notification",
-                "action": {
-                    "class_name": "SlackNotificationAction",
-                    "slack_webhook": validation_settings_obj.slack_webhook,
-                    "notify_on": validation_settings_obj.notify_on,
-                    "renderer": {
-                        "module_name": "great_expectations.render.renderer.slack_renderer",
-                        "class_name": "SlackRenderer",
-                    },
+            great_expectations.checkpoint.SlackNotificationAction(
+                name="send_slack_notification",
+                slack_webhook=validation_settings_obj.slack_webhook,
+                notify_on=validation_settings_obj.notify_on,
+                renderer={
+                    "module_name": "great_expectations.render.renderer.slack_renderer",
+                    "class_name": "SlackRenderer",
                 },
-            }
+            )
         )
 
     if validation_settings_obj.send_ms_teams_notification & (
         validation_settings_obj.ms_teams_webhook is not None
     ):
         action_list.append(
-            {
-                "name": "send_ms_teams_notification",
-                "action": {
-                    "class_name": "MicrosoftTeamsNotificationAction",
-                    "microsoft_teams_webhook": validation_settings_obj.ms_teams_webhook,
-                    "notify_on": validation_settings_obj.notify_on,
-                    "renderer": {
-                        "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
-                        "class_name": "MicrosoftTeamsRenderer",
-                    },
+            great_expectations.checkpoint.MicrosoftTeamsNotificationAction(
+                name="send_ms_teams_notification",
+                microsoft_teams_webhook=validation_settings_obj.ms_teams_webhook,
+                notify_on=validation_settings_obj.notify_on,
+                renderer={
+                    "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
+                    "class_name": "MicrosoftTeamsRenderer",
                 },
-            }
+            )
         )
 
     return action_list
@@ -165,11 +155,13 @@ def create_and_configure_expectations(
             great_expectations.expectations.core,
             humps.pascalize(gx_expectation_name),
         )
-        # TODO: drop pascalization, and require this as input check when
-        #  ingesting JSON? Could be done via humps.is_pascalcase()
+        # Issue 50
+        # TODO: drop pascalization, and require this as input check
+        #  when ingesting JSON? Could be done via humps.is_pascalcase()
 
         for validation_parameter_dict in validation_rule["parameters"]:
             kwargs = {}
+            # Issue 51
             # TODO/check: is this loop really necessary? Intuitively, I added
             #  the same expectation for each column - I didn't consider using
             #  the same expectation with different parameters
