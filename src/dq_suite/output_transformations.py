@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, List
 
 from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
@@ -50,19 +51,20 @@ def extract_dq_validatie_data(
     :param catalog_name:
     :param spark_session:
     """
-
     # Access run_time attribute
-    run_time = dq_result["meta"]["run_id"].run_time
+    # run_time = dq_result["meta"]["run_id"].run_time
+    run_time = datetime.date(1900, 0, 0)
+    # TODO: fix, find run_time in new GX API
     # Extracted data
     extracted_data = []
-    for result in dq_result["results"]:
-        element_count = int(result["result"].get("element_count", 0))
-        unexpected_count = int(result["result"].get("unexpected_count", 0))
+    for single_result in dq_result:
+        element_count = int(single_result["expectations"]["result"].get("element_count", 0))
+        unexpected_count = int(single_result["expectations"]["result"].get("unexpected_count", 0))
         aantal_valide_records = element_count - unexpected_count
-        expectation_type = result["expectation_config"]["expectation_type"]
-        attribute = result["expectation_config"]["kwargs"].get("column")
+        expectation_type = single_result["expectations"]["expectation_type"]
+        attribute = single_result["expectations"]["kwargs"].get("column")
         dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
-        output = result["success"]
+        output = single_result["expectations"]["success"]
         output_text = "success" if output else "failure"
         extracted_data.append(
             {
@@ -110,18 +112,20 @@ def extract_dq_afwijking_data(
     :param spark_session:
     """
     # Extracting information from the JSON
-    run_time = dq_result["meta"]["run_id"].run_time  # Access run_time attribute
+    # run_time = dq_result["meta"]["run_id"].run_time
+    run_time = datetime.date(1900, 0, 0)
+    # TODO: fix, find run_time in new GX API
     # Extracted data for df
     extracted_data = []
 
     # To store unique combinations of value and IDs
     unique_entries = set()
 
-    for result in dq_result["results"]:
-        expectation_type = result["expectation_config"]["expectation_type"]
-        attribute = result["expectation_config"]["kwargs"].get("column")
+    for single_result in dq_result:
+        expectation_type = single_result["expectations"]["expectation_type"]
+        attribute = single_result["expectations"]["kwargs"].get("column")
         dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
-        afwijkende_attribuut_waarde = result["result"].get(
+        afwijkende_attribuut_waarde = single_result["expectations"]["result"].get(
             "partial_unexpected_list", []
         )
         for value in afwijkende_attribuut_waarde:
