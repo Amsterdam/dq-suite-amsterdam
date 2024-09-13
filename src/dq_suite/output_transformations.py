@@ -38,8 +38,8 @@ def list_of_dicts_to_df(
 
 
 def construct_regel_id(
-    df: str,
-    output_columns_list: list,
+    df: DataFrame,
+    output_columns_list: list[str],
 ) -> DataFrame:
     df_with_id = df.withColumn("regelId", xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")))
     return df_with_id.select(*output_columns_list)
@@ -51,11 +51,43 @@ def create_parameter_list_from_results(result: dict) -> list[dict]:
     return [parameters]
 
 
+def get_target_attr_for_rule(result: dict) -> str:
+    if "column" in result["expectation_config"]["kwargs"]:
+        return result["expectation_config"]["kwargs"].get("column")
+    else:
+        return result["expectation_config"]["kwargs"].get("column_list")
+
+
+def get_unique_deviating_values(deviating_attribute_value: list[str]) -> set[str]:
+    unique_deviating_values = set()
+    for waarde in deviating_attribute_value:
+        if isinstance(waarde, dict):
+            waarde = tuple(waarde.items()) #transform because a dict cannot be added to a set
+        unique_deviating_values.add(waarde)
+    return unique_deviating_values
+
+
+def filter_df_based_on_deviating_values(
+    value: str,
+    attribute: str,
+    df: DataFrame,
+) -> DataFrame:
+    if value is None:
+        return df.filter(col(attribute).isNull())
+    elif isinstance(attribute, list):
+        number_of_attrs = len(attribute)
+        for i in range(number_of_attrs):
+            df = df.filter(col(attribute[i]) == value[i][1])
+        return df
+    else:
+        return df.filter(col(attribute) == value)
+
+
 def get_grouped_ids_per_deviating_value(
     filtered_df: DataFrame,
-    unique_identifier: list,
+    unique_identifier: list[str],
     number_of_unique_ids: int,
-) -> list:
+) -> list[str]:
     ids = (
         filtered_df.select(unique_identifier)
         .rdd.flatMap(lambda x: x)
@@ -147,40 +179,31 @@ def extract_dq_afwijking_data(
     tabel_id = f"{dataset_name}_{table_name}"
     run_time = dq_result["meta"]["run_id"].run_time  # Get the run timestamp
     extracted_data = []
-    if type(unique_identifier) is not list: unique_identifier = [unique_identifier]
+    if not isinstance(unique_identifier, list): unique_identifier = [unique_identifier]
     number_of_unique_ids = len(unique_identifier)
 
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
         parameter_list = create_parameter_list_from_results(result=result)
-        if "column" in result["expectation_config"]["kwargs"]:
-            attribute = result["expectation_config"]["kwargs"].get("column")
-        else:
-            attribute = result["expectation_config"]["kwargs"].get("column_list")
-        afwijkende_attribuut_waarde = result["result"].get(
+        attribute = get_target_attr_for_rule(result=result)
+        deviating_attribute_value = result["result"].get(
             "partial_unexpected_list", []
         )
-        unieke_afwijkende_waardes = set()
-        for waarde in afwijkende_attribuut_waarde:
-            if isinstance(waarde, dict):
-                waarde = tuple(waarde.items())
-            unieke_afwijkende_waardes.add(waarde)
-        for value in unieke_afwijkende_waardes:
-            if value is None:
-                filtered_df = df.filter(col(attribute).isNull())
-            elif isinstance(attribute, list):
-                number_of_attrs = len(attribute)
-                filtered_df = df
-                for i in range(number_of_attrs):
-                    filtered_df = filtered_df.filter(col(attribute[i]) == value[i][1])
-                value = str(value)
-            else:
-                filtered_df = df.filter(col(attribute) == value)
+        unique_deviating_values = get_unique_deviating_values(
+            deviating_attribute_value
+        )
+        for value in unique_deviating_values:
+            filtered_df = filter_df_based_on_deviating_values(
+                value=value,
+                attribute=attribute,
+                df=df
+            )
             grouped_ids = get_grouped_ids_per_deviating_value(
                 filtered_df=filtered_df,
                 unique_identifier=unique_identifier,
                 number_of_unique_ids=number_of_unique_ids
             )
+            if isinstance(attribute, list): value = str(value)
             extracted_data.append(
                 {
                     "identifierVeldWaarde": grouped_ids,
