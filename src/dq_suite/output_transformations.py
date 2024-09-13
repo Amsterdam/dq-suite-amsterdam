@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, List
+from typing import List
 
 from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
@@ -61,8 +61,12 @@ def extract_dq_validatie_data(
     extracted_data = []
     for validation_result in dq_result:
         for expectation_result in validation_result["expectations"]:
-            element_count = int(expectation_result["result"].get("element_count", 0))
-            unexpected_count = int(expectation_result["result"].get("unexpected_count", 0))
+            element_count = int(
+                expectation_result["result"].get("element_count", 0)
+            )
+            unexpected_count = int(
+                expectation_result["result"].get("unexpected_count", 0)
+            )
             aantal_valide_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
             attribute = expectation_result["kwargs"].get("column")

@@ -1,9 +1,8 @@
-from typing import Any, List
+from typing import List
 
 import great_expectations
 import humps
-from great_expectations import ValidationDefinition
-from great_expectations import Checkpoint
+from great_expectations import Checkpoint, ValidationDefinition
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
@@ -57,7 +56,8 @@ def get_or_add_validation_definition(
             name=validation_definition_name,
             data=batch_definition,
             suite=validation_settings_obj.data_context.suites.get(
-                validation_settings_obj.expectation_suite_name),
+                validation_settings_obj.expectation_suite_name
+            ),
         )  # Note: a validation definition combines data with a suite of
         # expectations
         validation_definition = (
