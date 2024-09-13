@@ -326,19 +326,20 @@ def write_validation_table(
     df: DataFrame,
     unique_identifier: str,
 ):
-    for results in validation_output.values():
-        result = results["validation_results"]
-        extract_dq_validatie_data(
-            validation_settings_obj.table_name,
-            result,
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
-        extract_dq_afwijking_data(
-            validation_settings_obj.table_name,
-            result,
-            df,
-            unique_identifier,
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
+    for k, v in validation_output.items():
+        if k == "validation_results":
+            result = v
+            extract_dq_validatie_data(
+                validation_settings_obj.table_name,
+                result,
+                validation_settings_obj.catalog_name,
+                validation_settings_obj.spark_session,
+            )
+            extract_dq_afwijking_data(
+                validation_settings_obj.table_name,
+                result,
+                df,
+                unique_identifier,
+                validation_settings_obj.catalog_name,
+                validation_settings_obj.spark_session,
+            )
