@@ -327,7 +327,7 @@ def write_validation_table(
     unique_identifier: str,
 ):
     for results in validation_output.values():
-        result = results["validation_result"]
+        result = results["validation_results"]
         extract_dq_validatie_data(
             validation_settings_obj.table_name,
             result,
