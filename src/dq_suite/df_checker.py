@@ -3,7 +3,7 @@ from typing import Any, List
 import great_expectations
 import humps
 from great_expectations import ValidationDefinition
-from great_expectations.checkpoint import Checkpoint
+from great_expectations import Checkpoint
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
