@@ -74,9 +74,6 @@ def create_action_list(
 ) -> List[CheckpointAction]:
     action_list = list()
 
-    # action_list.append(great_expectations.checkpoint.UpdateDataDocsAction(
-    #     name="update_data_docs"))
-
     if validation_settings_obj.send_slack_notification & (
         validation_settings_obj.slack_webhook is not None
     ):
