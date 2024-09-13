@@ -1,5 +1,6 @@
 from typing import Any, List
 
+from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
@@ -320,7 +321,7 @@ def write_non_validation_tables(
 
 
 def write_validation_table(
-    validation_output: Any,
+    validation_output: CheckpointDescriptionDict,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
     unique_identifier: str,

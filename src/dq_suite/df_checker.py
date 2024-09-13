@@ -231,7 +231,7 @@ def run(
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
-    validation_output = checkpoint_result["run_results"]
+    validation_output = checkpoint_result.describe_dict()
 
     # 3) write results to unity catalog
     write_non_validation_tables(
