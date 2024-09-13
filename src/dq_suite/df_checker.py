@@ -125,7 +125,7 @@ def get_or_add_checkpoint(
         checkpoint = Checkpoint(
             name=validation_settings_obj.checkpoint_name,
             validation_definitions=[validation_definition],
-            action_list=action_list,
+            actions=action_list,
         )  # Note: a checkpoint combines validations with actions
 
         # Add checkpoint to data context for future use
