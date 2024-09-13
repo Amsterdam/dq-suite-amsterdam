@@ -53,7 +53,7 @@ def extract_dq_validatie_data(
     """
     # Access run_time attribute
     # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.date(1900, 0, 0)
+    run_time = datetime.date(1900, 1, 1)
     # TODO: fix, find run_time in new GX API
     # Extracted data
     extracted_data = []
@@ -113,7 +113,7 @@ def extract_dq_afwijking_data(
     """
     # Extracting information from the JSON
     # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.date(1900, 0, 0)
+    run_time = datetime.date(1900, 1, 1)
     # TODO: fix, find run_time in new GX API
     # Extracted data for df
     extracted_data = []
