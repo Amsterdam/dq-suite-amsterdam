@@ -112,7 +112,7 @@ def create_action_list(
 
 def get_or_add_checkpoint(
     validation_settings_obj: ValidationSettings,
-    validation_definitions_list: List[ValidationDefinition],
+    validation_definition: ValidationDefinition,
 ) -> Checkpoint:
     try:
         checkpoint = validation_settings_obj.data_context.checkpoints.get(
@@ -123,8 +123,8 @@ def get_or_add_checkpoint(
             validation_settings_obj=validation_settings_obj
         )
         checkpoint = Checkpoint(
-            name=str(validation_settings_obj.checkpoint_name),
-            validation_definitions=validation_definitions_list,
+            name=validation_settings_obj.checkpoint_name,
+            validation_definitions=[validation_definition],
             action_list=action_list,
         )  # Note: a checkpoint combines validations with actions
 
@@ -198,7 +198,7 @@ def validate(
     print(validation_definition.run(batch_parameters={"dataframe": df}))
     checkpoint = get_or_add_checkpoint(
         validation_settings_obj=validation_settings_obj,
-        validation_definitions_list=[validation_definition],
+        validation_definition=validation_definition,
     )
 
     batch_params = {"dataframe": df}
