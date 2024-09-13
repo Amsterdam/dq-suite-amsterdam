@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dq-suite-amsterdam"
-version = "0.7.7"
+version = "0.10.0"
 authors = [
   { name="Arthur Kordes", email="a.kordes@amsterdam.nl" },
   { name="Aysegul Cayir Aydar", email="a.cayiraydar@amsterdam.nl" },
@@ -17,7 +17,7 @@ requires-python = ">=3.10"
 dependencies = [
   "great_expectations==1.0.1",
   "pandas==2.1.4",
-  "pyspark==3.3.2",
+  "pyspark==3.5.2",
   "pyhumps==3.8.0",
 ]
 
@@ -31,6 +31,7 @@ dev = [
     'pylint ~= 2.16',
     'autoflake ~= 2.0.1',
     'coverage ~= 7.6.1',
+    'delta-spark ~= 3.2.0',
 ]
 
 [tool.isort]
