@@ -51,30 +51,33 @@ def extract_dq_validatie_data(
     :param catalog_name:
     :param spark_session:
     """
+    dq_result = dq_result["validation_results"]
+
     # Access run_time attribute
     # run_time = dq_result["meta"]["run_id"].run_time
     run_time = datetime.date(1900, 1, 1)
     # TODO: fix, find run_time in new GX API
     # Extracted data
     extracted_data = []
-    for single_result in dq_result:
-        element_count = int(single_result["expectations"]["result"].get("element_count", 0))
-        unexpected_count = int(single_result["expectations"]["result"].get("unexpected_count", 0))
-        aantal_valide_records = element_count - unexpected_count
-        expectation_type = single_result["expectations"]["expectation_type"]
-        attribute = single_result["expectations"]["kwargs"].get("column")
-        dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
-        output = single_result["expectations"]["success"]
-        output_text = "success" if output else "failure"
-        extracted_data.append(
-            {
-                "regelId": dq_regel_id,
-                "aantalValideRecords": aantal_valide_records,
-                "aantalReferentieRecords": element_count,
-                "dqDatum": run_time,
-                "dqResultaat": output_text,
-            }
-        )
+    for validation_result in dq_result:
+        for expectation_result in validation_result["expectations"]:
+            element_count = int(expectation_result["result"].get("element_count", 0))
+            unexpected_count = int(expectation_result["result"].get("unexpected_count", 0))
+            aantal_valide_records = element_count - unexpected_count
+            expectation_type = expectation_result["expectation_type"]
+            attribute = expectation_result["kwargs"].get("column")
+            dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
+            output = expectation_result["success"]
+            output_text = "success" if output else "failure"
+            extracted_data.append(
+                {
+                    "regelId": dq_regel_id,
+                    "aantalValideRecords": aantal_valide_records,
+                    "aantalReferentieRecords": element_count,
+                    "dqDatum": run_time,
+                    "dqResultaat": output_text,
+                }
+            )
 
     df_validatie = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -111,6 +114,8 @@ def extract_dq_afwijking_data(
     :param catalog_name:
     :param spark_session:
     """
+    dq_result = dq_result["validation_results"]
+
     # Extracting information from the JSON
     # run_time = dq_result["meta"]["run_id"].run_time
     run_time = datetime.date(1900, 1, 1)
@@ -121,43 +126,44 @@ def extract_dq_afwijking_data(
     # To store unique combinations of value and IDs
     unique_entries = set()
 
-    for single_result in dq_result:
-        expectation_type = single_result["expectations"]["expectation_type"]
-        attribute = single_result["expectations"]["kwargs"].get("column")
-        dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
-        afwijkende_attribuut_waarde = single_result["expectations"]["result"].get(
-            "partial_unexpected_list", []
-        )
-        for value in afwijkende_attribuut_waarde:
-            if value is None:
-                filtered_df = df.filter(col(attribute).isNull())
-                ids = (
-                    filtered_df.select(unique_identifier)
-                    .rdd.flatMap(lambda x: x)
-                    .collect()
-                )
-            else:
-                filtered_df = df.filter(col(attribute) == value)
-                ids = (
-                    filtered_df.select(unique_identifier)
-                    .rdd.flatMap(lambda x: x)
-                    .collect()
-                )
-
-            for id_value in ids:
-                entry = id_value
-                if (
-                    entry not in unique_entries
-                ):  # Check for uniqueness before appending
-                    unique_entries.add(entry)
-                    extracted_data.append(
-                        {
-                            "regelId": dq_regel_id,
-                            "identifierVeldWaarde": id_value,
-                            "afwijkendeAttribuutWaarde": value,
-                            "dqDatum": run_time,
-                        }
+    for validation_result in dq_result:
+        for expectation_result in validation_result["expectations"]:
+            expectation_type = expectation_result["expectation_type"]
+            attribute = expectation_result["kwargs"].get("column")
+            dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
+            afwijkende_attribuut_waarde = expectation_result["result"].get(
+                "partial_unexpected_list", []
+            )
+            for value in afwijkende_attribuut_waarde:
+                if value is None:
+                    filtered_df = df.filter(col(attribute).isNull())
+                    ids = (
+                        filtered_df.select(unique_identifier)
+                        .rdd.flatMap(lambda x: x)
+                        .collect()
                     )
+                else:
+                    filtered_df = df.filter(col(attribute) == value)
+                    ids = (
+                        filtered_df.select(unique_identifier)
+                        .rdd.flatMap(lambda x: x)
+                        .collect()
+                    )
+
+                for id_value in ids:
+                    entry = id_value
+                    if (
+                        entry not in unique_entries
+                    ):  # Check for uniqueness before appending
+                        unique_entries.add(entry)
+                        extracted_data.append(
+                            {
+                                "regelId": dq_regel_id,
+                                "identifierVeldWaarde": id_value,
+                                "afwijkendeAttribuutWaarde": value,
+                                "dqDatum": run_time,
+                            }
+                        )
 
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -330,20 +336,17 @@ def write_validation_table(
     df: DataFrame,
     unique_identifier: str,
 ):
-    for k, v in validation_output.items():
-        if k == "validation_results":
-            result = v
-            extract_dq_validatie_data(
-                validation_settings_obj.table_name,
-                result,
-                validation_settings_obj.catalog_name,
-                validation_settings_obj.spark_session,
-            )
-            extract_dq_afwijking_data(
-                validation_settings_obj.table_name,
-                result,
-                df,
-                unique_identifier,
-                validation_settings_obj.catalog_name,
-                validation_settings_obj.spark_session,
-            )
+    extract_dq_validatie_data(
+        validation_settings_obj.table_name,
+        validation_output,
+        validation_settings_obj.catalog_name,
+        validation_settings_obj.spark_session,
+    )
+    extract_dq_afwijking_data(
+        validation_settings_obj.table_name,
+        validation_output,
+        df,
+        unique_identifier,
+        validation_settings_obj.catalog_name,
+        validation_settings_obj.spark_session,
+    )
