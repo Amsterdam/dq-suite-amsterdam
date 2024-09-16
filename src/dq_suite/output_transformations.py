@@ -75,6 +75,8 @@ def filter_df_based_on_deviating_values(
     if value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
+        # In case of compound keys, "attribute" is a list and "value" is a dict like tuple.
+        # The indeces will match, and we take [1] for value, because the "key" is stored in [0].
         number_of_attrs = len(attribute)
         for i in range(number_of_attrs):
             df = df.filter(col(attribute[i]) == value[i][1])
@@ -86,13 +88,13 @@ def filter_df_based_on_deviating_values(
 def get_grouped_ids_per_deviating_value(
     filtered_df: DataFrame,
     unique_identifier: list[str],
-    number_of_unique_ids: int,
 ) -> list[str]:
     ids = (
         filtered_df.select(unique_identifier)
         .rdd.flatMap(lambda x: x)
         .collect()
     )
+    number_of_unique_ids = len(unique_identifier)
     return [ids[x:x+number_of_unique_ids] for x in range(0, len(ids), number_of_unique_ids)]
 
 
@@ -180,7 +182,6 @@ def extract_dq_afwijking_data(
     run_time = dq_result["meta"]["run_id"].run_time  # Get the run timestamp
     extracted_data = []
     if not isinstance(unique_identifier, list): unique_identifier = [unique_identifier]
-    number_of_unique_ids = len(unique_identifier)
 
     for result in dq_result["results"]:
         expectation_type = result["expectation_config"]["expectation_type"]
@@ -200,8 +201,7 @@ def extract_dq_afwijking_data(
             )
             grouped_ids = get_grouped_ids_per_deviating_value(
                 filtered_df=filtered_df,
-                unique_identifier=unique_identifier,
-                number_of_unique_ids=number_of_unique_ids
+                unique_identifier=unique_identifier
             )
             if isinstance(attribute, list): value = str(value)
             extracted_data.append(
