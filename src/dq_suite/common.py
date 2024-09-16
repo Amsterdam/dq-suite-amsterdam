@@ -7,6 +7,7 @@ from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
+from delta.tables import *
 
 
 @dataclass()
@@ -72,19 +73,55 @@ class RulesDict:
         raise KeyError(key)
 
 
+@dataclass()
+class DatasetDict:
+    """
+    Groups the name and the medallion layer of the dataset where the
+    rules apply to.
+    """
+
+    name: str
+    layer: str
+
+    def __post_init__(self):
+        if not isinstance(self.name, str):
+            raise TypeError("'name' should be of type str")
+
+        if not isinstance(self.layer, str):
+            raise TypeError("'layer' should be of type str")
+
+    def __getitem__(self, key) -> str | RulesList | None:
+        if key == "name":
+            return self.name
+        elif key == "layer":
+            return self.layer
+        raise KeyError(key)
+
+
 RulesDictList = List[RulesDict]  # a list of dictionaries containing DQ rules
 
 
 @dataclass()
 class DataQualityRulesDict:
+    """
+    Groups a list of Table-objects together with the definition of the dataset
+    these tables are a part of.
+    """
+
+    dataset: DatasetDict
     tables: RulesDictList
 
     def __post_init__(self):
+        if not isinstance(self.dataset, dict):
+            raise TypeError("'dataset' should be DatasetDict")
+
         if not isinstance(self.tables, list):
             raise TypeError("'tables' should be RulesDictList")
 
-    def __getitem__(self, key) -> RulesDictList | None:
-        if key == "tables":
+    def __getitem__(self, key) -> str | RulesDictList | None:
+        if key == "dataset":
+            return self.dataset
+        elif key == "tables":
             return self.tables
         raise KeyError(key)
 
@@ -139,6 +176,35 @@ def write_to_unity_catalog(
     df.write.mode(mode).option("overwriteSchema", "true").saveAsTable(
         full_table_name
     )  # TODO: write as delta-table? .format("delta")
+
+
+def merge_df_with_unity_table(
+    df: DataFrame,
+    catalog_name: str,
+    table_name: str,
+    table_merge_id: str,
+    df_merge_id: str,
+    merge_dict: dict,
+    spark_session: SparkSession,
+) -> None:
+    """
+    This function takes a dataframe with new records to be merged
+    into an existing delta table. The upsert operation is based on
+    the regel_id column.
+    """
+    full_table_name = get_full_table_name(
+        catalog_name=catalog_name, table_name=table_name
+    )
+    df_alias = f'{table_name}_df'
+    regelTabel = DeltaTable.forName(spark_session, full_table_name)
+    regelTabel.alias(table_name) \
+        .merge(
+            df.alias(df_alias),
+            f'{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}'
+        ) \
+        .whenMatchedUpdate(set = merge_dict) \
+        .whenNotMatchedInsert(values = merge_dict) \
+        .execute()
 
 
 def get_data_context(
