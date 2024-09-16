@@ -206,5 +206,6 @@ def run(
         validation_output=validation_output,
         validation_settings_obj=validation_settings_obj,
         df=df,
+        dataset_name=validation_dict["dataset"]["name"],
         unique_identifier=rules_dict["unique_identifier"],
     )
