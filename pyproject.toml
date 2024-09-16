@@ -15,7 +15,7 @@ description = "Wrapper for Great Expectations to fit the requirements of the Gem
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "great_expectations==1.0.1",
+  "great_expectations==1.0.3",
   "pandas==2.1.4",
   "pyspark==3.3.2",
   "pyhumps==3.8.0",
