@@ -1,4 +1,8 @@
 {
+    "dataset": {
+        "name": "Afvalcontainers",
+        "layer": "Brons"
+    },
     "tables": [
         {   
             "unique_identifier": "id",
