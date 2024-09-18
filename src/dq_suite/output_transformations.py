@@ -270,6 +270,7 @@ def create_brondataset(
         df_merge_id="bronDatasetId",
         merge_dict=merge_dict,
         spark_session=spark_session,
+        schema=BRONDATASET_SCHEMA,
     )
 
 
@@ -316,6 +317,7 @@ def create_brontabel(
         df_merge_id="bronTabelId",
         merge_dict=merge_dict,
         spark_session=spark_session,
+        schema=BRONTABEL_SCHEMA,
     )
 
 
@@ -374,6 +376,7 @@ def create_bronattribute(
         df_merge_id="bronAttribuutId",
         merge_dict=merge_dict,
         spark_session=spark_session,
+        schema=BRONATTRIBUUT_SCHEMA,
     )    
 
 
@@ -434,6 +437,7 @@ def create_dq_regel(
         df_merge_id="regelId",
         merge_dict=merge_dict,
         spark_session=spark_session,
+        schema=REGEL_SCHEMA,
     )    
 
 
