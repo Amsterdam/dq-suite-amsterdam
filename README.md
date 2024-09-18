@@ -87,3 +87,5 @@ Version 0.6: The results are written to tables in the "dataquality" schema
 Version 0.7: Refactored the solution
 
 Version 0.8: Implemented output historization
+
+Version 0.9: Added dataset descriptions
