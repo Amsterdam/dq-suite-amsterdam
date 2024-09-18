@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 
+from delta.tables import *
 from great_expectations import get_context
 from great_expectations.data_context import AbstractDataContext
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
-from delta.tables import *
 
 
 @dataclass()
@@ -172,9 +172,9 @@ def write_to_unity_catalog(
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
-    df.write.mode(mode).option("overwriteSchema", "true").saveAsTable(
-        full_table_name
-    )  # TODO: write as delta-table? .format("delta")
+    df.write.format("delta").mode(mode).option(
+        "overwriteSchema", "true"
+    ).saveAsTable(full_table_name)
 
 
 def merge_df_with_unity_table(
@@ -185,6 +185,7 @@ def merge_df_with_unity_table(
     df_merge_id: str,
     merge_dict: dict,
     spark_session: SparkSession,
+    schema: StructType,
 ) -> None:
     """
     This function takes a dataframe with new records to be merged
@@ -194,16 +195,19 @@ def merge_df_with_unity_table(
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
-    df_alias = f'{table_name}_df'
-    regelTabel = DeltaTable.forName(spark_session, full_table_name)
-    regelTabel.alias(table_name) \
-        .merge(
+    df_alias = f"{table_name}_df"
+    if DeltaTable.isDeltaTable(spark_session, full_table_name):
+        regelTabel = DeltaTable.forName(spark_session, full_table_name)
+        regelTabel.alias(table_name).merge(
             df.alias(df_alias),
-            f'{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}'
-        ) \
-        .whenMatchedUpdate(set = merge_dict) \
-        .whenNotMatchedInsert(values = merge_dict) \
-        .execute()
+            f"{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}",
+        ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
+            values=merge_dict
+        ).execute()
+        return
+    write_to_unity_catalog(
+        df=df, catalog_name=catalog_name, table_name=table_name, schema=schema
+    )
 
 
 def get_data_context(
@@ -234,6 +238,7 @@ class ValidationSettings:
     notify_on: when to send notifications, can be equal to "all",
     "success" or "failure"
     """
+
     spark_session: SparkSession
     catalog_name: str
     table_name: str
