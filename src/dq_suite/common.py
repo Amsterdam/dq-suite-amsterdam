@@ -8,9 +8,9 @@ from great_expectations.data_context import (
     EphemeralDataContext,
 )
 from great_expectations.data_context.types.base import (
-        DataContextConfig,
-        InMemoryStoreBackendDefaults,
-    )
+    DataContextConfig,
+    InMemoryStoreBackendDefaults,
+)
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
