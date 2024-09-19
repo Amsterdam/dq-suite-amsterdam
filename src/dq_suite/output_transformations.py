@@ -50,7 +50,7 @@ def construct_regel_id(
     
 
 def create_parameter_list_from_results(result: dict) -> list[dict]:
-    parameters = result["expectation_config"]["kwargs"]
+    parameters = result["kwargs"]
     parameters.pop("batch_id", None)
     return [parameters]
 
@@ -88,7 +88,7 @@ def extract_dq_validatie_data(
             expectation_type = expectation_result["expectation_type"]
             parameter_list = create_parameter_list_from_results(result=expectation_result)
             attribute = expectation_result["kwargs"].get("column")
-            dq_regel_id = f"{df_name}_{expectation_type}_{attribute}"
+
             output = expectation_result["success"]
             output_text = "success" if output else "failure"
             extracted_data.append(

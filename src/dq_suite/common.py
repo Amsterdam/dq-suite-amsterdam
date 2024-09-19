@@ -1,8 +1,16 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
+import yaml
 
 from great_expectations import ExpectationSuite, get_context
-from great_expectations.data_context import AbstractDataContext
+from great_expectations.data_context import (
+    AbstractDataContext,
+    EphemeralDataContext,
+)
+from great_expectations.data_context.types.base import (
+        DataContextConfig,
+        InMemoryStoreBackendDefaults,
+    )
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
@@ -207,10 +215,13 @@ def merge_df_with_unity_table(
         .execute()
 
 
-def get_data_context(
-    data_context_root_dir: str = "/dbfs/great_expectations/",
-) -> AbstractDataContext:  # pragma: no cover - part of GX
-    return get_context(context_root_dir=data_context_root_dir)
+def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
+    return get_context(
+        project_config=DataContextConfig(
+            store_backend_defaults=InMemoryStoreBackendDefaults(),
+            analytics_enabled=False
+        )
+    )
 
 
 @dataclass()
@@ -285,9 +296,7 @@ class ValidationSettings:
             )
 
     def _set_data_context(self):  # pragma: no cover - uses part of GX
-        self.data_context = get_data_context(
-            data_context_root_dir=self.data_context_root_dir
-        )
+        self.data_context = get_data_context()
 
     def _set_expectation_suite_name(self):
         self.expectation_suite_name = f"{self.check_name}_expectation_suite"
