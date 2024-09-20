@@ -248,4 +248,35 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     data_quality_rules_dict = load_data_quality_rules(
         dq_rules_json_string=dq_rules_json_string
     )
+    validate_data_quality_rules_dict(
+        data_quality_rules_dict=data_quality_rules_dict)
+
     return data_quality_rules_dict
+
+
+def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
+    """
+    ### 1) Check tables & dataset in data_quality_rules_dict.keys()
+
+    ### 2) Check name & layer in data_quality_rules_dict["dataset"].keys()
+    ### 2a) Check name & layer both string-valued
+
+    ### 3) Check data_quality_rules_dict["tables"] is list
+    ### 3a) Check data_quality_rules_dict["tables"] is list of dicts
+    ### 3b) Check each dict in data_quality_rules_dict["tables"].keys() contains
+    # unique_identifier, table_name and rules
+    ### 3b1) Check rules is list
+    ### 3b2) If rules is empty list, then dict should also contain
+    # validate_table_schema and validate_table_schema_url
+    ### 3b3) If rules is non-empty list, then it should be a list of Rule-dicts
+
+    ### 4) Each of these Rule-dicts.keys() contains rule_name, parameters
+    ### 4a) Each of those data_quality_rules_dict["tables"]["rules"][
+    "rule_name"] should be a string, which should be pascal-case (i.e. the
+    rule name should be WrittenLikeThis instead of written_like_this)
+    ### 4b) Each of those parameters.values() should NOT be a list, merely a
+    dict (so you could have duplicate rule_names, but you're reducing the
+    complexity of the dataclass)
+    """
+
+    pass
