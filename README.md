@@ -90,3 +90,5 @@ Version 0.7: Refactored the solution
 Version 0.8: Implemented output historization
 
 Version 0.9: Added dataset descriptions
+
+Version 0.10: Switched to GX 1.0
