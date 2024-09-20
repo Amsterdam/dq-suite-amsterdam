@@ -492,12 +492,14 @@ def write_validation_table(
 ):
     extract_dq_validatie_data(
         validation_settings_obj.table_name,
+        dataset_name,
         validation_output,
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
     extract_dq_afwijking_data(
         validation_settings_obj.table_name,
+        dataset_name
         validation_output,
         df,
         unique_identifier,
