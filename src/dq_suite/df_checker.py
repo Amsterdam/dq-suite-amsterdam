@@ -1,7 +1,11 @@
-from typing import Any, List, Tuple
+from typing import List
 
-from great_expectations.checkpoint import Checkpoint
-from great_expectations.validator.validator import Validator
+import great_expectations
+import humps
+from great_expectations import Checkpoint, ValidationDefinition
+from great_expectations.checkpoint.actions import CheckpointAction
+from great_expectations.checkpoint.checkpoint import CheckpointResult
+from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
 
 from .common import DataQualityRulesDict, Rule, RulesDict, ValidationSettings
@@ -22,126 +26,152 @@ def filter_validation_dict_by_table_name(
     return None
 
 
-def get_batch_request_and_validator(
-    df: DataFrame,
+def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
-) -> Tuple[Any, Validator]:
+) -> ValidationDefinition:
     dataframe_datasource = (
-        validation_settings_obj.data_context.sources.add_or_update_spark(
-            name="my_spark_in_memory_datasource_"
-            + validation_settings_obj.check_name
+        validation_settings_obj.data_context.data_sources.add_or_update_spark(
+            name=f"spark_datasource_" f"{validation_settings_obj.check_name}"
         )
     )
 
     df_asset = dataframe_datasource.add_dataframe_asset(
-        name=validation_settings_obj.check_name, dataframe=df
+        name=validation_settings_obj.check_name
     )
-    batch_request = df_asset.build_batch_request()
-
-    validator = validation_settings_obj.data_context.get_validator(
-        batch_request=batch_request,
-        expectation_suite_name=validation_settings_obj.expectation_suite_name,
+    batch_definition = df_asset.add_batch_definition_whole_dataframe(
+        name=f"{validation_settings_obj.check_name}_batch_definition"
     )
 
-    return batch_request, validator
+    validation_definition_name = (
+        f"{validation_settings_obj.check_name}" f"_validation_definition"
+    )
+    try:
+        validation_definition = (
+            validation_settings_obj.data_context.validation_definitions.get(
+                name=validation_definition_name
+            )
+        )
+    except DataContextError:
+        validation_definition = ValidationDefinition(
+            name=validation_definition_name,
+            data=batch_definition,
+            suite=validation_settings_obj.data_context.suites.get(
+                validation_settings_obj.expectation_suite_name
+            ),
+        )  # Note: a validation definition combines data with a suite of
+        # expectations
+        validation_definition = (
+            validation_settings_obj.data_context.validation_definitions.add(
+                validation=validation_definition
+            )
+        )
+
+    return validation_definition
 
 
 def create_action_list(
     validation_settings_obj: ValidationSettings,
-) -> List[dict[str, Any]]:
+) -> List[CheckpointAction]:
     action_list = list()
-
-    action_list.append(
-        {  # TODO/check: do we really have to store the validation results?
-            "name": "store_validation_result",
-            "action": {"class_name": "StoreValidationResultAction"},
-        }
-    )
 
     if validation_settings_obj.send_slack_notification & (
         validation_settings_obj.slack_webhook is not None
     ):
         action_list.append(
-            {
-                "name": "send_slack_notification",
-                "action": {
-                    "class_name": "SlackNotificationAction",
-                    "slack_webhook": validation_settings_obj.slack_webhook,
-                    "notify_on": validation_settings_obj.notify_on,
-                    "renderer": {
-                        "module_name": "great_expectations.render.renderer.slack_renderer",
-                        "class_name": "SlackRenderer",
-                    },
+            great_expectations.checkpoint.SlackNotificationAction(
+                name="send_slack_notification",
+                slack_webhook=validation_settings_obj.slack_webhook,
+                notify_on=validation_settings_obj.notify_on,
+                renderer={
+                    "module_name": "great_expectations.render.renderer.slack_renderer",
+                    "class_name": "SlackRenderer",
                 },
-            }
+            )
         )
 
     if validation_settings_obj.send_ms_teams_notification & (
         validation_settings_obj.ms_teams_webhook is not None
     ):
         action_list.append(
-            {
-                "name": "send_ms_teams_notification",
-                "action": {
-                    "class_name": "MicrosoftTeamsNotificationAction",
-                    "microsoft_teams_webhook": validation_settings_obj.ms_teams_webhook,
-                    "notify_on": validation_settings_obj.notify_on,
-                    "renderer": {
-                        "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
-                        "class_name": "MicrosoftTeamsRenderer",
-                    },
+            great_expectations.checkpoint.MicrosoftTeamsNotificationAction(
+                name="send_ms_teams_notification",
+                microsoft_teams_webhook=validation_settings_obj.ms_teams_webhook,
+                notify_on=validation_settings_obj.notify_on,
+                renderer={
+                    "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
+                    "class_name": "MicrosoftTeamsRenderer",
                 },
-            }
+            )
         )
 
     return action_list
 
 
-def create_and_run_checkpoint(
-    validation_settings_obj: ValidationSettings, batch_request: Any
-) -> Any:
-    action_list = create_action_list(
-        validation_settings_obj=validation_settings_obj
-    )
-    checkpoint = Checkpoint(
-        name=validation_settings_obj.checkpoint_name,
-        run_name_template=validation_settings_obj.run_name,
-        data_context=validation_settings_obj.data_context,
-        batch_request=batch_request,
-        expectation_suite_name=validation_settings_obj.expectation_suite_name,
-        action_list=action_list,
-    )
+def get_or_add_checkpoint(
+    validation_settings_obj: ValidationSettings,
+    validation_definition: ValidationDefinition,
+) -> Checkpoint:
+    try:
+        checkpoint = validation_settings_obj.data_context.checkpoints.get(
+            name=validation_settings_obj.checkpoint_name
+        )
+    except DataContextError:
+        action_list = create_action_list(
+            validation_settings_obj=validation_settings_obj
+        )
+        checkpoint = Checkpoint(
+            name=validation_settings_obj.checkpoint_name,
+            validation_definitions=[validation_definition],
+            actions=action_list,
+        )  # Note: a checkpoint combines validations with actions
 
-    validation_settings_obj.data_context.add_or_update_checkpoint(
-        checkpoint=checkpoint
-    )
-    checkpoint_result = checkpoint.run()
-    return checkpoint_result["run_results"]
+        # Add checkpoint to data context for future use
+        (
+            validation_settings_obj.data_context.checkpoints.add(
+                checkpoint=checkpoint
+            )
+        )
+    return checkpoint
 
 
 def create_and_configure_expectations(
-    validation_rules_list: List[Rule], validator: Validator
+    validation_rules_list: List[Rule],
+    validation_settings_obj: ValidationSettings,
 ) -> None:
+    # The suite should exist by now
+    suite = validation_settings_obj.data_context.suites.get(
+        name=validation_settings_obj.expectation_suite_name
+    )
+
     for validation_rule in validation_rules_list:
         # Get the name of expectation as defined by GX
         gx_expectation_name = validation_rule["rule_name"]
 
         # Get the actual expectation as defined by GX
-        gx_expectation = getattr(validator, gx_expectation_name)
+        gx_expectation = getattr(
+            great_expectations.expectations.core,
+            humps.pascalize(gx_expectation_name),
+        )
+        # Issue 50
+        # TODO: drop pascalization, and require this as input check
+        #  when ingesting JSON? Could be done via humps.is_pascalcase()
+
         for validation_parameter_dict in validation_rule["parameters"]:
             kwargs = {}
+            # Issue 51
+            # TODO/check: is this loop really necessary? Intuitively, I added
+            #  the same expectation for each column - I didn't consider using
+            #  the same expectation with different parameters
             for par_name, par_value in validation_parameter_dict.items():
                 kwargs[par_name] = par_value
-            gx_expectation(**kwargs)
-
-    validator.save_expectation_suite(discard_failed_expectations=False)
+            suite.add_expectation(gx_expectation(**kwargs))
 
 
 def validate(
     df: DataFrame,
     rules_dict: RulesDict,
     validation_settings_obj: ValidationSettings,
-) -> Any:
+) -> CheckpointResult:
     """
     [explanation goes here]
 
@@ -153,21 +183,23 @@ def validate(
     # Make sure all attributes are aligned before validating
     validation_settings_obj.initialise_or_update_attributes()
 
-    batch_request, validator = get_batch_request_and_validator(
-        df=df,
-        validation_settings_obj=validation_settings_obj,
-    )
-
     create_and_configure_expectations(
-        validation_rules_list=rules_dict["rules"], validator=validator
-    )
-
-    checkpoint_output = create_and_run_checkpoint(
+        validation_rules_list=rules_dict["rules"],
         validation_settings_obj=validation_settings_obj,
-        batch_request=batch_request,
     )
 
-    return checkpoint_output
+    validation_definition = get_or_add_validation_definition(
+        validation_settings_obj=validation_settings_obj,
+    )
+    print("***Starting validation definition run***")
+    print(validation_definition.run(batch_parameters={"dataframe": df}))
+    checkpoint = get_or_add_checkpoint(
+        validation_settings_obj=validation_settings_obj,
+        validation_definition=validation_definition,
+    )
+
+    batch_params = {"dataframe": df}
+    return checkpoint.run(batch_parameters=batch_params)
 
 
 def run(
@@ -191,11 +223,12 @@ def run(
         return
 
     # 2) perform the validation on the dataframe
-    validation_output = validate(
+    checkpoint_result = validate(
         df=df,
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
+    validation_output = checkpoint_result.describe_dict()
 
     # 3) write results to unity catalog
     write_non_validation_tables(

@@ -1,5 +1,7 @@
-from typing import Any, List
+import datetime
+from typing import List
 
+from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, xxhash64
 from pyspark.sql.types import StructType
@@ -34,7 +36,9 @@ def list_of_dicts_to_df(
         return create_empty_dataframe(
             spark_session=spark_session, schema=schema
         )
-    return spark_session.createDataFrame((Row(**x) for x in list_of_dicts), schema=schema)
+    return spark_session.createDataFrame(
+        (Row(**x) for x in list_of_dicts), schema=schema
+    )
 
 
 def construct_regel_id(
@@ -46,7 +50,7 @@ def construct_regel_id(
     
 
 def create_parameter_list_from_results(result: dict) -> list[dict]:
-    parameters = result["expectation_config"]["kwargs"]
+    parameters = result["kwargs"]
     parameters.pop("batch_id", None)
     return [parameters]
 
@@ -114,30 +118,40 @@ def extract_dq_validatie_data(
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
-    run_time = dq_result["meta"]["run_id"].run_time
-    extracted_data = []
-    for result in dq_result["results"]:
-        element_count = int(result["result"].get("element_count", 0))
-        unexpected_count = int(result["result"].get("unexpected_count", 0))
-        aantal_valide_records = element_count - unexpected_count
-        expectation_type = result["expectation_config"]["expectation_type"]
-        parameter_list = create_parameter_list_from_results(result=result)
-        attribute = result["expectation_config"]["kwargs"].get("column")
-        
-        output = result["success"]
-        output_text = "success" if output else "failure"
-        extracted_data.append(
-            {
-                "aantalValideRecords": aantal_valide_records,
-                "aantalReferentieRecords": element_count,
-                "dqDatum": run_time,
-                "dqResultaat": output_text,
-                "regelNaam": expectation_type,
-                "regelParameters": parameter_list,
-                "bronTabelId": tabel_id,
-            }
-        )
+    dq_result = dq_result["validation_results"]
+
+    # run_time = dq_result["meta"]["run_id"].run_time
+    run_time = datetime.datetime(1900, 1, 1)
+    # TODO: fix, find run_time in new GX API
     
+    extracted_data = []
+    for validation_result in dq_result:
+        for expectation_result in validation_result["expectations"]:
+            element_count = int(
+                expectation_result["result"].get("element_count", 0)
+            )
+            unexpected_count = int(
+                expectation_result["result"].get("unexpected_count", 0)
+            )
+            aantal_valide_records = element_count - unexpected_count
+            expectation_type = expectation_result["expectation_type"]
+            parameter_list = create_parameter_list_from_results(result=expectation_result)
+            attribute = expectation_result["kwargs"].get("column")
+
+            output = expectation_result["success"]
+            output_text = "success" if output else "failure"
+            extracted_data.append(
+                {
+                    "aantalValideRecords": aantal_valide_records,
+                    "aantalReferentieRecords": element_count,
+                    "dqDatum": run_time,
+                    "dqResultaat": output_text,
+                    "regelNaam": expectation_type,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": tabel_id,
+                }
+            )
+
     df_validatie = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
@@ -179,41 +193,47 @@ def extract_dq_afwijking_data(
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
-    run_time = dq_result["meta"]["run_id"].run_time  # Get the run timestamp
+    dq_result = dq_result["validation_results"]
+
+    # run_time = dq_result["meta"]["run_id"].run_time
+    run_time = datetime.datetime(1900, 1, 1)
+    # TODO: fix, find run_time in new GX API
+    
     extracted_data = []
     if not isinstance(unique_identifier, list): unique_identifier = [unique_identifier]
 
-    for result in dq_result["results"]:
-        expectation_type = result["expectation_config"]["expectation_type"]
-        parameter_list = create_parameter_list_from_results(result=result)
-        attribute = get_target_attr_for_rule(result=result)
-        deviating_attribute_value = result["result"].get(
+    for validation_result in dq_result:
+        for expectation_result in validation_result["expectations"]:
+            expectation_type = expectation_result["expectation_type"]
+            parameter_list = create_parameter_list_from_results(result=expectation_result)
+            attribute = get_target_attr_for_rule(result=result)
+            deviating_attribute_value = expectation_result["result"].get(
             "partial_unexpected_list", []
-        )
-        unique_deviating_values = get_unique_deviating_values(
-            deviating_attribute_value
-        )
-        for value in unique_deviating_values:
-            filtered_df = filter_df_based_on_deviating_values(
-                value=value,
-                attribute=attribute,
-                df=df
             )
-            grouped_ids = get_grouped_ids_per_deviating_value(
-                filtered_df=filtered_df,
-                unique_identifier=unique_identifier
+            unique_deviating_values = get_unique_deviating_values(
+                deviating_attribute_value
             )
-            if isinstance(attribute, list): value = str(value)
-            extracted_data.append(
-                {
-                    "identifierVeldWaarde": grouped_ids,
-                    "afwijkendeAttribuutWaarde": value,
-                    "dqDatum": run_time,
-                    "regelNaam": expectation_type,
-                    "regelParameters": parameter_list,
-                    "bronTabelId": tabel_id,
-                }
-            )
+            for value in unique_deviating_values:
+                filtered_df = filter_df_based_on_deviating_values(
+                    value=value,
+                    attribute=attribute,
+                    df=df
+                )
+                grouped_ids = get_grouped_ids_per_deviating_value(
+                    filtered_df=filtered_df,
+                    unique_identifier=unique_identifier
+                )
+                if isinstance(attribute, list): value = str(value)
+                extracted_data.append(
+                    {
+                        "identifierVeldWaarde": grouped_ids,
+                        "afwijkendeAttribuutWaarde": value,
+                        "dqDatum": run_time,
+                        "regelNaam": expectation_type,
+                        "regelParameters": parameter_list,
+                        "bronTabelId": tabel_id,
+                    }
+                )
 
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -464,27 +484,23 @@ def write_non_validation_tables(
 
 
 def write_validation_table(
-    validation_output: Any,
+    validation_output: CheckpointDescriptionDict,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
     dataset_name: str,
     unique_identifier: str,
 ):
-    for results in validation_output.values():
-        result = results["validation_result"]
-        extract_dq_validatie_data(
-            validation_settings_obj.table_name,
-            dataset_name,
-            result,
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
-        extract_dq_afwijking_data(
-            validation_settings_obj.table_name,
-            dataset_name,
-            result,
-            df,
-            unique_identifier,
-            validation_settings_obj.catalog_name,
-            validation_settings_obj.spark_session,
-        )
+    extract_dq_validatie_data(
+        validation_settings_obj.table_name,
+        validation_output,
+        validation_settings_obj.catalog_name,
+        validation_settings_obj.spark_session,
+    )
+    extract_dq_afwijking_data(
+        validation_settings_obj.table_name,
+        validation_output,
+        df,
+        unique_identifier,
+        validation_settings_obj.catalog_name,
+        validation_settings_obj.spark_session,
+    )
