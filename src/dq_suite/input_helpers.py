@@ -288,12 +288,6 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     if not isinstance(data_quality_rules_dict["dataset"]["layer"], str):
         raise TypeError("Dataset 'layer' should be of type 'str'")
 
-    # The values of 'name' and 'layer' should both be lower case
-    if not data_quality_rules_dict["dataset"]["name"].islower():
-        raise ValueError("Dataset 'name' should be in lower case")
-    if not data_quality_rules_dict["dataset"]["layer"].islower():
-        raise ValueError("Dataset 'layer' should be in lower case")
-
     # 'tables' should be a list
     if not isinstance(data_quality_rules_dict["tables"], list):
         raise TypeError("'tables' should be of type 'list'")
