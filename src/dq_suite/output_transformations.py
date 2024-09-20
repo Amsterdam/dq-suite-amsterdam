@@ -56,10 +56,10 @@ def create_parameter_list_from_results(result: dict) -> list[dict]:
 
 
 def get_target_attr_for_rule(result: dict) -> str:
-    if "column" in result["expectation_config"]["kwargs"]:
-        return result["expectation_config"]["kwargs"].get("column")
+    if "column" in result["kwargs"]:
+        return result["kwargs"].get("column")
     else:
-        return result["expectation_config"]["kwargs"].get("column_list")
+        return result["kwargs"].get("column_list")
 
 
 def get_unique_deviating_values(deviating_attribute_value: list[str]) -> set[str]:
@@ -106,6 +106,7 @@ def extract_dq_validatie_data(
     table_name: str,
     dataset_name: str,
     dq_result: dict,
+    run_time: datetime,
     catalog_name: str,
     spark_session: SparkSession,
 ) -> None:
@@ -114,15 +115,12 @@ def extract_dq_validatie_data(
 
     :param table_name: Name of the tables
     :param dq_result:  # TODO: add dataclass?
+    :param run_time:
     :param catalog_name:
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
     dq_result = dq_result["validation_results"]
-
-    # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.datetime(1900, 1, 1)
-    # TODO: fix, find run_time in new GX API
     
     extracted_data = []
     for validation_result in dq_result:
@@ -179,6 +177,7 @@ def extract_dq_afwijking_data(
     dq_result: dict,  # TODO: add dataclass?
     df: DataFrame,
     unique_identifier: str,
+    run_time: datetime,
     catalog_name: str,
     spark_session: SparkSession,
 ) -> None:
@@ -189,15 +188,12 @@ def extract_dq_afwijking_data(
     :param dq_result:
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
+    :param run_time:
     :param catalog_name:
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
     dq_result = dq_result["validation_results"]
-
-    # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.datetime(1900, 1, 1)
-    # TODO: fix, find run_time in new GX API
     
     extracted_data = []
     if not isinstance(unique_identifier, list): unique_identifier = [unique_identifier]
@@ -206,7 +202,7 @@ def extract_dq_afwijking_data(
         for expectation_result in validation_result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
             parameter_list = create_parameter_list_from_results(result=expectation_result)
-            attribute = get_target_attr_for_rule(result=result)
+            attribute = get_target_attr_for_rule(result=expectation_result)
             deviating_attribute_value = expectation_result["result"].get(
             "partial_unexpected_list", []
             )
@@ -489,20 +485,23 @@ def write_validation_table(
     df: DataFrame,
     dataset_name: str,
     unique_identifier: str,
+    run_time: datetime,
 ):
     extract_dq_validatie_data(
         validation_settings_obj.table_name,
         dataset_name,
         validation_output,
+        run_time,
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
     extract_dq_afwijking_data(
         validation_settings_obj.table_name,
-        dataset_name
+        dataset_name,
         validation_output,
         df,
         unique_identifier,
+        run_time,
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
