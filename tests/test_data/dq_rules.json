@@ -1,4 +1,8 @@
 {
+    "dataset": {
+        "name": "the_dataset",
+        "layer": "the_layer"
+    },
     "tables": [
         {   
             "unique_identifier": "id",
