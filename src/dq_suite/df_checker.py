@@ -215,12 +215,11 @@ def run(
         table_name=validation_settings_obj.table_name,
     )
     if rules_dict is None:
-        print(
+        raise ValueError(
             f"No validations found for table_name "
             f"'{validation_settings_obj.table_name}' in JSON file at '"
             f"{json_path}'."
         )
-        return
 
     # 2) perform the validation on the dataframe
     checkpoint_result = validate(
