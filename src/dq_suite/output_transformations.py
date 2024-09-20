@@ -56,10 +56,10 @@ def create_parameter_list_from_results(result: dict) -> list[dict]:
 
 
 def get_target_attr_for_rule(result: dict) -> str:
-    if "column" in result["expectation_config"]["kwargs"]:
-        return result["expectation_config"]["kwargs"].get("column")
+    if "column" in result["kwargs"]:
+        return result["kwargs"].get("column")
     else:
-        return result["expectation_config"]["kwargs"].get("column_list")
+        return result["kwargs"].get("column_list")
 
 
 def get_unique_deviating_values(deviating_attribute_value: list[str]) -> set[str]:
@@ -206,7 +206,7 @@ def extract_dq_afwijking_data(
         for expectation_result in validation_result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
             parameter_list = create_parameter_list_from_results(result=expectation_result)
-            attribute = get_target_attr_for_rule(result=result)
+            attribute = get_target_attr_for_rule(result=expectation_result)
             deviating_attribute_value = expectation_result["result"].get(
             "partial_unexpected_list", []
             )
@@ -499,7 +499,7 @@ def write_validation_table(
     )
     extract_dq_afwijking_data(
         validation_settings_obj.table_name,
-        dataset_name
+        dataset_name,
         validation_output,
         df,
         unique_identifier,
