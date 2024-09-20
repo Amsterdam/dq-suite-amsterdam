@@ -184,7 +184,7 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
     return dq_rules_json_string
 
 
-def load_data_quality_rules(
+def load_data_quality_rules_from_json_string(
     dq_rules_json_string: str,
 ) -> Any | None:
     """
@@ -224,7 +224,7 @@ def data_quality_rules_json_string_to_dict(
     :param json_string: A JSON string with all DQ configuration.
     :return: rule_json: A dictionary with all DQ configuration.
     """
-    dq_rules_dict: DataQualityRulesDict = load_data_quality_rules(
+    dq_rules_dict: DataQualityRulesDict = load_data_quality_rules_from_json_string(
         dq_rules_json_string=json_string
     )
 
@@ -245,7 +245,7 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(
         file_path=file_path
     )
-    data_quality_rules_dict = load_data_quality_rules(
+    data_quality_rules_dict = load_data_quality_rules_from_json_string(
         dq_rules_json_string=dq_rules_json_string
     )
     validate_data_quality_rules_dict(
@@ -256,20 +256,6 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
 
 def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     """
-    ### 1) Check tables & dataset in data_quality_rules_dict.keys()
-
-    ### 2) Check name & layer in data_quality_rules_dict["dataset"].keys()
-    ### 2a) Check name & layer both string-valued
-
-    ### 3) Check data_quality_rules_dict["tables"] is list
-    ### 3a) Check data_quality_rules_dict["tables"] is list of dicts
-    ### 3b) Check each dict in data_quality_rules_dict["tables"].keys() contains
-    # unique_identifier, table_name and rules
-    ### 3b1) Check rules is list
-    ### 3b2) If rules is empty list, then dict should also contain
-    # validate_table_schema and validate_table_schema_url
-    ### 3b3) If rules is non-empty list, then it should be a list of Rule-dicts
-
     ### 4) Each of these Rule-dicts.keys() contains rule_name, parameters
     ### 4a) Each of those data_quality_rules_dict["tables"]["rules"][
     "rule_name"] should be a string, which should be pascal-case (i.e. the
@@ -278,5 +264,65 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     dict (so you could have duplicate rule_names, but you're reducing the
     complexity of the dataclass)
     """
+    # data_quality_rules_dict should contain 'dataset' and 'tables' keys
+    if "dataset" not in data_quality_rules_dict:
+        raise KeyError("No 'dataset' key found in data_quality_rules_dict")
+    if "tables" not in data_quality_rules_dict:
+        raise KeyError("No 'tables' key found in data_quality_rules_dict")
 
-    pass
+    # 'dataset' should be a dict
+    if not isinstance(data_quality_rules_dict["dataset"], dict):
+        raise TypeError("'dataset' should be of type 'dict'")
+
+    # The 'dataset' dict should contain 'name' and 'layer' keys
+    if "name" not in data_quality_rules_dict["dataset"]:
+        raise KeyError("No 'name' key found in data_quality_rules_dict["
+                       "'dataset']")
+    if "layer" not in data_quality_rules_dict["dataset"]:
+        raise KeyError("No 'layer' key found in data_quality_rules_dict["
+                       "'dataset']")
+
+    # The values of 'name' and 'layer' should both be string-typed
+    if not isinstance(data_quality_rules_dict["dataset"]["name"], str):
+        raise TypeError("Dataset 'name' should be of type 'str'")
+    if not isinstance(data_quality_rules_dict["dataset"]["layer"], str):
+        raise TypeError("Dataset 'layer' should be of type 'str'")
+
+    # The values of 'name' and 'layer' should both be lower case
+    if not data_quality_rules_dict["dataset"]["name"].islower():
+        raise ValueError("Dataset 'name' should be in lower case")
+    if not data_quality_rules_dict["dataset"]["layer"].islower():
+        raise ValueError("Dataset 'layer' should be in lower case")
+
+    # 'tables' should be a list
+    if not isinstance(data_quality_rules_dict["tables"], list):
+        raise TypeError("'tables' should be of type 'list'")
+
+    # All RulesDict objects in 'tables' should...
+    for rules_dict in data_quality_rules_dict["tables"]:
+        # ... be a dict
+        if not isinstance(rules_dict, dict):
+            raise TypeError(f"{rules_dict} should be of type 'dict'")
+
+        # ... contain 'unique_identifier', 'table_name' and 'rules' keys
+        if "unique_identifier" not in rules_dict:
+            raise KeyError(f"No 'unique_identifier' key found in {rules_dict}")
+        if "table_name" not in rules_dict:
+            raise KeyError(f"No 'table_name' key found in {rules_dict}")
+        if "rules" not in rules_dict:
+            raise KeyError(f"No 'rules' key found in {rules_dict}")
+
+        if not isinstance(rules_dict["rules"], list):
+            raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
+        if len(rules_dict["rules"]) == 0:
+            if "validate_table_schema" not in rules_dict:
+                raise KeyError(f"No 'validate_table_schema' key found in "
+                               f"{rules_dict}")
+            if "validate_table_schema_url" not in rules_dict:
+                raise KeyError(f"No 'validate_table_schema_url' key found in "
+                               f"{rules_dict}")
+        else:
+            # All Rule objects should be dict
+            for rule in rules_dict["rules"]:
+                if not isinstance(rule, dict):
+                    raise TypeError(f"{rule} should be of type 'dict'")

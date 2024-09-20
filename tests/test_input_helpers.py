@@ -1,6 +1,10 @@
+import json
+
 import pytest
 
-from src.dq_suite.input_helpers import read_data_quality_rules_from_json
+from src.dq_suite.input_helpers import (read_data_quality_rules_from_json,
+                                        load_data_quality_rules_from_json_string,
+                                        validate_data_quality_rules_dict)
 from tests import TEST_DATA_FOLDER
 
 
@@ -15,8 +19,37 @@ class TestReadDataQualityRulesFromJson:
             read_data_quality_rules_from_json(file_path=self.dummy_file_path)
 
     def test_read_data_quality_rules_from_json_returns_json_string(self):
-        dq_rules_json_string = read_data_quality_rules_from_json(
+        data_quality_rules_json_string = read_data_quality_rules_from_json(
             file_path=self.real_file_path
         )
-        assert type(dq_rules_json_string) is str
-        assert "tables" in dq_rules_json_string
+        assert isinstance(data_quality_rules_json_string, str)
+
+
+class TestLoadDataQualityRulesFromJsonString:
+    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
+    data_quality_rules_json_string = read_data_quality_rules_from_json(
+        file_path=real_file_path
+    )
+
+    # TODO: implement tests for all failure paths (and raise errors in
+    #  read_data_quality_rules_from_json)
+
+    def test_load_data_quality_rules_from_json_string(self):
+        data_quality_rules_dict = load_data_quality_rules_from_json_string(
+            dq_rules_json_string=self.data_quality_rules_json_string)
+        assert isinstance(data_quality_rules_dict, dict)
+
+
+class TestValidateDataQualityRulesDict:
+    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
+    data_quality_rules_json_string = read_data_quality_rules_from_json(
+        file_path=real_file_path
+    )
+    data_quality_rules_dict = load_data_quality_rules_from_json_string(
+        dq_rules_json_string=data_quality_rules_json_string)
+
+    # TODO: implement tests for all failure paths
+
+    def test_validate_data_quality_rules_dict(self):
+        validate_data_quality_rules_dict(
+            data_quality_rules_dict=self.data_quality_rules_dict)
