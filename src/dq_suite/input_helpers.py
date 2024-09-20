@@ -184,7 +184,7 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
     return dq_rules_json_string
 
 
-def validate_and_load_data_quality_rules(
+def load_data_quality_rules(
     dq_rules_json_string: str,
 ) -> Any | None:
     """
@@ -224,7 +224,7 @@ def data_quality_rules_json_string_to_dict(
     :param json_string: A JSON string with all DQ configuration.
     :return: rule_json: A dictionary with all DQ configuration.
     """
-    dq_rules_dict: DataQualityRulesDict = validate_and_load_data_quality_rules(
+    dq_rules_dict: DataQualityRulesDict = load_data_quality_rules(
         dq_rules_json_string=json_string
     )
 
@@ -245,7 +245,7 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(
         file_path=file_path
     )
-    data_quality_rules_dict = validate_and_load_data_quality_rules(
+    data_quality_rules_dict = load_data_quality_rules(
         dq_rules_json_string=dq_rules_json_string
     )
     return data_quality_rules_dict
