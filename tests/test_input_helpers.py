@@ -6,9 +6,10 @@ from src.dq_suite.input_helpers import (
     read_data_quality_rules_from_json,
     validate_data_quality_rules_dict,
     validate_dataset,
+    validate_rule,
     validate_rules_dict,
     validate_table_schema,
-    validate_tables, validate_rule,
+    validate_tables,
 )
 
 
@@ -19,9 +20,7 @@ def real_file_path():
 
 @pytest.fixture
 def data_quality_rules_json_string(real_file_path):
-    return read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
+    return read_data_quality_rules_from_json(file_path=real_file_path)
 
 
 @pytest.fixture
@@ -44,7 +43,9 @@ class TestReadDataQualityRulesFromJson:
         with pytest.raises(FileNotFoundError):
             read_data_quality_rules_from_json(file_path="nonexistent_file_path")
 
-    def test_read_data_quality_rules_from_json_returns_json_string(self, real_file_path):
+    def test_read_data_quality_rules_from_json_returns_json_string(
+        self, real_file_path
+    ):
         data_quality_rules_json_string = read_data_quality_rules_from_json(
             file_path=real_file_path
         )
@@ -56,7 +57,9 @@ class TestLoadDataQualityRulesFromJsonString:
     # TODO: implement tests for all failure paths (and raise errors in
     #  read_data_quality_rules_from_json)
 
-    def test_load_data_quality_rules_from_json_string(self, data_quality_rules_json_string):
+    def test_load_data_quality_rules_from_json_string(
+        self, data_quality_rules_json_string
+    ):
         data_quality_rules_dict = load_data_quality_rules_from_json_string(
             dq_rules_json_string=data_quality_rules_json_string
         )
@@ -127,9 +130,7 @@ class TestValidateDataSet:
                 }
             )
 
-    def test_validate_dataset_works_as_expected(
-        self, data_quality_rules_dict
-    ):
+    def test_validate_dataset_works_as_expected(self, data_quality_rules_dict):
         validate_dataset(data_quality_rules_dict=data_quality_rules_dict)
 
 
@@ -151,9 +152,7 @@ class TestValidateTables:
                 data_quality_rules_dict={"tables": "with_some_value"}
             )
 
-    def test_validate_tables_works_as_expected(
-        self, data_quality_rules_dict
-    ):
+    def test_validate_tables_works_as_expected(self, data_quality_rules_dict):
         validate_tables(data_quality_rules_dict=data_quality_rules_dict)
 
 
@@ -197,9 +196,7 @@ class TestValidateRulesDict:
                 }
             )
 
-    def test_validate_rules_dict_works_as_expected(
-        self, rules_dict
-    ):
+    def test_validate_rules_dict_works_as_expected(self, rules_dict):
         validate_rules_dict(rules_dict=rules_dict)
 
 
@@ -240,7 +237,7 @@ class TestValidateTableSchema:
 
 class TestValidateRule:
     def test_validate_rule_without_dict_typed_rule_raises_type_error(
-            self,
+        self,
     ):
         with pytest.raises(TypeError):
             validate_rule(rule="not_a_dict")
@@ -261,27 +258,26 @@ class TestValidateRule:
         self,
     ):
         with pytest.raises(TypeError):
-            validate_rule(rule={"rule_name": 123,
-                                "parameters": 456})
+            validate_rule(rule={"rule_name": 123, "parameters": 456})
 
     def test_validate_rule_without_pascal_case_rule_name_raises_value_error(
         self,
     ):
         with pytest.raises(ValueError):
-            validate_rule(rule={"rule_name": "the_rule",
-                                "parameters": 456})
+            validate_rule(rule={"rule_name": "the_rule", "parameters": 456})
 
     def test_validate_rule_without_dict_typed_parameters_raises_type_error(
         self,
     ):
         with pytest.raises(TypeError):
-            validate_rule(rule={"rule_name": "TheRule",
-                                "parameters": 456})
+            validate_rule(rule={"rule_name": "TheRule", "parameters": 456})
 
     def test_validate_rule_works_as_expected(
         self,
     ):
-        validate_rule(rule={"rule_name": "TheRule",
-                            "parameters": {"some_key": "some_value"}
-                            }
-                      )
+        validate_rule(
+            rule={
+                "rule_name": "TheRule",
+                "parameters": {"some_key": "some_value"},
+            }
+        )
