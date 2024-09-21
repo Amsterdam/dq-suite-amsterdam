@@ -1,7 +1,6 @@
 from typing import List
 
 import great_expectations
-import humps
 from great_expectations import Checkpoint, ValidationDefinition
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult

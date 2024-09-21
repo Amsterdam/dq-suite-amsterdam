@@ -1,11 +1,11 @@
-import json
-
 import pytest
-
-from src.dq_suite.input_helpers import (read_data_quality_rules_from_json,
-                                        load_data_quality_rules_from_json_string,
-                                        validate_data_quality_rules_dict)
 from tests import TEST_DATA_FOLDER
+
+from src.dq_suite.input_helpers import (
+    load_data_quality_rules_from_json_string,
+    read_data_quality_rules_from_json,
+    validate_data_quality_rules_dict,
+)
 
 
 class TestReadDataQualityRulesFromJson:
@@ -36,7 +36,8 @@ class TestLoadDataQualityRulesFromJsonString:
 
     def test_load_data_quality_rules_from_json_string(self):
         data_quality_rules_dict = load_data_quality_rules_from_json_string(
-            dq_rules_json_string=self.data_quality_rules_json_string)
+            dq_rules_json_string=self.data_quality_rules_json_string
+        )
         assert isinstance(data_quality_rules_dict, dict)
 
 
@@ -46,10 +47,12 @@ class TestValidateDataQualityRulesDict:
         file_path=real_file_path
     )
     data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string)
+        dq_rules_json_string=data_quality_rules_json_string
+    )
 
     # TODO: implement tests for all failure paths
 
     def test_validate_data_quality_rules_dict(self):
         validate_data_quality_rules_dict(
-            data_quality_rules_dict=self.data_quality_rules_dict)
+            data_quality_rules_dict=self.data_quality_rules_dict
+        )

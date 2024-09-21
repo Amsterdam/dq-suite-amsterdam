@@ -1,12 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
-import yaml
 
+from delta.tables import *
 from great_expectations import ExpectationSuite, get_context
-from great_expectations.data_context import (
-    AbstractDataContext,
-    EphemeralDataContext,
-)
+from great_expectations.data_context import AbstractDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     InMemoryStoreBackendDefaults,
@@ -15,7 +12,6 @@ from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
-from delta.tables import *
 
 
 @dataclass()
@@ -34,9 +30,7 @@ class Rule:
             raise TypeError("'rule_name' should be of type str")
 
         if not isinstance(self.parameters, dict):
-            raise TypeError(
-                "'parameters' should be of type Dict[str, Any]"
-            )
+            raise TypeError("'parameters' should be of type Dict[str, Any]")
 
     def __getitem__(self, key) -> str | Dict[str, Any] | None:
         if key == "rule_name":
@@ -203,23 +197,21 @@ def merge_df_with_unity_table(
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
-    df_alias = f'{table_name}_df'
+    df_alias = f"{table_name}_df"
     regelTabel = DeltaTable.forName(spark_session, full_table_name)
-    regelTabel.alias(table_name) \
-        .merge(
-            df.alias(df_alias),
-            f'{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}'
-        ) \
-        .whenMatchedUpdate(set = merge_dict) \
-        .whenNotMatchedInsert(values = merge_dict) \
-        .execute()
+    regelTabel.alias(table_name).merge(
+        df.alias(df_alias),
+        f"{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}",
+    ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
+        values=merge_dict
+    ).execute()
 
 
 def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
     return get_context(
         project_config=DataContextConfig(
             store_backend_defaults=InMemoryStoreBackendDefaults(),
-            analytics_enabled=False
+            analytics_enabled=False,
         )
     )
 
