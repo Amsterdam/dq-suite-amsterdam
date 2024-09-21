@@ -124,7 +124,7 @@ def generate_dq_rules_from_schema(
                             rule_type = column_type.capitalize() + "Type"
                         rule = Rule(
                             rule_name="expect_column_values_to_be_of_type",
-                            parameters=[{"column": column, "type_": rule_type}],
+                            parameters={"column": column, "type_": rule_type},
                         )
                         table["rules"].append(rule)
 
@@ -258,10 +258,28 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     return data_quality_rules_dict
 
 
-def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
+def validate_data_quality_rules_dict(
+    data_quality_rules_dict: Any | None,
+) -> None:
     """
-    [description goes here]
+    Validates the format of the input JSON file containing all GX validations
+    for a particular dataset.
     """
+    # data_quality_rules_dict should (obviously) be a dict
+    if not isinstance(data_quality_rules_dict, dict):
+        raise TypeError("'data_quality_rules_dict' should be of type 'dict'")
+    validate_lowest_level(data_quality_rules_dict=data_quality_rules_dict)
+
+    # All RulesDict objects in 'tables' should...
+    for rules_dict in data_quality_rules_dict["tables"]:
+        validate_rules_dict(rules_dict=rules_dict)
+
+        if len(rules_dict["rules"]) > 0:
+            for rule in rules_dict["rules"]:
+                validate_rule(rule=rule)
+
+
+def validate_lowest_level(data_quality_rules_dict: Any) -> None:
     # data_quality_rules_dict should contain 'dataset' and 'tables' keys
     if "dataset" not in data_quality_rules_dict:
         raise KeyError("No 'dataset' key found in data_quality_rules_dict")
@@ -275,11 +293,11 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     # The 'dataset' dict should contain 'name' and 'layer' keys
     if "name" not in data_quality_rules_dict["dataset"]:
         raise KeyError(
-            "No 'name' key found in data_quality_rules_dict[" "'dataset']"
+            "No 'name' key found in data_quality_rules_dict['dataset']"
         )
     if "layer" not in data_quality_rules_dict["dataset"]:
         raise KeyError(
-            "No 'layer' key found in data_quality_rules_dict[" "'dataset']"
+            "No 'layer' key found in data_quality_rules_dict['dataset']"
         )
 
     # The values of 'name' and 'layer' should both be string-typed
@@ -292,71 +310,68 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     if not isinstance(data_quality_rules_dict["tables"], list):
         raise TypeError("'tables' should be of type 'list'")
 
+
+def validate_rules_dict(rules_dict: dict) -> None:
     # All RulesDict objects in 'tables' should...
-    for rules_dict in data_quality_rules_dict["tables"]:
-        # ... be a dict
-        if not isinstance(rules_dict, dict):
-            raise TypeError(f"{rules_dict} should be of type 'dict'")
 
-        # ... contain 'unique_identifier', 'table_name' and 'rules' keys
-        if "unique_identifier" not in rules_dict:
-            raise KeyError(f"No 'unique_identifier' key found in {rules_dict}")
-        if "table_name" not in rules_dict:
-            raise KeyError(f"No 'table_name' key found in {rules_dict}")
-        if "rules" not in rules_dict:
-            raise KeyError(f"No 'rules' key found in {rules_dict}")
+    # ... be a dict
+    if not isinstance(rules_dict, dict):
+        raise TypeError(f"{rules_dict} should be of type 'dict'")
 
-        if not isinstance(rules_dict["rules"], list):
-            raise TypeError(
-                f"In {rules_dict}, 'rules' should be of type 'list'"
+    # ... contain 'unique_identifier', 'table_name' and 'rules' keys
+    if "unique_identifier" not in rules_dict:
+        raise KeyError(f"No 'unique_identifier' key found in {rules_dict}")
+    if "table_name" not in rules_dict:
+        raise KeyError(f"No 'table_name' key found in {rules_dict}")
+    if "rules" not in rules_dict:
+        raise KeyError(f"No 'rules' key found in {rules_dict}")
+
+    if not isinstance(rules_dict["rules"], list):
+        raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
+    if len(rules_dict["rules"]) == 0:
+        if "validate_table_schema" not in rules_dict:
+            raise KeyError(
+                f"No 'validate_table_schema' key found in " f"{rules_dict}"
             )
-        if len(rules_dict["rules"]) == 0:
-            if "validate_table_schema" not in rules_dict:
-                raise KeyError(
-                    f"No 'validate_table_schema' key found in " f"{rules_dict}"
-                )
-            if "validate_table_schema_url" not in rules_dict:
-                raise KeyError(
-                    f"No 'validate_table_schema_url' key found in "
-                    f"{rules_dict}"
-                )
-        else:
-            # All Rule objects should...
-            for rule in rules_dict["rules"]:
-                # ... be a dict
-                if not isinstance(rule, dict):
-                    raise TypeError(f"{rule} should be of type 'dict'")
+        if "validate_table_schema_url" not in rules_dict:
+            raise KeyError(
+                f"No 'validate_table_schema_url' key found in " f"{rules_dict}"
+            )
 
-                # ... contain 'rule_name' and 'parameters' as keys
-                if "rule_name" not in rule:
-                    raise KeyError(f"No 'rule_name' key found in {rule}")
-                if "parameters" not in rule:
-                    raise KeyError(f"No 'parameters' key found in {rule}")
 
-                # ... contain string-typed expectation names...
-                if not isinstance(rule["rule_name"], str):
-                    raise TypeError(
-                        f"In {rule}, 'rule_name' should be of type 'str'"
-                    )
-                # ... as defined in GX (which switched to Pascal case in v1.0)
-                if not humps.is_pascalcase(rule["rule_name"]):
-                    raise ValueError(
-                        f"The expectation name"
-                        f" '{rule['rule_name']}' "
-                        f"should "
-                        f"be written in Pascal case, "
-                        f"e.g. 'WrittenLikeThis' instead of "
-                        f"'written_like_this'"
-                        f"(hint: "
-                        f"'{humps.pascalize(rule['rule_name'])}')"
-                    )
+def validate_rule(rule: dict) -> None:
+    # All Rule objects should...
 
-                # 'parameters' should NOT be a list (as used in previous
-                # versions), but a dict. The consequence of this is that the
-                # same expectation should be repeated multiple times, with a
-                # single dict of parameters each - decreasing the complexity
-                # of the dataclass, but adding 'repeated' expectations
-                if not isinstance(rule["parameters"], dict):
-                    raise TypeError(
-                        f"In {rule}, 'parameters' should be of type 'dict'"
-                    )
+    # ... be a dict
+    if not isinstance(rule, dict):
+        raise TypeError(f"{rule} should be of type 'dict'")
+
+    # ... contain 'rule_name' and 'parameters' as keys
+    if "rule_name" not in rule:
+        raise KeyError(f"No 'rule_name' key found in {rule}")
+    if "parameters" not in rule:
+        raise KeyError(f"No 'parameters' key found in {rule}")
+
+    # ... contain string-typed expectation names...
+    if not isinstance(rule["rule_name"], str):
+        raise TypeError(f"In {rule}, 'rule_name' should be of type 'str'")
+    # ... as defined in GX (which switched to Pascal case in v1.0)
+    if not humps.is_pascalcase(rule["rule_name"]):
+        raise ValueError(
+            f"The expectation name"
+            f" '{rule['rule_name']}' "
+            f"should "
+            f"be written in Pascal case, "
+            f"e.g. 'WrittenLikeThis' instead of "
+            f"'written_like_this'"
+            f"(hint: "
+            f"'{humps.pascalize(rule['rule_name'])}')"
+        )
+
+    # 'parameters' should NOT be a list (as used in previous
+    # versions), but a dict. The consequence of this is that the
+    # same expectation should be repeated multiple times, with a
+    # single dict of parameters each - decreasing the complexity
+    # of the dataclass, but adding 'repeated' expectations
+    if not isinstance(rule["parameters"], dict):
+        raise TypeError(f"In {rule}, 'parameters' should be of type 'dict'")
