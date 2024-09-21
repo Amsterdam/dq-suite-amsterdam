@@ -26,19 +26,19 @@ class Rule:
     """
 
     rule_name: str  # Name of the GX expectation
-    parameters: List[Dict[str, Any]]  # Collection of parameters required for
+    parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
             raise TypeError("'rule_name' should be of type str")
 
-        if not isinstance(self.parameters, list):
+        if not isinstance(self.parameters, dict):
             raise TypeError(
-                "'parameters' should be of type List[Dict[str, Any]]"
+                "'parameters' should be of type Dict[str, Any]"
             )
 
-    def __getitem__(self, key) -> str | List[Dict[str, Any]] | None:
+    def __getitem__(self, key) -> str | Dict[str, Any] | None:
         if key == "rule_name":
             return self.rule_name
         elif key == "parameters":
