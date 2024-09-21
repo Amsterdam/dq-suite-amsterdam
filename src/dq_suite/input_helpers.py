@@ -344,6 +344,6 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
                 # same expectation should be repeated multiple times, with a
                 # single dict of parameters each - decreasing the complexity
                 # of the dataclass, but adding 'repeated' expectations
-                # if not isinstance(rule["parameters"], dict):
-                #     raise TypeError(
-                #         f"In {rule}, 'parameters' should be of type 'dict'")
+                if not isinstance(rule["parameters"], dict):
+                    raise TypeError(
+                        f"In {rule}, 'parameters' should be of type 'dict'")
