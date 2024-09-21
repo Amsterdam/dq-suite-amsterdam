@@ -5,6 +5,7 @@ from src.dq_suite.input_helpers import (
     load_data_quality_rules_from_json_string,
     read_data_quality_rules_from_json,
     validate_data_quality_rules_dict, validate_dataset, validate_tables,
+    validate_rules_dict,
 )
 
 
@@ -158,3 +159,52 @@ class TestValidateTables:
         self,
     ):
         validate_tables(data_quality_rules_dict=self.data_quality_rules_dict)
+
+
+class TestValidateRulesDict:
+    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
+    data_quality_rules_json_string = read_data_quality_rules_from_json(
+        file_path=real_file_path
+    )
+    data_quality_rules_dict = load_data_quality_rules_from_json_string(
+        dq_rules_json_string=data_quality_rules_json_string
+    )
+    rules_dict = data_quality_rules_dict["tables"][0]
+
+    def test_validate_rules_dict_without_dict_typed_value_raises_type_error(
+            self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rules_dict(rules_dict="not_a_dict")
+
+    def test_validate_rules_dict_without_unique_identifier_key_raises_key_error(
+            self,
+    ):
+        with pytest.raises(KeyError):
+            validate_rules_dict(rules_dict=dict())
+
+    def test_validate_rules_dict_without_table_name_key_raises_key_error(
+            self,
+    ):
+        with pytest.raises(KeyError):
+            validate_rules_dict(rules_dict={"unique_identifier": 123})
+
+    def test_validate_rules_dict_without_rules_key_raises_key_error(
+            self,
+    ):
+        with pytest.raises(KeyError):
+            validate_rules_dict(rules_dict={"unique_identifier": 123,
+                                            "table_name": 456})
+
+    def test_validate_rules_dict_without_list_typed_rules_raises_type_error(
+            self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rules_dict(rules_dict={"unique_identifier": 123,
+                                            "table_name": 456,
+                                            "rules": 789})
+
+    def test_validate_rules_dict_works_as_expected(
+        self,
+    ):
+        validate_rules_dict(rules_dict=self.rules_dict)
