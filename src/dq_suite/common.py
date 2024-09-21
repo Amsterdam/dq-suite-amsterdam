@@ -92,7 +92,7 @@ class DatasetDict:
         if not isinstance(self.layer, str):
             raise TypeError("'layer' should be of type str")
 
-    def __getitem__(self, key) -> str | RulesList | None:
+    def __getitem__(self, key) -> str | None:
         if key == "name":
             return self.name
         elif key == "layer":
@@ -120,7 +120,7 @@ class DataQualityRulesDict:
         if not isinstance(self.tables, list):
             raise TypeError("'tables' should be RulesDictList")
 
-    def __getitem__(self, key) -> str | RulesDictList | None:
+    def __getitem__(self, key) -> DatasetDict | RulesDictList | None:
         if key == "dataset":
             return self.dataset
         elif key == "tables":
@@ -198,8 +198,8 @@ def merge_df_with_unity_table(
         catalog_name=catalog_name, table_name=table_name
     )
     df_alias = f"{table_name}_df"
-    regelTabel = DeltaTable.forName(spark_session, full_table_name)
-    regelTabel.alias(table_name).merge(
+    regel_tabel = DeltaTable.forName(spark_session, full_table_name)
+    regel_tabel.alias(table_name).merge(
         df.alias(df_alias),
         f"{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}",
     ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
