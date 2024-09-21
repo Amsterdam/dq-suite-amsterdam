@@ -152,9 +152,6 @@ def create_and_configure_expectations(
             great_expectations.expectations.core,
             humps.pascalize(gx_expectation_name),
         )
-        # Issue 50
-        # TODO: drop pascalization, and require this as input check
-        #  when ingesting JSON? Could be done via humps.is_pascalcase()
 
         for validation_parameter_dict in validation_rule["parameters"]:
             kwargs = {}
