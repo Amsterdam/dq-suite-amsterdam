@@ -1,13 +1,14 @@
 import pytest
-import validators
-
 from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.input_helpers import (
     load_data_quality_rules_from_json_string,
     read_data_quality_rules_from_json,
-    validate_data_quality_rules_dict, validate_dataset, validate_tables,
-    validate_rules_dict, validate_table_schema,
+    validate_data_quality_rules_dict,
+    validate_dataset,
+    validate_rules_dict,
+    validate_table_schema,
+    validate_tables,
 )
 
 
@@ -58,7 +59,8 @@ class TestValidateDataQualityRulesDict:
     ):
         with pytest.raises(TypeError):
             validate_data_quality_rules_dict(
-                data_quality_rules_dict="wrong_type")
+                data_quality_rules_dict="wrong_type"
+            )
 
     def test_validate_data_quality_rules_dict(self):
         validate_data_quality_rules_dict(
@@ -79,54 +81,47 @@ class TestValidateDataSet:
         self,
     ):
         with pytest.raises(KeyError):
-            validate_dataset(data_quality_rules_dict=
-                             {"some_other_thing": "with_some_value"})
+            validate_dataset(
+                data_quality_rules_dict={"some_other_thing": "with_some_value"}
+            )
 
     def test_validate_dataset_without_dict_typed_value_raises_type_error(
         self,
     ):
         with pytest.raises(TypeError):
-            validate_dataset(data_quality_rules_dict=
-                             {"dataset": "with_some_value"})
+            validate_dataset(
+                data_quality_rules_dict={"dataset": "with_some_value"}
+            )
 
     def test_validate_dataset_without_name_key_raises_key_error(
         self,
     ):
         with pytest.raises(KeyError):
-            validate_dataset(data_quality_rules_dict=
-                             {"dataset": dict()})
+            validate_dataset(data_quality_rules_dict={"dataset": dict()})
 
     def test_validate_dataset_without_layer_key_raises_key_error(
         self,
     ):
         with pytest.raises(KeyError):
-            validate_dataset(data_quality_rules_dict=
-                             {"dataset": {
-                                 "name": 123
-                             }
-                              })
+            validate_dataset(data_quality_rules_dict={"dataset": {"name": 123}})
 
     def test_validate_dataset_without_str_typed_name_raises_type_error(
         self,
     ):
         with pytest.raises(TypeError):
-            validate_dataset(data_quality_rules_dict=
-                             {"dataset": {
-                                 "name": 123,
-                                 "layer": 456
-                             }
-                              })
+            validate_dataset(
+                data_quality_rules_dict={"dataset": {"name": 123, "layer": 456}}
+            )
 
     def test_validate_dataset_without_str_typed_layer_raises_type_error(
         self,
     ):
         with pytest.raises(TypeError):
-            validate_dataset(data_quality_rules_dict=
-                             {"dataset": {
-                                 "name": "the_dataset_name",
-                                 "layer": 456
-                             }
-                              })
+            validate_dataset(
+                data_quality_rules_dict={
+                    "dataset": {"name": "the_dataset_name", "layer": 456}
+                }
+            )
 
     def test_validate_dataset_works_as_expected(
         self,
@@ -144,18 +139,20 @@ class TestValidateTables:
     )
 
     def test_validate_tables_without_tables_key_raises_key_error(
-            self,
+        self,
     ):
         with pytest.raises(KeyError):
-            validate_tables(data_quality_rules_dict=
-                            {"some_other_thing": "with_some_value"})
+            validate_tables(
+                data_quality_rules_dict={"some_other_thing": "with_some_value"}
+            )
 
     def test_validate_tables_without_list_typed_value_raises_type_error(
-            self,
+        self,
     ):
         with pytest.raises(TypeError):
-            validate_tables(data_quality_rules_dict=
-                            {"tables": "with_some_value"})
+            validate_tables(
+                data_quality_rules_dict={"tables": "with_some_value"}
+            )
 
     def test_validate_tables_works_as_expected(
         self,
@@ -174,37 +171,42 @@ class TestValidateRulesDict:
     rules_dict = data_quality_rules_dict["tables"][0]
 
     def test_validate_rules_dict_without_dict_typed_value_raises_type_error(
-            self,
+        self,
     ):
         with pytest.raises(TypeError):
             validate_rules_dict(rules_dict="not_a_dict")
 
     def test_validate_rules_dict_without_unique_identifier_key_raises_key_error(
-            self,
+        self,
     ):
         with pytest.raises(KeyError):
             validate_rules_dict(rules_dict=dict())
 
     def test_validate_rules_dict_without_table_name_key_raises_key_error(
-            self,
+        self,
     ):
         with pytest.raises(KeyError):
             validate_rules_dict(rules_dict={"unique_identifier": 123})
 
     def test_validate_rules_dict_without_rules_key_raises_key_error(
-            self,
+        self,
     ):
         with pytest.raises(KeyError):
-            validate_rules_dict(rules_dict={"unique_identifier": 123,
-                                            "table_name": 456})
+            validate_rules_dict(
+                rules_dict={"unique_identifier": 123, "table_name": 456}
+            )
 
     def test_validate_rules_dict_without_list_typed_rules_raises_type_error(
-            self,
+        self,
     ):
         with pytest.raises(TypeError):
-            validate_rules_dict(rules_dict={"unique_identifier": 123,
-                                            "table_name": 456,
-                                            "rules": 789})
+            validate_rules_dict(
+                rules_dict={
+                    "unique_identifier": 123,
+                    "table_name": 456,
+                    "rules": 789,
+                }
+            )
 
     def test_validate_rules_dict_works_as_expected(
         self,
@@ -213,28 +215,35 @@ class TestValidateRulesDict:
 
 
 class TestValidateTableSchema:
-    def test_validate_table_schema_without_validate_table_schema_key_raises_key_error(self):
+    def test_validate_table_schema_without_validate_table_schema_key_raises_key_error(
+        self,
+    ):
         with pytest.raises(KeyError):
             validate_table_schema(rules_dict=dict())
 
-    def test_validate_table_schema_without_validate_table_schema_url_key_raises_key_error(self):
+    def test_validate_table_schema_without_validate_table_schema_url_key_raises_key_error(
+        self,
+    ):
         with pytest.raises(KeyError):
-            validate_table_schema(rules_dict={"validate_table_schema":
-                                                  "some_table_name"})
-    def test_validate_table_schema_with_invalid_url_raises_value_error(
-            self):
+            validate_table_schema(
+                rules_dict={"validate_table_schema": "some_table_name"}
+            )
+
+    def test_validate_table_schema_with_invalid_url_raises_value_error(self):
         with pytest.raises(ValueError):
-            validate_table_schema(rules_dict={"validate_table_schema":
-                                                  "some_table_name",
-                                              "validate_table_schema_url":
-                                                  "blablabla",
-                                              })
+            validate_table_schema(
+                rules_dict={
+                    "validate_table_schema": "some_table_name",
+                    "validate_table_schema_url": "blablabla",
+                }
+            )
 
     def test_validate_table_schema_works_as_expected(
         self,
     ):
-        validate_table_schema(rules_dict={"validate_table_schema":
-                                                  "some_table_name",
-                                          "validate_table_schema_url":
-                                              "https://www.someurl.nl",
-                                          })
+        validate_table_schema(
+            rules_dict={
+                "validate_table_schema": "some_table_name",
+                "validate_table_schema_url": "https://www.someurl.nl",
+            }
+        )
