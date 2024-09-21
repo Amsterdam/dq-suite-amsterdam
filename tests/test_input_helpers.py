@@ -8,7 +8,7 @@ from src.dq_suite.input_helpers import (
     validate_dataset,
     validate_rules_dict,
     validate_table_schema,
-    validate_tables,
+    validate_tables, validate_rule,
 )
 
 
@@ -247,3 +247,52 @@ class TestValidateTableSchema:
                 "validate_table_schema_url": "https://www.someurl.nl",
             }
         )
+
+
+class TestValidateRule:
+    def test_validate_rule_without_dict_typed_rule_raises_type_error(
+            self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rule(rule="not_a_dict")
+
+    def test_validate_rule_without_rule_name_key_raises_key_error(
+        self,
+    ):
+        with pytest.raises(KeyError):
+            validate_rule(rule=dict())
+
+    def test_validate_rule_without_parameters_key_raises_key_error(
+        self,
+    ):
+        with pytest.raises(KeyError):
+            validate_rule(rule={"rule_name": 123})
+
+    def test_validate_rule_without_string_typed_rule_name_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rule(rule={"rule_name": 123,
+                                "parameters": 456})
+
+    def test_validate_rule_without_pascal_case_rule_name_raises_value_error(
+        self,
+    ):
+        with pytest.raises(ValueError):
+            validate_rule(rule={"rule_name": "the_rule",
+                                "parameters": 456})
+
+    def test_validate_rule_without_dict_typed_parameters_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rule(rule={"rule_name": "TheRule",
+                                "parameters": 456})
+
+    def test_validate_rule_works_as_expected(
+        self,
+    ):
+        validate_rule(rule={"rule_name": "TheRule",
+                            "parameters": {"some_key": "some_value"}
+                            }
+                      )
