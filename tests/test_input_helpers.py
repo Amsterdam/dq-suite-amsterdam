@@ -12,48 +12,59 @@ from src.dq_suite.input_helpers import (
 )
 
 
-class TestReadDataQualityRulesFromJson:
-    dummy_file_path = "nonexistent_file_path"
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
+@pytest.fixture
+def real_file_path():
+    return f"{TEST_DATA_FOLDER}/dq_rules.json"
 
+
+@pytest.fixture
+def data_quality_rules_json_string(real_file_path):
+    return read_data_quality_rules_from_json(
+        file_path=real_file_path
+    )
+
+
+@pytest.fixture
+def data_quality_rules_dict(data_quality_rules_json_string):
+    return load_data_quality_rules_from_json_string(
+        dq_rules_json_string=data_quality_rules_json_string
+    )
+
+
+@pytest.fixture
+def rules_dict(data_quality_rules_dict):
+    return data_quality_rules_dict["tables"][0]
+
+
+@pytest.mark.usefixtures("real_file_path")
+class TestReadDataQualityRulesFromJson:
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
         self,
     ):
         with pytest.raises(FileNotFoundError):
-            read_data_quality_rules_from_json(file_path=self.dummy_file_path)
+            read_data_quality_rules_from_json(file_path="nonexistent_file_path")
 
-    def test_read_data_quality_rules_from_json_returns_json_string(self):
+    def test_read_data_quality_rules_from_json_returns_json_string(self, real_file_path):
         data_quality_rules_json_string = read_data_quality_rules_from_json(
-            file_path=self.real_file_path
+            file_path=real_file_path
         )
         assert isinstance(data_quality_rules_json_string, str)
 
 
+@pytest.mark.usefixtures("data_quality_rules_json_string")
 class TestLoadDataQualityRulesFromJsonString:
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
-    data_quality_rules_json_string = read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
-
     # TODO: implement tests for all failure paths (and raise errors in
     #  read_data_quality_rules_from_json)
 
-    def test_load_data_quality_rules_from_json_string(self):
+    def test_load_data_quality_rules_from_json_string(self, data_quality_rules_json_string):
         data_quality_rules_dict = load_data_quality_rules_from_json_string(
-            dq_rules_json_string=self.data_quality_rules_json_string
+            dq_rules_json_string=data_quality_rules_json_string
         )
         assert isinstance(data_quality_rules_dict, dict)
 
 
+@pytest.mark.usefixtures("data_quality_rules_dict")
 class TestValidateDataQualityRulesDict:
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
-    data_quality_rules_json_string = read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string
-    )
-
     def test_validate_data_quality_rules_dict_raises_type_error(
         self,
     ):
@@ -62,21 +73,14 @@ class TestValidateDataQualityRulesDict:
                 data_quality_rules_dict="wrong_type"
             )
 
-    def test_validate_data_quality_rules_dict(self):
+    def test_validate_data_quality_rules_dict(self, data_quality_rules_dict):
         validate_data_quality_rules_dict(
-            data_quality_rules_dict=self.data_quality_rules_dict
+            data_quality_rules_dict=data_quality_rules_dict
         )
 
 
+@pytest.mark.usefixtures("data_quality_rules_dict")
 class TestValidateDataSet:
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
-    data_quality_rules_json_string = read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string
-    )
-
     def test_validate_dataset_without_dataset_key_raises_key_error(
         self,
     ):
@@ -124,20 +128,13 @@ class TestValidateDataSet:
             )
 
     def test_validate_dataset_works_as_expected(
-        self,
+        self, data_quality_rules_dict
     ):
-        validate_dataset(data_quality_rules_dict=self.data_quality_rules_dict)
+        validate_dataset(data_quality_rules_dict=data_quality_rules_dict)
 
 
+@pytest.mark.usefixtures("data_quality_rules_dict")
 class TestValidateTables:
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
-    data_quality_rules_json_string = read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string
-    )
-
     def test_validate_tables_without_tables_key_raises_key_error(
         self,
     ):
@@ -155,21 +152,13 @@ class TestValidateTables:
             )
 
     def test_validate_tables_works_as_expected(
-        self,
+        self, data_quality_rules_dict
     ):
-        validate_tables(data_quality_rules_dict=self.data_quality_rules_dict)
+        validate_tables(data_quality_rules_dict=data_quality_rules_dict)
 
 
+@pytest.mark.usefixtures("rules_dict")
 class TestValidateRulesDict:
-    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
-    data_quality_rules_json_string = read_data_quality_rules_from_json(
-        file_path=real_file_path
-    )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string
-    )
-    rules_dict = data_quality_rules_dict["tables"][0]
-
     def test_validate_rules_dict_without_dict_typed_value_raises_type_error(
         self,
     ):
@@ -209,9 +198,9 @@ class TestValidateRulesDict:
             )
 
     def test_validate_rules_dict_works_as_expected(
-        self,
+        self, rules_dict
     ):
-        validate_rules_dict(rules_dict=self.rules_dict)
+        validate_rules_dict(rules_dict=rules_dict)
 
 
 class TestValidateTableSchema:
