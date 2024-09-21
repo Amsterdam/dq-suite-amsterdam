@@ -146,22 +146,14 @@ def create_and_configure_expectations(
     for validation_rule in validation_rules_list:
         # Get the name of expectation as defined by GX
         gx_expectation_name = validation_rule["rule_name"]
+        gx_expectation_parameters: dict = validation_rule["parameters"]
 
         # Get the actual expectation as defined by GX
         gx_expectation = getattr(
             great_expectations.expectations.core,
-            humps.pascalize(gx_expectation_name),
+            gx_expectation_name,
         )
-
-        for validation_parameter_dict in validation_rule["parameters"]:
-            kwargs = {}
-            # Issue 51
-            # TODO/check: is this loop really necessary? Intuitively, I added
-            #  the same expectation for each column - I didn't consider using
-            #  the same expectation with different parameters
-            for par_name, par_value in validation_parameter_dict.items():
-                kwargs[par_name] = par_value
-            suite.add_expectation(gx_expectation(**kwargs))
+        suite.add_expectation(gx_expectation(**gx_expectation_parameters))
 
 
 def validate(
