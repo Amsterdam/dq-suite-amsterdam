@@ -50,7 +50,11 @@ class TestValidateDataQualityRulesDict:
         dq_rules_json_string=data_quality_rules_json_string
     )
 
-    # TODO: implement tests for all failure paths
+    def test_validate_data_quality_rules_dict_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            validate_data_quality_rules_dict(data_quality_rules_dict="bla")
 
     def test_validate_data_quality_rules_dict(self):
         validate_data_quality_rules_dict(
