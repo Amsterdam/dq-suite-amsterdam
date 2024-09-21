@@ -274,7 +274,9 @@ def validate_data_quality_rules_dict(
     for rules_dict in data_quality_rules_dict["tables"]:
         validate_rules_dict(rules_dict=rules_dict)
 
-        if len(rules_dict["rules"]) > 0:
+        if len(rules_dict["rules"]) == 0:
+            validate_table_schema(rules_dict=rules_dict)
+        else:
             for rule in rules_dict["rules"]:
                 validate_rule(rule=rule)
 
@@ -328,15 +330,15 @@ def validate_rules_dict(rules_dict: dict) -> None:
 
     if not isinstance(rules_dict["rules"], list):
         raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
-    if len(rules_dict["rules"]) == 0:
-        if "validate_table_schema" not in rules_dict:
-            raise KeyError(
-                f"No 'validate_table_schema' key found in " f"{rules_dict}"
-            )
-        if "validate_table_schema_url" not in rules_dict:
-            raise KeyError(
-                f"No 'validate_table_schema_url' key found in " f"{rules_dict}"
-            )
+
+
+def validate_table_schema(rules_dict: dict) -> None:
+    if "validate_table_schema" not in rules_dict:
+        raise KeyError(f"No 'validate_table_schema' key found in {rules_dict}")
+    if "validate_table_schema_url" not in rules_dict:
+        raise KeyError(
+            f"No 'validate_table_schema_url' key found in {rules_dict}"
+        )
 
 
 def validate_rule(rule: dict) -> None:
