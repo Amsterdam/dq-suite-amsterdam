@@ -1,11 +1,13 @@
 import pytest
+import validators
+
 from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.input_helpers import (
     load_data_quality_rules_from_json_string,
     read_data_quality_rules_from_json,
     validate_data_quality_rules_dict, validate_dataset, validate_tables,
-    validate_rules_dict,
+    validate_rules_dict, validate_table_schema,
 )
 
 
@@ -208,3 +210,31 @@ class TestValidateRulesDict:
         self,
     ):
         validate_rules_dict(rules_dict=self.rules_dict)
+
+
+class TestValidateTableSchema:
+    def test_validate_table_schema_without_validate_table_schema_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            validate_table_schema(rules_dict=dict())
+
+    def test_validate_table_schema_without_validate_table_schema_url_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            validate_table_schema(rules_dict={"validate_table_schema":
+                                                  "some_table_name"})
+    def test_validate_table_schema_with_invalid_url_raises_value_error(
+            self):
+        with pytest.raises(ValueError):
+            validate_table_schema(rules_dict={"validate_table_schema":
+                                                  "some_table_name",
+                                              "validate_table_schema_url":
+                                                  "blablabla",
+                                              })
+
+    def test_validate_table_schema_works_as_expected(
+        self,
+    ):
+        validate_table_schema(rules_dict={"validate_table_schema":
+                                                  "some_table_name",
+                                          "validate_table_schema_url":
+                                              "https://www.someurl.nl",
+                                          })
