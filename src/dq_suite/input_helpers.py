@@ -268,9 +268,10 @@ def validate_data_quality_rules_dict(
     # data_quality_rules_dict should (obviously) be a dict
     if not isinstance(data_quality_rules_dict, dict):
         raise TypeError("'data_quality_rules_dict' should be of type 'dict'")
-    validate_lowest_level(data_quality_rules_dict=data_quality_rules_dict)
 
-    # All RulesDict objects in 'tables' should...
+    validate_dataset(data_quality_rules_dict=data_quality_rules_dict)
+    validate_tables(data_quality_rules_dict=data_quality_rules_dict)
+
     for rules_dict in data_quality_rules_dict["tables"]:
         validate_rules_dict(rules_dict=rules_dict)
 
@@ -281,18 +282,13 @@ def validate_data_quality_rules_dict(
                 validate_rule(rule=rule)
 
 
-def validate_lowest_level(data_quality_rules_dict: Any) -> None:
-    # data_quality_rules_dict should contain 'dataset' and 'tables' keys
+def validate_dataset(data_quality_rules_dict: dict) -> None:
     if "dataset" not in data_quality_rules_dict:
         raise KeyError("No 'dataset' key found in data_quality_rules_dict")
-    if "tables" not in data_quality_rules_dict:
-        raise KeyError("No 'tables' key found in data_quality_rules_dict")
 
-    # 'dataset' should be a dict
     if not isinstance(data_quality_rules_dict["dataset"], dict):
         raise TypeError("'dataset' should be of type 'dict'")
 
-    # The 'dataset' dict should contain 'name' and 'layer' keys
     if "name" not in data_quality_rules_dict["dataset"]:
         raise KeyError(
             "No 'name' key found in data_quality_rules_dict['dataset']"
@@ -302,13 +298,16 @@ def validate_lowest_level(data_quality_rules_dict: Any) -> None:
             "No 'layer' key found in data_quality_rules_dict['dataset']"
         )
 
-    # The values of 'name' and 'layer' should both be string-typed
     if not isinstance(data_quality_rules_dict["dataset"]["name"], str):
         raise TypeError("Dataset 'name' should be of type 'str'")
     if not isinstance(data_quality_rules_dict["dataset"]["layer"], str):
         raise TypeError("Dataset 'layer' should be of type 'str'")
 
-    # 'tables' should be a list
+
+def validate_tables(data_quality_rules_dict: Any) -> None:
+    if "tables" not in data_quality_rules_dict:
+        raise KeyError("No 'tables' key found in data_quality_rules_dict")
+
     if not isinstance(data_quality_rules_dict["tables"], list):
         raise TypeError("'tables' should be of type 'list'")
 
