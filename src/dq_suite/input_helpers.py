@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict
 
+import humps
 import requests
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
@@ -256,13 +257,7 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
 
 def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
     """
-    ### 4) Each of these Rule-dicts.keys() contains rule_name, parameters
-    ### 4a) Each of those data_quality_rules_dict["tables"]["rules"][
-    "rule_name"] should be a string, which should be pascal-case (i.e. the
-    rule name should be WrittenLikeThis instead of written_like_this)
-    ### 4b) Each of those parameters.values() should NOT be a list, merely a
-    dict (so you could have duplicate rule_names, but you're reducing the
-    complexity of the dataclass)
+    [description goes here]
     """
     # data_quality_rules_dict should contain 'dataset' and 'tables' keys
     if "dataset" not in data_quality_rules_dict:
@@ -316,7 +311,39 @@ def validate_data_quality_rules_dict(data_quality_rules_dict: Any) -> None:
                 raise KeyError(f"No 'validate_table_schema_url' key found in "
                                f"{rules_dict}")
         else:
-            # All Rule objects should be dict
+            # All Rule objects should...
             for rule in rules_dict["rules"]:
+                # ... be a dict
                 if not isinstance(rule, dict):
                     raise TypeError(f"{rule} should be of type 'dict'")
+
+                # ... contain 'rule_name' and 'parameters' as keys
+                if "rule_name" not in rule:
+                    raise KeyError(
+                        f"No 'rule_name' key found in {rule}")
+                if "parameters" not in rule:
+                    raise KeyError(f"No 'parameters' key found in {rule}")
+
+                # ... contain string-typed expectation names...
+                if not isinstance(rule["rule_name"], str):
+                    raise TypeError(
+                        f"In {rule}, 'rule_name' should be of type 'str'")
+                # ... as defined in GX (which switched to Pascal case in v1.0)
+                if not humps.is_pascalcase(rule["rule_name"]):
+                    raise ValueError(f"The expectation name"
+                                     f" '{rule['rule_name']}' "
+                                     f"should "
+                                     f"be written in Pascal case, "
+                                     f"e.g. 'WrittenLikeThis' instead of "
+                                     f"'written_like_this'"
+                                     f"(hint: "
+                                     f"'{humps.pascalize(rule['rule_name'])}')")
+
+                # 'parameters' should NOT be a list (as used in previous
+                # versions), but a dict. The consequence of this is that the
+                # same expectation should be repeated multiple times, with a
+                # single dict of parameters each - decreasing the complexity
+                # of the dataclass, but adding 'repeated' expectations
+                # if not isinstance(rule["parameters"], dict):
+                #     raise TypeError(
+                #         f"In {rule}, 'parameters' should be of type 'dict'")
