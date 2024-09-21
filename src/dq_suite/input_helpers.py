@@ -370,7 +370,7 @@ def validate_rule(rule: dict) -> None:
             f"should "
             f"be written in Pascal case, "
             f"e.g. 'WrittenLikeThis' instead of "
-            f"'written_like_this'"
+            f"'written_like_this' "
             f"(hint: "
             f"'{humps.pascalize(rule['rule_name'])}')"
         )
