@@ -72,7 +72,7 @@ def fetch_schema_from_github(
     schema_dict = {}
     for table in dq_rules_dict["tables"]:
         if "validate_table_schema_url" in table:
-            url = table["validate_table_schema_url"]  # TODO: validate URL
+            url = table["validate_table_schema_url"]
             r = requests.get(url)
             schema = json.loads(r.text)
             schema_dict[table["table_name"]] = schema
