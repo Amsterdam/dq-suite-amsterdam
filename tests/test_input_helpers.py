@@ -234,7 +234,7 @@ class TestValidateTableSchema:
             validate_table_schema(
                 rules_dict={
                     "validate_table_schema": "some_table_name",
-                    "validate_table_schema_url": "blablabla",
+                    "validate_table_schema_url": "some_invalid_url",
                 }
             )
 
