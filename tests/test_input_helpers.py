@@ -4,7 +4,7 @@ from tests import TEST_DATA_FOLDER
 from src.dq_suite.input_helpers import (
     load_data_quality_rules_from_json_string,
     read_data_quality_rules_from_json,
-    validate_data_quality_rules_dict, validate_dataset,
+    validate_data_quality_rules_dict, validate_dataset, validate_tables,
 )
 
 
@@ -71,6 +71,7 @@ class TestValidateDataSet:
     data_quality_rules_dict = load_data_quality_rules_from_json_string(
         dq_rules_json_string=data_quality_rules_json_string
     )
+
     def test_validate_dataset_without_dataset_key_raises_key_error(
         self,
     ):
@@ -128,3 +129,32 @@ class TestValidateDataSet:
         self,
     ):
         validate_dataset(data_quality_rules_dict=self.data_quality_rules_dict)
+
+
+class TestValidateTables:
+    real_file_path = f"{TEST_DATA_FOLDER}/dq_rules.json"
+    data_quality_rules_json_string = read_data_quality_rules_from_json(
+        file_path=real_file_path
+    )
+    data_quality_rules_dict = load_data_quality_rules_from_json_string(
+        dq_rules_json_string=data_quality_rules_json_string
+    )
+
+    def test_validate_tables_without_tables_key_raises_key_error(
+            self,
+    ):
+        with pytest.raises(KeyError):
+            validate_tables(data_quality_rules_dict=
+                            {"some_other_thing": "with_some_value"})
+
+    def test_validate_tables_without_list_typed_value_raises_type_error(
+            self,
+    ):
+        with pytest.raises(TypeError):
+            validate_tables(data_quality_rules_dict=
+                            {"tables": "with_some_value"})
+
+    def test_validate_tables_works_as_expected(
+        self,
+    ):
+        validate_tables(data_quality_rules_dict=self.data_quality_rules_dict)
