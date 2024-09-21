@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import humps
 import requests
+import validators
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
@@ -337,6 +338,11 @@ def validate_table_schema(rules_dict: dict) -> None:
     if "validate_table_schema_url" not in rules_dict:
         raise KeyError(
             f"No 'validate_table_schema_url' key found in {rules_dict}"
+        )
+    if not validators.url(rules_dict["validate_table_schema_url"]):
+        raise ValueError(
+            f"The url specified in {rules_dict['validate_table_schema_url']} "
+            f"is invalid"
         )
 
 
