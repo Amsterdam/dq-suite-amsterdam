@@ -16,14 +16,14 @@ from src.dq_suite.common import (
 
 class TestRule:
     expected_rule_name = "the_rule"
-    expected_parameters = [{"q": 42}]
+    expected_parameters = {"q": 42}
     rule_obj = Rule(
         rule_name=expected_rule_name, parameters=expected_parameters
     )
 
     def test_initialisation_with_wrong_typed_rule_name_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert Rule(rule_name=123, parameters=[{}])
+            assert Rule(rule_name=123, parameters={})
 
     def test_initialisation_with_wrong_typed_parameters_raises_type_error(self):
         with pytest.raises(TypeError):
@@ -42,7 +42,7 @@ class TestRule:
 
 
 class TestRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters=[{"q": 42}])
+    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42})
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
@@ -99,7 +99,9 @@ class TestRulesDict:
 class TestDatasetDict:
     expected_dataset_name = "the_dataset"
     expected_layer_name = "brons"
-    dataset_obj = DatasetDict(name=expected_dataset_name, layer=expected_layer_name)
+    dataset_obj = DatasetDict(
+        name=expected_dataset_name, layer=expected_layer_name
+    )
 
     def test_initialisation_with_wrong_typed_name_raises_type_error(self):
         with pytest.raises(TypeError):
@@ -122,7 +124,7 @@ class TestDatasetDict:
 
 
 class TestDataQualityRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters=[{"q": 42}])
+    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42})
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
@@ -135,13 +137,11 @@ class TestDataQualityRulesDict:
     expected_dataset_name = "the_dataset"
     expected_layer_name = "brons"
     dataset_obj = DatasetDict(
-        name=expected_dataset_name,
-        layer=expected_layer_name
+        name=expected_dataset_name, layer=expected_layer_name
     )
     dataset_obj = {"name": "the_dataset", "layer": "brons"}
     data_quality_rules_dict = DataQualityRulesDict(
-        dataset=dataset_obj,
-        tables=expected_rules_dict_obj_list
+        dataset=dataset_obj, tables=expected_rules_dict_obj_list
     )
 
     def test_initialisation_with_wrong_typed_dataset_raises_type_error(self):
@@ -153,17 +153,16 @@ class TestDataQualityRulesDict:
                         unique_identifier="id",
                         table_name="the_table",
                         rules_list=[
-                            Rule(rule_name="the_rule", parameters=[{"q": 42}])
+                            Rule(rule_name="the_rule", parameters={"q": 42})
                         ],
                     )
-                ]
+                ],
             )
 
     def test_initialisation_with_wrong_typed_tables_raises_type_error(self):
         with pytest.raises(TypeError):
             assert DataQualityRulesDict(
-                dataset={"name": "the_dataset", "layer": "brons"},
-                tables=123
+                dataset={"name": "the_dataset", "layer": "brons"}, tables=123
             )
 
     def test_get_value_from_data_quality_rules_dict_by_existing_key(self):

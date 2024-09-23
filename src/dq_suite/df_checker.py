@@ -1,7 +1,6 @@
 from typing import List
 
 import great_expectations
-import humps
 from great_expectations import Checkpoint, ValidationDefinition
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
@@ -146,25 +145,14 @@ def create_and_configure_expectations(
     for validation_rule in validation_rules_list:
         # Get the name of expectation as defined by GX
         gx_expectation_name = validation_rule["rule_name"]
+        gx_expectation_parameters: dict = validation_rule["parameters"]
 
         # Get the actual expectation as defined by GX
         gx_expectation = getattr(
             great_expectations.expectations.core,
-            humps.pascalize(gx_expectation_name),
+            gx_expectation_name,
         )
-        # Issue 50
-        # TODO: drop pascalization, and require this as input check
-        #  when ingesting JSON? Could be done via humps.is_pascalcase()
-
-        for validation_parameter_dict in validation_rule["parameters"]:
-            kwargs = {}
-            # Issue 51
-            # TODO/check: is this loop really necessary? Intuitively, I added
-            #  the same expectation for each column - I didn't consider using
-            #  the same expectation with different parameters
-            for par_name, par_value in validation_parameter_dict.items():
-                kwargs[par_name] = par_value
-            suite.add_expectation(gx_expectation(**kwargs))
+        suite.add_expectation(gx_expectation(**gx_expectation_parameters))
 
 
 def validate(
@@ -215,12 +203,11 @@ def run(
         table_name=validation_settings_obj.table_name,
     )
     if rules_dict is None:
-        print(
+        raise ValueError(
             f"No validations found for table_name "
             f"'{validation_settings_obj.table_name}' in JSON file at '"
             f"{json_path}'."
         )
-        return
 
     # 2) perform the validation on the dataframe
     checkpoint_result = validate(
