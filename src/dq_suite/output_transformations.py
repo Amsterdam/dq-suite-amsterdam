@@ -86,8 +86,9 @@ def filter_df_based_on_deviating_values(
     if value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
-        # In case of compound keys, "attribute" is a list and "value" is a dict like tuple.
-        # The indeces will match, and we take [1] for value, because the "key" is stored in [0].
+        # In case of compound keys, "attribute" is a list and "value" is a dict
+        # like tuple. The indeces will match, and we take [1] for value,
+        # because the "key" is stored in [0].
         number_of_attrs = len(attribute)
         for i in range(number_of_attrs):
             df = df.filter(col(attribute[i]) == value[i][1])
@@ -113,7 +114,7 @@ def get_grouped_ids_per_deviating_value(
 def extract_dq_validatie_data(
     table_name: str,
     dataset_name: str,
-    dq_result: dict,
+    dq_result: CheckpointDescriptionDict,
     catalog_name: str,
     spark_session: SparkSession,
 ) -> None:
@@ -121,11 +122,14 @@ def extract_dq_validatie_data(
     [insert explanation here]
 
     :param table_name: Name of the tables
-    :param dq_result:  # TODO: add dataclass?
+    :param dataset_name:
+    :param dq_result:
     :param catalog_name:
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
+
+    # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
 
     # run_time = dq_result["meta"]["run_id"].run_time
@@ -192,7 +196,7 @@ def extract_dq_validatie_data(
 def extract_dq_afwijking_data(
     table_name: str,
     dataset_name: str,
-    dq_result: dict,  # TODO: add dataclass?
+    dq_result: CheckpointDescriptionDict,
     df: DataFrame,
     unique_identifier: str,
     catalog_name: str,
@@ -202,6 +206,7 @@ def extract_dq_afwijking_data(
     [insert explanation here]
 
     :param table_name: Name of the table
+    :param dataset_name:
     :param dq_result:
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
@@ -209,6 +214,8 @@ def extract_dq_afwijking_data(
     :param spark_session:
     """
     tabel_id = f"{dataset_name}_{table_name}"
+
+    # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
 
     # run_time = dq_result["meta"]["run_id"].run_time
