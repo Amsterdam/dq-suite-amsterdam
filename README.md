@@ -66,7 +66,9 @@ Using a Shared Compute Cluster will result in an error, as it does not have the 
 ([click](https://docs.databricks.com/en/release-notes/runtime/13.3lts.html#system-environment)). 
 Older versions of DBR will result in errors upon install of the `dq-suite-amsterdam` library.
 
-- At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project. 
+- At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project.
+
+- The run_time is defined separately from Great Expectations in df_checker. We plan on fixing it when Great Expectations has documented how to access it from the RunIdentifier object.
 
 # Contributing to this library
 See the separate [developers' readme](src/Readme-dev.md).
