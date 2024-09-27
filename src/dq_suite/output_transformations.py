@@ -145,7 +145,10 @@ def extract_dq_validatie_data(
             unexpected_count = int(
                 expectation_result["result"].get("unexpected_count", 0)
             )
-            aantal_valide_records = element_count - unexpected_count
+            percentage_of_valid_records = int(
+                100 - expectation_result["result"].get("unexpected_percent", 0)
+            )
+            number_of_valid_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
             parameter_list = create_parameter_list_from_results(
                 result=expectation_result
@@ -156,8 +159,9 @@ def extract_dq_validatie_data(
             output_text = "success" if output else "failure"
             extracted_data.append(
                 {
-                    "aantalValideRecords": aantal_valide_records,
+                    "aantalValideRecords": number_of_valid_records,
                     "aantalReferentieRecords": element_count,
+                    "percentageValideRecords": percentage_of_valid_records,
                     "dqDatum": run_time,
                     "dqResultaat": output_text,
                     "regelNaam": expectation_type,
@@ -177,6 +181,7 @@ def extract_dq_validatie_data(
             "regelId",
             "aantalValideRecords",
             "aantalReferentieRecords",
+            "percentageValideRecords",
             "dqDatum",
             "dqResultaat",
         ],
@@ -449,17 +454,18 @@ def create_dq_regel(
         tabel_id = f"{dataset_name}_{table_name}"
         for rule in table["rules"]:
             rule_name = rule["rule_name"]
-            parameters = rule.get("parameters", [])
-            for param_set in parameters:
-                column = param_set.get("column")
-                extracted_data.append(
-                    {
-                        "regelNaam": rule_name,
-                        "regelParameters": parameters,
-                        "bronTabelId": tabel_id,
-                        "attribuut": column,
-                    }
-                )
+            parameters = rule.get("parameters")
+            norm = rule.get("norm", None)
+            column = parameters.get("column", None)
+            extracted_data.append(
+                {
+                    "regelNaam": rule_name,
+                    "regelParameters": parameters,
+                    "norm": norm,
+                    "bronTabelId": tabel_id,
+                    "attribuut": column,
+                }
+            )
 
     df_regel = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -472,6 +478,7 @@ def create_dq_regel(
             "regelId",
             "regelNaam",
             "regelParameters",
+            "norm",
             "bronTabelId",
             "attribuut",
         ],
@@ -480,6 +487,7 @@ def create_dq_regel(
         "regelId": "regel_df.regelId",
         "regelNaam": "regel_df.regelNaam",
         "regelParameters": "regel_df.regelParameters",
+        "norm": "regel_df.norm",
         "bronTabelId": "regel_df.bronTabelId",
         "attribuut": "regel_df.attribuut",
     }
