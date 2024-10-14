@@ -114,6 +114,7 @@ def get_grouped_ids_per_deviating_value(
 def extract_dq_validatie_data(
     table_name: str,
     dataset_name: str,
+    run_time: datetime,
     dq_result: CheckpointDescriptionDict,
     catalog_name: str,
     spark_session: SparkSession,
@@ -123,7 +124,8 @@ def extract_dq_validatie_data(
 
     :param table_name: Name of the tables
     :param dataset_name:
-    :param dq_result:
+    :param run_time:
+    :param dq_result:  # TODO: add dataclass?
     :param catalog_name:
     :param spark_session:
     """
@@ -131,10 +133,6 @@ def extract_dq_validatie_data(
 
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
-
-    # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.datetime(1900, 1, 1)
-    # TODO: fix, find run_time in new GX API
 
     extracted_data = []
     for validation_result in dq_result:
@@ -199,6 +197,7 @@ def extract_dq_afwijking_data(
     dq_result: CheckpointDescriptionDict,
     df: DataFrame,
     unique_identifier: str,
+    run_time: datetime,
     catalog_name: str,
     spark_session: SparkSession,
 ) -> None:
@@ -210,6 +209,7 @@ def extract_dq_afwijking_data(
     :param dq_result:
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
+    :param run_time:
     :param catalog_name:
     :param spark_session:
     """
@@ -217,11 +217,7 @@ def extract_dq_afwijking_data(
 
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
-
-    # run_time = dq_result["meta"]["run_id"].run_time
-    run_time = datetime.datetime(1900, 1, 1)
-    # TODO: fix, find run_time in new GX API
-
+    
     extracted_data = []
     if not isinstance(unique_identifier, list):
         unique_identifier = [unique_identifier]
@@ -526,11 +522,13 @@ def write_validation_table(
     df: DataFrame,
     dataset_name: str,
     unique_identifier: str,
+    run_time: datetime,
 ):
     extract_dq_validatie_data(
         validation_settings_obj.table_name,
         dataset_name,
         validation_output,
+        run_time,
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
@@ -540,6 +538,7 @@ def write_validation_table(
         validation_output,
         df,
         unique_identifier,
+        run_time,
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
