@@ -217,7 +217,7 @@ def extract_dq_afwijking_data(
 
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
-    
+
     extracted_data = []
     if not isinstance(unique_identifier, list):
         unique_identifier = [unique_identifier]
