@@ -32,6 +32,8 @@ def create_empty_dataframe(
 def list_of_dicts_to_df(
     list_of_dicts: List[dict], spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
+    if not isinstance(list_of_dicts, list):
+        raise TypeError("'list_of_dicts' should be of type 'list'")
     if len(list_of_dicts) == 0:
         return create_empty_dataframe(
             spark_session=spark_session, schema=schema
