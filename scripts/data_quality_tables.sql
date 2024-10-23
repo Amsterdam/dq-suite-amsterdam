@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
   regelId STRING,
   regelNaam STRING,
   regelParameters STRING,
+  norm INT,
   bronTabelId STRING,
   attribuut STRING)
 USING delta
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
   regelId STRING,
   aantalValideRecords BIGINT,
   aantalReferentieRecords BIGINT,
+  percentageValideRecords INT,
   dqDatum TIMESTAMP,
   dqResultaat STRING)
 USING delta
