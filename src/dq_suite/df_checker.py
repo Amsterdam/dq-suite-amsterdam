@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 
 import great_expectations
@@ -216,6 +217,7 @@ def run(
         validation_settings_obj=validation_settings_obj,
     )
     validation_output = checkpoint_result.describe_dict()
+    run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
 
     # 3) write results to unity catalog
     write_non_validation_tables(
@@ -228,4 +230,5 @@ def run(
         df=df,
         dataset_name=validation_dict["dataset"]["name"],
         unique_identifier=rules_dict["unique_identifier"],
+        run_time=run_time,
     )
