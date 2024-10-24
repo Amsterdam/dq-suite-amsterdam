@@ -47,6 +47,8 @@ def construct_regel_id(
     df: DataFrame,
     output_columns_list: list[str],
 ) -> DataFrame:
+    if not isinstance(output_columns_list, list):
+        raise TypeError("'output_columns_list' should be of type 'list'")
     df_with_id = df.withColumn(
         "regelId",
         xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")),
