@@ -1,13 +1,47 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import humps
 import requests
 import validators
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col
 
 from .common import DataQualityRulesDict, Rule
+
+
+def get_table_name_list_from_unity_catalog(dataset: str, spark:
+SparkSession) -> List[str]:
+    """
+    Returns a list of all table names present in a schema (e.g. 'bronze') in 
+    Unity Catalog. 
+    """
+    table_query = """
+            SELECT table_name
+            FROM system.information_schema.tables
+            WHERE table_schema = {dataset}
+        """
+    return (
+        spark.sql(sqlQuery=table_query, dataset=dataset)
+        .select("table_name")
+        .rdd.flatMap(lambda x: x)
+        .collect()
+    )
+
+
+def create_dataframe_containing_all_column_names_in_tables(table_name_list: List[
+    str], spark: SparkSession) -> DataFrame:
+
+    table_name_sql_string = (
+            "'" + "', '".join(table_name_list) + "'"
+    )
+
+    column_query = f"""
+                SELECT column_name, table_name
+                FROM system.information_schema.columns
+                WHERE table_name IN ({table_name_sql_string})
+            """
+    return spark.sql(column_query).select("column_name", "table_name")
 
 
 def export_schema(dataset: str, spark: SparkSession) -> str:
@@ -15,37 +49,21 @@ def export_schema(dataset: str, spark: SparkSession) -> str:
     Function exports a schema from Unity Catalog to be used by the Excel
     input form
 
-    :param dataset: The name of the required dataset
+    :param dataset: The name of the required dataset (schema in Unity Catalog)
     :param spark: The current SparkSession required for querying
     :return: schema_json: A JSON string with the schema of the required dataset
     """
 
-    table_query = """
-        SELECT table_name
-        FROM system.information_schema.tables
-        WHERE table_schema = {dataset}
-    """
-    tables = (
-        spark.sql(table_query, dataset=dataset)
-        .select("table_name")
-        .rdd.flatMap(lambda x: x)
-        .collect()
-    )
-    table_list = (
-        "'" + "', '".join(tables) + "'"
-    )  # creates a list of all tables, is used by the next query
+    table_name_list = get_table_name_list_from_unity_catalog(dataset=dataset,
+                                                             spark=spark)
 
-    column_query = f"""
-            SELECT column_name, table_name
-            FROM system.information_schema.columns
-            WHERE table_name IN ({table_list})
-        """
-    columns = spark.sql(column_query).select("column_name", "table_name")
+    df_columns_tables = create_dataframe_containing_all_column_names_in_tables(
+        table_name_list=table_name_list, spark=spark)
 
     columns_list = []
-    for table in tables:
+    for table in table_name_list:
         columns_table = (
-            columns.filter(col("table_name") == table)
+            df_columns_tables.filter(col("table_name") == table)
             .select("column_name")
             .rdd.flatMap(lambda x: x)
             .collect()
