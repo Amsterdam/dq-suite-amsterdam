@@ -7,10 +7,16 @@ from pyspark.sql import SparkSession
 from src.dq_suite.output_transformations import (
     construct_regel_id,
     create_empty_dataframe,
+    create_parameter_list_from_results,
+    filter_df_based_on_deviating_values,
+    get_grouped_ids_per_deviating_value,
+    get_target_attr_for_rule,
+    get_unique_deviating_values,
     list_of_dicts_to_df,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
+from .test_data.test_schema import SCHEMA2 as AFWIJKING_SCHEMA2
 
 
 @pytest.fixture()
@@ -84,3 +90,158 @@ class TestConstructRegelId:
         )
         expected_df.schema["regelId"].nullable = False
         assert_df_equality(actual_df, expected_df)
+
+
+class TestCreateParameterListFromResult:
+    def test_create_parameter_list_from_results_with_and_without_batch_id(self):
+        result = {
+            "kwargs": {
+                "param1": 10,
+                "param2": "example",
+                "batch_id": 123,
+            }
+        }
+        result2 = {"kwargs": {"param1": 10, "param2": "example"}}
+        expected_output = [{"param1": 10, "param2": "example"}]
+
+        assert create_parameter_list_from_results(result) == expected_output
+        assert create_parameter_list_from_results(result2) == expected_output
+
+    def test_create_parameter_list_from_results_empty_kwargs(self):
+        result = {"kwargs": {}}
+
+        expected_output = [{}]
+        assert create_parameter_list_from_results(result) == expected_output
+
+    def test_create_parameter_list_from_results_no_kwargs_key(self):
+        result = {}
+
+        with pytest.raises(KeyError):
+            create_parameter_list_from_results(result)
+
+
+class TestGetTargetAttrForRule:
+    def test_get_target_attr_for_rule_with_column(self):
+        result = {"kwargs": {"column": "age", "column_list": ["age", "name"]}}
+        expected_output = "age"
+        assert get_target_attr_for_rule(result) == expected_output
+
+    def test_get_target_attr_for_rule_without_column(self):
+        result = {"kwargs": {"column_list": ["age", "name"]}}
+        expected_output = ["age", "name"]
+        assert get_target_attr_for_rule(result) == expected_output
+
+    def test_get_target_attr_for_rule_no_column_or_column_list(self):
+        result = {"kwargs": {}}
+        expected_output = None
+        assert get_target_attr_for_rule(result) == expected_output
+
+    def test_get_target_attr_for_rule_no_kwargs_key(self):
+        result = {}
+        with pytest.raises(KeyError):
+            get_target_attr_for_rule(result)
+
+
+class TestGetUniqueDeviatingValues:
+    def test_get_unique_deviating_values_empty_list(self):
+        result = get_unique_deviating_values([])
+        expected_output = set()
+        assert result == expected_output
+
+    def test_get_unique_deviating_values_list_of_strings(self):
+        result = get_unique_deviating_values(["apple", "banana", "cherry"])
+        expected_output = {"apple", "banana", "cherry"}
+        assert result == expected_output
+
+    def test_get_unique_deviating_values_with_duplicate_strings(self):
+        result = get_unique_deviating_values(["apple", "banana", "apple"])
+        expected_output = {"apple", "banana"}
+        assert result == expected_output
+
+    def test_get_unique_deviating_values_with_duplicate_dicts(self):
+        result = get_unique_deviating_values(
+            [
+                {"key1": "value1", "key2": "value2"},
+                {"key1": "value1", "key2": "value2"},  # same dict
+            ]
+        )
+        expected_output = {(("key1", "value1"), ("key2", "value2"))}
+        assert result == expected_output
+
+    def test_get_unique_deviating_values_with_mixed_dicts_and_strings(self):
+        result = get_unique_deviating_values(
+            [
+                "apple",
+                {"key1": "value1", "key2": "value2"},
+                "banana",
+                {"key1": "value1", "key2": "value2"},  # same dict
+                "apple",  # same string
+            ]
+        )
+        expected_output = {
+            "apple",
+            "banana",
+            (("key1", "value1"), ("key2", "value2")),
+        }
+        assert result == expected_output
+
+
+@pytest.mark.usefixtures("spark")
+class TestFilterDfBasedOnDeviatingValues:
+    def test_filter_df_based_on_deviating_values_none_value(self, spark):
+        data = [("test", None, 20), ("John", None, 24), ("Alice", "Jansen", 45)]
+        df = spark.createDataFrame(data, AFWIJKING_SCHEMA2)
+
+        result_df = filter_df_based_on_deviating_values(None, "achternaam", df)
+        expected_data = [("test", None, 20), ("John", None, 24)]
+        expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
+        assert_df_equality(result_df, expected_df)
+
+    def test_filter_df_based_on_deviating_values_single_attribute(self, spark):
+        data = [
+            ("Alice", "Jansen", 30),
+            ("John", "Doe", 42),
+            ("Alice", "Taylor", 28),
+        ]
+        df = spark.createDataFrame(data, AFWIJKING_SCHEMA2)
+        result_df = filter_df_based_on_deviating_values("Alice", "voornaam", df)
+        expected_data = [("Alice", "Jansen", 30), ("Alice", "Taylor", 28)]
+        expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
+        assert_df_equality(result_df, expected_df)
+
+    def test_filter_df_based_on_deviating_values_compound_key(self, spark):
+        data = [
+            ("Alice", "Jansen", 30),
+            ("John", "Doe", 42),
+            ("Alice", "Taylor", 28),
+        ]
+        df = spark.createDataFrame(data, AFWIJKING_SCHEMA2)
+
+        result_df = filter_df_based_on_deviating_values(
+            [("voornaam", "Alice"), ("achternaam", "Jansen")],
+            ["voornaam", "achternaam"],
+            df,
+        )
+        expected_data = [("Alice", "Jansen", 30)]
+        expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
+        assert_df_equality(result_df, expected_df)
+
+
+@pytest.mark.usefixtures("spark")
+class TestGetGroupedIdsPerDeviatingValue:
+    def test_get_grouped_ids_per_deviating_value(self, spark):
+        data = [
+            ("Alice", "Jansen", 30),
+            ("John", "Doe", 25),
+            ("Alice", "Smith", 30),
+            ("John", "Doe", 25),
+        ]
+        df = spark.createDataFrame(data, AFWIJKING_SCHEMA2)
+        filtered_df = df.filter(df.voornaam == "Alice")
+        unique_identifier = ["voornaam", "achternaam"]
+        grouped_ids = get_grouped_ids_per_deviating_value(
+            filtered_df, unique_identifier
+        )
+
+        expected_grouped_ids = [["Alice", "Jansen"], ["Alice", "Smith"]]
+        assert grouped_ids == expected_grouped_ids
