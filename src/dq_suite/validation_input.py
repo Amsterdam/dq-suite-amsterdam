@@ -4,17 +4,18 @@ from typing import Any, Dict, List
 import humps
 import requests
 import validators
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, lit
 
 from .common import DataQualityRulesDict, Rule
 
 
-def get_table_name_list_from_unity_catalog(dataset: str, spark:
-SparkSession) -> List[str]:
+def get_table_name_list_from_unity_catalog(
+    dataset: str, spark: SparkSession
+) -> List[str]:
     """
-    Returns a list of all table names present in a schema (e.g. 'bronze') in 
-    Unity Catalog. 
+    Returns a list of all table names present in a schema (e.g. 'bronze') in
+    Unity Catalog.
     """
     table_query = """
             SELECT table_name
@@ -29,15 +30,14 @@ SparkSession) -> List[str]:
     )
 
 
-def create_dataframe_containing_all_column_names_in_tables(table_name_list: List[
-    str], spark: SparkSession) -> DataFrame:
+def create_dataframe_containing_all_column_names_in_tables(
+    table_name_list: List[str], spark: SparkSession
+) -> DataFrame:
     """
     Query once, return a dataframe containing all column names in all tables.
     """
 
-    table_name_sql_string = (
-            "'" + "', '".join(table_name_list) + "'"
-    )
+    table_name_sql_string = "'" + "', '".join(table_name_list) + "'"
 
     column_query = f"""
                 SELECT column_name, table_name
@@ -47,26 +47,32 @@ def create_dataframe_containing_all_column_names_in_tables(table_name_list: List
     return spark.sql(column_query).select("column_name", "table_name")
 
 
-def get_column_name_list(df_columns_tables: DataFrame, table_name: str) -> (
-        List)[str]:
+def get_column_name_list(
+    df_columns_tables: DataFrame, table_name: str
+) -> (List)[str]:
     return (
-            df_columns_tables.filter(col("table_name") == lit(table_name))
-            .select("column_name")
-            .rdd.flatMap(lambda x: x)
-            .collect()
-        )
+        df_columns_tables.filter(col("table_name") == lit(table_name))
+        .select("column_name")
+        .rdd.flatMap(lambda x: x)
+        .collect()
+    )
 
 
-def get_all_table_name_to_column_names_mappings(table_name_list: List[str],
-                                     df_columns_tables: DataFrame) -> List[Dict[str, str | List[str]]]:
+def get_all_table_name_to_column_names_mappings(
+    table_name_list: List[str], df_columns_tables: DataFrame
+) -> List[Dict[str, str | List[str]]]:
     list_of_all_table_name_to_column_names_mappings = []
     for table_name in table_name_list:
         column_name_list = get_column_name_list(
-            df_columns_tables=df_columns_tables, table_name=table_name)
+            df_columns_tables=df_columns_tables, table_name=table_name
+        )
         table_name_to_column_names_mapping: Dict[str, str | List[str]] = {
-            "table_name": table_name, "attributes": column_name_list}
+            "table_name": table_name,
+            "attributes": column_name_list,
+        }
         list_of_all_table_name_to_column_names_mappings.append(
-            table_name_to_column_names_mapping)
+            table_name_to_column_names_mapping
+        )
     return list_of_all_table_name_to_column_names_mappings
 
 
@@ -81,17 +87,25 @@ def export_schema(dataset: str, spark: SparkSession) -> str:
     """
 
     table_name_list = get_table_name_list_from_unity_catalog(
-        dataset=dataset, spark=spark)
+        dataset=dataset, spark=spark
+    )
 
     df_columns_tables = create_dataframe_containing_all_column_names_in_tables(
-        table_name_list=table_name_list, spark=spark)
+        table_name_list=table_name_list, spark=spark
+    )
 
     list_of_all_table_name_to_column_names_mappings = (
         get_all_table_name_to_column_names_mappings(
-            table_name_list=table_name_list, df_columns_tables=df_columns_tables))
+            table_name_list=table_name_list, df_columns_tables=df_columns_tables
+        )
+    )
 
-    return json.dumps({"dataset": dataset, "tables":
-        list_of_all_table_name_to_column_names_mappings})
+    return json.dumps(
+        {
+            "dataset": dataset,
+            "tables": list_of_all_table_name_to_column_names_mappings,
+        }
+    )
 
 
 def fetch_schema_from_github(

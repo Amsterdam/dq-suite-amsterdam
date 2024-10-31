@@ -1,4 +1,3 @@
-
 import pytest
 from pyspark.sql import SparkSession
 
