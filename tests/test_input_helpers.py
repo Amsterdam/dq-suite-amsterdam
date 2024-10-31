@@ -35,6 +35,10 @@ def rules_dict(data_quality_rules_dict):
     return data_quality_rules_dict["tables"][0]
 
 
+class TestExportSchema:
+    pass
+
+
 @pytest.mark.usefixtures("real_file_path")
 class TestReadDataQualityRulesFromJson:
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
