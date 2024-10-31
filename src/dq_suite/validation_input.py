@@ -34,7 +34,8 @@ def create_dataframe_containing_all_column_names_in_tables(
     table_name_list: List[str], spark: SparkSession
 ) -> DataFrame:
     """
-    Query once, return a dataframe containing all column names in all tables.
+    Returns a dataframe containing all column names in all tables.
+    Query once, and (in a next step) loop multiple times over the dataframe.
     """
 
     table_name_sql_string = "'" + "', '".join(table_name_list) + "'"
@@ -49,7 +50,10 @@ def create_dataframe_containing_all_column_names_in_tables(
 
 def get_column_name_list(
     df_columns_tables: DataFrame, table_name: str
-) -> (List)[str]:
+) -> List[str]:
+    """
+    Returns a list of all column names in a particular table.
+    """
     return (
         df_columns_tables.filter(col("table_name") == lit(table_name))
         .select("column_name")
@@ -61,6 +65,10 @@ def get_column_name_list(
 def get_all_table_name_to_column_names_mappings(
     table_name_list: List[str], df_columns_tables: DataFrame
 ) -> List[Dict[str, str | List[str]]]:
+    """
+    Returns a list of dictionaries. Each dictionary contains information
+    about 1 table: the table name, and the column names within that table.
+    """
     list_of_all_table_name_to_column_names_mappings = []
     for table_name in table_name_list:
         column_name_list = get_column_name_list(
