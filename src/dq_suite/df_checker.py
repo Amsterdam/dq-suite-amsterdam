@@ -9,7 +9,7 @@ from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
 
 from .common import DataQualityRulesDict, Rule, RulesDict, ValidationSettings
-from .input_helpers import get_data_quality_rules_dict
+from .validation_input import get_data_quality_rules_dict
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
