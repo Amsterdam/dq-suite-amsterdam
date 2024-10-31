@@ -5,7 +5,7 @@ import humps
 import requests
 import validators
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, lit
 
 from .common import DataQualityRulesDict, Rule
 
@@ -31,6 +31,9 @@ SparkSession) -> List[str]:
 
 def create_dataframe_containing_all_column_names_in_tables(table_name_list: List[
     str], spark: SparkSession) -> DataFrame:
+    """
+    Query once, return a dataframe containing all column names in all tables.
+    """
 
     table_name_sql_string = (
             "'" + "', '".join(table_name_list) + "'"
@@ -44,36 +47,51 @@ def create_dataframe_containing_all_column_names_in_tables(table_name_list: List
     return spark.sql(column_query).select("column_name", "table_name")
 
 
+def get_column_name_list(df_columns_tables: DataFrame, table_name: str) -> (
+        List)[str]:
+    return (
+            df_columns_tables.filter(col("table_name") == lit(table_name))
+            .select("column_name")
+            .rdd.flatMap(lambda x: x)
+            .collect()
+        )
+
+
+def get_all_table_name_to_column_names_mappings(table_name_list: List[str],
+                                     df_columns_tables: DataFrame) -> List[Dict[str, str | List[str]]]:
+    list_of_all_table_name_to_column_names_mappings = []
+    for table_name in table_name_list:
+        column_name_list = get_column_name_list(
+            df_columns_tables=df_columns_tables, table_name=table_name)
+        table_name_to_column_names_mapping: Dict[str, str | List[str]] = {
+            "table_name": table_name, "attributes": column_name_list}
+        list_of_all_table_name_to_column_names_mappings.append(
+            table_name_to_column_names_mapping)
+    return list_of_all_table_name_to_column_names_mappings
+
+
 def export_schema(dataset: str, spark: SparkSession) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
     input form
 
-    :param dataset: The name of the required dataset (schema in Unity Catalog)
-    :param spark: The current SparkSession required for querying
-    :return: schema_json: A JSON string with the schema of the required dataset
+    :param dataset: name of the schema in Unity Catalog
+    :param spark: SparkSession object
+    :return: schema_json: JSON string with the schema of the required dataset
     """
 
-    table_name_list = get_table_name_list_from_unity_catalog(dataset=dataset,
-                                                             spark=spark)
+    table_name_list = get_table_name_list_from_unity_catalog(
+        dataset=dataset, spark=spark)
 
     df_columns_tables = create_dataframe_containing_all_column_names_in_tables(
         table_name_list=table_name_list, spark=spark)
 
-    columns_list = []
-    for table in table_name_list:
-        columns_table = (
-            df_columns_tables.filter(col("table_name") == table)
-            .select("column_name")
-            .rdd.flatMap(lambda x: x)
-            .collect()
-        )
-        columns_dict = {"table_name": table, "attributes": columns_table}
-        columns_list.append(columns_dict)
+    list_of_all_table_name_to_column_names_mappings = (
+        get_all_table_name_to_column_names_mappings(
+            table_name_list=table_name_list, df_columns_tables=df_columns_tables))
 
-    output_dict = {"dataset": dataset, "tables": columns_list}
-
-    return json.dumps(output_dict)
+    return json.dumps({"dataset": dataset, "tables":
+        list_of_all_table_name_to_column_names_mappings})
 
 
 def fetch_schema_from_github(
