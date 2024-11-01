@@ -1,5 +1,7 @@
-# Introduction 
-This repository contains functions that will ease the use of Great Expectations. Users can input data and data quality rules and get results in return.
+# About dq-suite-amsterdam
+This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations). All that is needed to get started is in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
+
+While the results of all validations are written to a `data_quality` schema in Unity Catalog, users can also choose to get notified via Slack or Microsoft Teams.
 
 DISCLAIMER: The package is in MVP phase
 
