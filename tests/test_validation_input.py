@@ -5,7 +5,6 @@ from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.validation_input import (
     get_data_quality_rules_dict,
-    load_data_quality_rules_from_json_string,
     read_data_quality_rules_from_json,
     validate_data_quality_rules_dict,
     validate_dataset,
@@ -29,13 +28,6 @@ def real_non_json_file_path():
 @pytest.fixture
 def data_quality_rules_json_string(real_json_file_path):
     return read_data_quality_rules_from_json(file_path=real_json_file_path)
-
-
-@pytest.fixture
-def data_quality_rules_dict(data_quality_rules_json_string):
-    return load_data_quality_rules_from_json_string(
-        dq_rules_json_string=data_quality_rules_json_string
-    )
 
 
 @pytest.fixture
@@ -75,24 +67,6 @@ class TestReadDataQualityRulesFromJson:
             file_path=real_json_file_path
         )
         assert isinstance(data_quality_rules_json_string, str)
-
-
-@pytest.mark.usefixtures("data_quality_rules_json_string")
-class TestLoadDataQualityRulesFromJsonString:
-    def test_load_data_quality_rules_from_json_string_raises_value_error(self):
-        wrong_json_string = "{'hello'; 123}"
-        with pytest.raises(json.JSONDecodeError):
-            load_data_quality_rules_from_json_string(
-                dq_rules_json_string=wrong_json_string
-            )
-
-    def test_load_data_quality_rules_from_json_string(
-        self, data_quality_rules_json_string
-    ):
-        data_quality_rules_dict = load_data_quality_rules_from_json_string(
-            dq_rules_json_string=data_quality_rules_json_string
-        )
-        assert isinstance(data_quality_rules_dict, dict)
 
 
 @pytest.mark.usefixtures("data_quality_rules_dict")
