@@ -1,11 +1,17 @@
 # About dq-suite-amsterdam
-This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
+This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is an in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
 
 While the results of all validations are written to a `data_quality` schema in Unity Catalog, users can also choose to get notified via Slack or Microsoft Teams.
 
 <img src="docs/wip_computer.jpg" width="20%" height="auto">
 
 DISCLAIMER: The package is in MVP phase, so watch your step. 
+
+
+## How to contribute
+Want to help out? Great! Feel free to create a pull request addressing one of the open [issues](https://github.com/Amsterdam/dq-suite-amsterdam/issues). Some notes for developers are located [here](docs/Readme-dev.md).
+
+Found a bug, or need a new feature? Add a new issue describing what you need. 
 
 
 # Getting started
@@ -16,7 +22,7 @@ Following GX, we recommend installing `dq-suite-amsterdam` in a virtual environm
 pip install dq-suite-amsterdam
 ```
 
-2. Create the `data_quality` schema (and tables) by running the SQL notebook located [here](scripts/data_quality_tables.sql). All it needs is the name of the catalog (and the rights to create a schema within that catalog).
+2. Create the `data_quality` schema (and tables all results will be written to) by running the SQL notebook located [here](scripts/data_quality_tables.sql). All it needs is the name of the catalog - and the rights to create a schema within that catalog :)
 
 
 3. Get ready to validate your first table. To do so, define
@@ -53,9 +59,6 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 - At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project.
 
 - The run_time is defined separately from Great Expectations in df_checker. We plan on fixing it when Great Expectations has documented how to access it from the RunIdentifier object.
-
-# Contributing to this library
-See the separate [developers' readme](docs/Readme-dev.md).
 
 
 # Updates
