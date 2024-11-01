@@ -170,7 +170,11 @@ def load_data_quality_rules_from_json_string(
         if "Expecting ':' delimiter:" in error_message:
             print("Colon is missing in the JSON.")
         if "Expecting value:" in error_message:
-            print("Rules' Value is missing in the JSON.")
+            print("'Rules' Value is missing in the JSON.")
+
+        raise json.JSONDecodeError(msg=e.args[0],
+                                   doc=dq_rules_json_string,
+                                   pos=e.pos)
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")

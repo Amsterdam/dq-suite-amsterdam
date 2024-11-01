@@ -75,8 +75,12 @@ class TestReadDataQualityRulesFromJson:
 
 @pytest.mark.usefixtures("data_quality_rules_json_string")
 class TestLoadDataQualityRulesFromJsonString:
-    # TODO: implement tests for all failure paths (and raise errors in
-    #  read_data_quality_rules_from_json)
+    def test_load_data_quality_rules_from_json_string_raises_value_error(
+            self
+    ):
+        wrong_json_string = "{'hello'; 123}"
+        with pytest.raises(json.JSONDecodeError):
+            load_data_quality_rules_from_json_string(dq_rules_json_string=wrong_json_string)
 
     def test_load_data_quality_rules_from_json_string(
         self, data_quality_rules_json_string
