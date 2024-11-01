@@ -1,4 +1,5 @@
 import json
+import os.path
 from typing import Any
 
 import humps
@@ -8,6 +9,12 @@ from .common import DataQualityRulesDict
 
 
 def read_data_quality_rules_from_json(file_path: str) -> str:
+    if not isinstance(file_path, str):
+        raise TypeError(f"{file_path} should be of type 'str'")
+
+    if not os.path.isfile(path=file_path):
+        raise FileNotFoundError(f"'file_path' {file_path} does not point to a file")
+
     with open(file_path, "r") as json_file:
         dq_rules_json_string = json_file.read()
     return dq_rules_json_string

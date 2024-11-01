@@ -45,11 +45,24 @@ def rules_dict(data_quality_rules_dict):
 @pytest.mark.usefixtures("real_json_file_path")
 @pytest.mark.usefixtures("real_non_json_file_path")
 class TestReadDataQualityRulesFromJson:
+    def test_read_data_quality_rules_from_json_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            read_data_quality_rules_from_json(file_path=123)
+
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
         self,
     ):
         with pytest.raises(FileNotFoundError):
             read_data_quality_rules_from_json(file_path="nonexistent_file_path")
+
+    def test_read_data_quality_rules_from_json_raises_value_error_for_non_json_file(self, real_non_json_file_path):
+        non_json_string = read_data_quality_rules_from_json(
+            file_path=real_non_json_file_path)
+        assert isinstance(non_json_string, str)  # It's a string...
+        with pytest.raises(ValueError):  # ... but not valid JSON
+            json.loads(non_json_string)
 
     def test_read_data_quality_rules_from_json_returns_json_string(
         self, real_json_file_path
@@ -58,14 +71,6 @@ class TestReadDataQualityRulesFromJson:
             file_path=real_json_file_path
         )
         assert isinstance(data_quality_rules_json_string, str)
-
-
-    def test_read_data_quality_rules_from_json_raises_value_error_for_non_json_file(self, real_non_json_file_path):
-        non_json_string = read_data_quality_rules_from_json(
-            file_path=real_non_json_file_path)
-        assert isinstance(non_json_string, str)  # It's a string...
-        with pytest.raises(ValueError):  # ... but not valid JSON
-            json.loads(non_json_string)
 
 
 @pytest.mark.usefixtures("data_quality_rules_json_string")
