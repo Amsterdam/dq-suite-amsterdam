@@ -26,6 +26,11 @@ def real_non_json_file_path():
 
 
 @pytest.fixture
+def real_json_file_invalid_formatting_path():
+    return f"{TEST_DATA_FOLDER}/dq_rules_invalid_formatting.json"
+
+
+@pytest.fixture
 def data_quality_rules_json_string(real_json_file_path):
     return read_data_quality_rules_from_json(file_path=real_json_file_path)
 
@@ -286,8 +291,15 @@ class TestValidateRule:
         )
 
 
+@pytest.mark.usefixtures("real_json_file_invalid_formatting_path")
 @pytest.mark.usefixtures("real_json_file_path")
 class TestGetDataQualityRulesDict:
+    def test_get_data_quality_rules_dict_raises_json_decode_error(self, real_json_file_invalid_formatting_path):
+        with pytest.raises(json.JSONDecodeError):
+            get_data_quality_rules_dict(
+                file_path=real_json_file_invalid_formatting_path
+            )
+
     def test_get_data_quality_rules_dict_returns_dict(
         self, real_json_file_path
     ):
