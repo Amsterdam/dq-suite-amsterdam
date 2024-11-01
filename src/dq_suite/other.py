@@ -1,3 +1,10 @@
+"""
+The contents of this other.py script used to be in validation_input.py.
+They were moved here, because none of them are used by an actual validation
+run - instead, they are more like general helper functions for ad-hoc tasks.
+"""
+
+
 import json
 from typing import Any, Dict, List
 
