@@ -29,7 +29,6 @@ pip install dq-suite-amsterdam
 - `catalog_name` as the name of your catalog
 - `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
 - `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
-- load the table requiring a data quality check into a Spark dataframe 
 - `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
 
 
