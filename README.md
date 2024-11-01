@@ -18,12 +18,16 @@ pip install dq-suite-amsterdam
 
 2. Create the `data_quality` schema (and tables) by running the SQL notebook located [here](scripts/data_quality_tables.sql). All it needs is the name of the catalog (and the rights to create a schema within that catalog).
 
-3. Validate your first table. To do so, 
-- define `catalog_name` as the name of your catalog
-- define `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
-- define `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
-- load the table requiring a data quality check into a Spark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
-- finally, run the following:
+
+3. Get ready to validate your first table. To do so, define
+- `catalog_name` as the name of your catalog
+- `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
+- `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
+- load the table requiring a data quality check into a Spark dataframe 
+- `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
+
+
+4. Finally, perform the validation by running
 ```python
 import dq_suite
 
@@ -35,28 +39,7 @@ dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validat
 ```
 Note: Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
-See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation. 
-
-
-# Export the schema from Unity Catalog to the Input Form
-In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
-
-```
-schema_output = dq_suite.schema_to_json_string('schema_name', spark)
-print(schema_output)
-```
-
-Copy the string to the Input Form to quickly ingest the schema in Excel.
-
-
-# Validate the schema of a table
-It is possible to validate the schema of an entire table to a schema definition from Amsterdam Schema in one go. This is done by adding two fields to the "dq_rules" JSON when describing the table (See: https://github.com/Amsterdam/dq-suite-amsterdam/blob/main/dq_rules_example.json). 
-
-You will need:
-- validate_table_schema: the id field of the table from Amsterdam Schema
-- validate_table_schema_url: the url of the table or dataset from Amsterdam Schema
-
-The schema definition is converted into column level expectations (expect_column_values_to_be_of_type) on run time.
+See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation.
 
 
 # Known exceptions
