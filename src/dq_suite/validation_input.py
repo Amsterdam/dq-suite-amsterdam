@@ -13,7 +13,9 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
         raise TypeError(f"{file_path} should be of type 'str'")
 
     if not os.path.isfile(path=file_path):
-        raise FileNotFoundError(f"'file_path' {file_path} does not point to a file")
+        raise FileNotFoundError(
+            f"'file_path' {file_path} does not point to a file"
+        )
 
     with open(file_path, "r") as json_file:
         dq_rules_json_string = json_file.read()
@@ -147,37 +149,13 @@ def validate_rule(rule: dict) -> None:
 
 def load_data_quality_rules_from_json_string(
     dq_rules_json_string: str,
-) -> Any | None:
+) -> Any:
     """
-    Deserializes a JSON document in string format, and prints one or more error
-    messages in case a JSONDecodeError is raised.
+    Deserializes a JSON document in string format.
 
     :param dq_rules_json_string: A JSON string with all DQ configuration.
     """
-    try:
-        return json.loads(dq_rules_json_string)
-
-    except json.JSONDecodeError as e:
-        error_message = str(e)
-        print(f"Data quality check failed: {error_message}")
-        if "Invalid control character at:" in error_message:
-            print("Quota is missing in the JSON.")
-        if "Expecting ',' delimiter:" in error_message:
-            print(
-                "Square brackets, Comma or curly brackets can be missing in "
-                "the JSON."
-            )
-        if "Expecting ':' delimiter:" in error_message:
-            print("Colon is missing in the JSON.")
-        if "Expecting value:" in error_message:
-            print("'Rules' Value is missing in the JSON.")
-
-        raise json.JSONDecodeError(msg=e.args[0],
-                                   doc=dq_rules_json_string,
-                                   pos=e.pos)
-
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    return json.loads(dq_rules_json_string)
 
 
 def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
