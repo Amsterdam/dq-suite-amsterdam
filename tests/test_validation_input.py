@@ -11,7 +11,7 @@ from src.dq_suite.validation_input import (
     validate_rule,
     validate_rules_dict,
     validate_table_schema,
-    validate_tables,
+    validate_tables, get_data_quality_rules_dict,
 )
 
 
@@ -297,3 +297,12 @@ class TestValidateRule:
                 "parameters": {"some_key": "some_value"},
             }
         )
+
+
+@pytest.mark.usefixtures("real_json_file_path")
+class TestGetDataQualityRulesDict:
+    def test_get_data_quality_rules_dict_returns_dict(self,
+                                                      real_json_file_path):
+        data_quality_rules_dict = get_data_quality_rules_dict(
+            file_path=real_json_file_path)
+        assert isinstance(data_quality_rules_dict, dict)

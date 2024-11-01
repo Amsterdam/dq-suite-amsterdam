@@ -13,20 +13,6 @@ def read_data_quality_rules_from_json(file_path: str) -> str:
     return dq_rules_json_string
 
 
-def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
-    dq_rules_json_string = read_data_quality_rules_from_json(
-        file_path=file_path
-    )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=dq_rules_json_string
-    )
-    validate_data_quality_rules_dict(
-        data_quality_rules_dict=data_quality_rules_dict
-    )
-
-    return data_quality_rules_dict
-
-
 def validate_data_quality_rules_dict(
     data_quality_rules_dict: Any | None,
 ) -> None:
@@ -181,3 +167,17 @@ def load_data_quality_rules_from_json_string(
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+
+
+def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
+    dq_rules_json_string = read_data_quality_rules_from_json(
+        file_path=file_path
+    )
+    data_quality_rules_dict = load_data_quality_rules_from_json_string(
+        dq_rules_json_string=dq_rules_json_string
+    )
+    validate_data_quality_rules_dict(
+        data_quality_rules_dict=data_quality_rules_dict
+    )
+
+    return data_quality_rules_dict
