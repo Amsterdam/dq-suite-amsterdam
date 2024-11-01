@@ -147,24 +147,11 @@ def validate_rule(rule: dict) -> None:
         raise TypeError(f"In {rule}, 'parameters' should be of type 'dict'")
 
 
-def load_data_quality_rules_from_json_string(
-    dq_rules_json_string: str,
-) -> Any:
-    """
-    Deserializes a JSON document in string format.
-
-    :param dq_rules_json_string: A JSON string with all DQ configuration.
-    """
-    return json.loads(dq_rules_json_string)
-
-
 def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(
         file_path=file_path
     )
-    data_quality_rules_dict = load_data_quality_rules_from_json_string(
-        dq_rules_json_string=dq_rules_json_string
-    )
+    data_quality_rules_dict = json.loads(dq_rules_json_string)
     validate_data_quality_rules_dict(
         data_quality_rules_dict=data_quality_rules_dict
     )

@@ -13,9 +13,6 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, lit
 
 from src.dq_suite.common import DataQualityRulesDict, Rule
-from src.dq_suite.validation_input import (
-    load_data_quality_rules_from_json_string,
-)
 
 
 def get_table_name_list_from_unity_catalog(
@@ -207,11 +204,7 @@ def data_quality_rules_json_string_to_dict(
     :param json_string: A JSON string with all DQ configuration.
     :return: rule_json: A dictionary with all DQ configuration.
     """
-    dq_rules_dict: DataQualityRulesDict = (
-        load_data_quality_rules_from_json_string(
-            dq_rules_json_string=json_string
-        )
-    )
+    dq_rules_dict: DataQualityRulesDict = json.loads(json_string)
 
     for table in dq_rules_dict["tables"]:
         for rule in table["rules"]:
