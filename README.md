@@ -1,42 +1,41 @@
 # About dq-suite-amsterdam
-This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations). All that is needed to get started is in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
+This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
 
 While the results of all validations are written to a `data_quality` schema in Unity Catalog, users can also choose to get notified via Slack or Microsoft Teams.
 
-DISCLAIMER: The package is in MVP phase
+<img src="docs/wip_computer.jpg" width="20%" height="auto">
+
+DISCLAIMER: The package is in MVP phase, so watch your step. 
 
 
 # Getting started
-Install the dq suite on your compute, for example by running the following code in your workspace:
+Following GX, we recommend installing `dq-suite-amsterdam` in a virtual environment. This could be either locally via your IDE, on your compute via a notebook in Databricks, or as part of a workflow. 
 
+1. Run the following command:
 ```
 pip install dq-suite-amsterdam
 ```
 
-To validate your first table:
-- define `dq_rule_json_path` as a path to a JSON file, similar to shown in dq_rules_example.json in this repo
-- define `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
-- load the table requiring a data quality check into a PySpark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
+2. Create the `data_quality` schema (and tables) by running the SQL notebook located [here](scripts/data_quality_tables.sql). All it needs is the name of the catalog (and the rights to create a schema within that catalog).
 
+3. Validate your first table. To do so, 
+- define `catalog_name` as the name of your catalog
+- define `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
+- define `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
+- load the table requiring a data quality check into a Spark dataframe `df` (e.g. via `spark.read.csv` or `spark.read.table`)
+- finally, run the following:
 ```python
 import dq_suite
 
 validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, 
-                                                      catalog_name="dpxx_dev",
+                                                      catalog_name=catalog_name,
                                                       table_name=table_name,
                                                       check_name="name_of_check_goes_here")
 dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validation_settings_obj)
 ```
-Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
+Note: Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
 
-See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation (e.g. Slack 
-or MS Teams webhooks for notifications, location for storing GX, etc). 
-
-
-# Create data quality schema and tables (in respective catalog of data team)
-Before running your first dq check, create the data quality schema and tables from the notebook from repo path: scripts/data_quality_tables.sql
-- Open the notebook, connect to a cluster.
-- Select the catalog of the data team and execute the notebook. It will create the schema and tables if they are not yet there.
+See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation. 
 
 
 # Export the schema from Unity Catalog to the Input Form
@@ -73,7 +72,7 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 - The run_time is defined separately from Great Expectations in df_checker. We plan on fixing it when Great Expectations has documented how to access it from the RunIdentifier object.
 
 # Contributing to this library
-See the separate [developers' readme](src/Readme-dev.md).
+See the separate [developers' readme](docs/Readme-dev.md).
 
 
 # Updates
