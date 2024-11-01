@@ -16,6 +16,13 @@
                         }
                 }
             ]
+        },
+        {
+            "unique_identifier": "the_id",
+            "table_name": "the_table_name",
+            "validate_table_schema": "the_table_schema_to_validate",
+            "validate_table_schema_url": "https://the-url.nl",
+            "rules": []
         }
     ]
 }
