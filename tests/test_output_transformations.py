@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 import pytest
@@ -7,7 +8,13 @@ from pyspark.sql import SparkSession
 from src.dq_suite.output_transformations import (
     construct_regel_id,
     create_empty_dataframe,
-    create_parameter_list_from_results,
+    get_parameters_from_results,
+    extract_afwijking_data,
+    extract_attribute_data,
+    extract_dataset_data,
+    extract_regel_data,
+    extract_table_data,
+    extract_validatie_data,
     filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
     get_target_attr_for_rule,
@@ -17,6 +24,22 @@ from src.dq_suite.output_transformations import (
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
 from .test_data.test_schema import SCHEMA2 as AFWIJKING_SCHEMA2
+
+
+@pytest.mark.usefixtures("rules_file_path")
+@pytest.fixture()
+def read_test_rules_as_dict(rules_file_path):
+    with open(rules_file_path, "r") as json_file:
+        dq_rules_json_string = json_file.read()
+    return json.loads(dq_rules_json_string)
+
+
+@pytest.mark.usefixtures("result_file_path")
+@pytest.fixture()
+def read_test_result_as_dict(result_file_path):
+    with open(result_file_path, "r") as json_file:
+        dq_result_json_string = json_file.read()
+    return json.loads(dq_result_json_string)
 
 
 @pytest.fixture()
@@ -92,8 +115,8 @@ class TestConstructRegelId:
         assert_df_equality(actual_df, expected_df)
 
 
-class TestCreateParameterListFromResult:
-    def test_create_parameter_list_from_results_with_and_without_batch_id(self):
+class TestGetParametersFromResults:
+    def test_get_parameters_from_results_with_and_without_batch_id(self):
         result = {
             "kwargs": {
                 "param1": 10,
@@ -102,22 +125,22 @@ class TestCreateParameterListFromResult:
             }
         }
         result2 = {"kwargs": {"param1": 10, "param2": "example"}}
-        expected_output = [{"param1": 10, "param2": "example"}]
+        expected_output = {"param1": 10, "param2": "example"}
 
-        assert create_parameter_list_from_results(result) == expected_output
-        assert create_parameter_list_from_results(result2) == expected_output
+        assert get_parameters_from_results(result) == expected_output
+        assert get_parameters_from_results(result2) == expected_output
 
-    def test_create_parameter_list_from_results_empty_kwargs(self):
+    def get_parameters_from_results(self):
         result = {"kwargs": {}}
 
         expected_output = [{}]
-        assert create_parameter_list_from_results(result) == expected_output
+        assert get_parameters_from_results(result) == expected_output
 
-    def test_create_parameter_list_from_results_no_kwargs_key(self):
+    def get_parameters_from_results(self):
         result = {}
 
         with pytest.raises(KeyError):
-            create_parameter_list_from_results(result)
+            get_parameters_from_results(result)
 
 
 class TestGetTargetAttrForRule:
@@ -245,3 +268,200 @@ class TestGetGroupedIdsPerDeviatingValue:
 
         expected_grouped_ids = [["Alice", "Jansen"], ["Alice", "Smith"]]
         assert grouped_ids == expected_grouped_ids
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestExtractDatasetData:
+    def test_extract_dataset_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            extract_dataset_data(dq_rules_dict="123")
+
+    def test_extract_dataset_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = extract_dataset_data(
+            dq_rules_dict=read_test_rules_as_dict
+        )
+        expected_result = [
+            {"bronDatasetId": "the_dataset", "medaillonLaag": "the_layer"}
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestExtractTableData:
+    def test_extract_table_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            extract_dataset_data(dq_rules_dict="123")
+
+    def test_extract_table_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = extract_table_data(dq_rules_dict=read_test_rules_as_dict)
+        expected_result = [
+            {
+                "bronTabelId": "the_dataset_the_table",
+                "tabelNaam": "the_table",
+                "uniekeSleutel": "id",
+            },
+            {
+                "bronTabelId": "the_dataset_the_other_table",
+                "tabelNaam": "the_other_table",
+                "uniekeSleutel": "other_id",
+            },
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestExtractAttributeData:
+    def test_extract_attribute_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            extract_attribute_data(dq_rules_dict="123")
+
+    def test_extract_attribute_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = extract_attribute_data(
+            dq_rules_dict=read_test_rules_as_dict
+        )
+        expected_result = [
+            {
+                "bronAttribuutId": "the_dataset_the_table_the_column",
+                "attribuutNaam": "the_column",
+                "bronTabelId": "the_dataset_the_table",
+            },
+            {
+                "bronAttribuutId": "the_dataset_the_other_table_the_other_column",
+                "attribuutNaam": "the_other_column",
+                "bronTabelId": "the_dataset_the_other_table",
+            },
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestExtractRegelData:
+    def test_extract_regel_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            extract_regel_data(dq_rules_dict="123")
+
+    def test_extract_regel_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = extract_regel_data(dq_rules_dict=read_test_rules_as_dict)
+        expected_result = [
+            {
+                "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
+                "regelParameters": {
+                    "column": "the_column",
+                    "value_set": [1, 2, 3],
+                },
+                "bronTabelId": "the_dataset_the_table",
+                "attribuut": "the_column",
+                "norm": None,
+            },
+            {
+                "regelNaam": "ExpectColumnValuesToBeBetween",
+                "regelParameters": {
+                    "column": "the_other_column",
+                    "min_value": 6,
+                    "max_value": 10000,
+                },
+                "bronTabelId": "the_dataset_the_other_table",
+                "attribuut": "the_other_column",
+                "norm": None,
+            },
+            {
+                "regelNaam": "ExpectTableRowCountToBeBetween",
+                "regelParameters": {"min_value": 1, "max_value": 1000},
+                "bronTabelId": "the_dataset_the_other_table",
+                "attribuut": None,
+                "norm": None,
+            },
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_result_as_dict")
+class TestExtractValidatieData:
+    def test_extract_validatie_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            extract_validatie_data(
+                table_name="table_name",
+                dataset_name="dataset_name",
+                run_time=datetime.now(),
+                dq_result="123",
+            )
+
+    def test_extract_validatie_data_returns_correct_list(
+        self, read_test_result_as_dict
+    ):
+        test_output = extract_validatie_data(
+            table_name="table_name",
+            dataset_name="dataset_name",
+            run_time=datetime.now(),
+            dq_result=read_test_result_as_dict,
+        )
+        test_sample = test_output[0]
+        del test_sample["dqDatum"] #timestamp will be impossible to get right
+        expected_result = {
+            "aantalValideRecords": 23537,
+            "aantalReferentieRecords": 23538,
+            "dqResultaat": "success",
+            "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
+            "regelParameters": {
+                "column": "the_column",
+                "value_set": [1, 2, 3],
+            },
+            "bronTabelId": "dataset_name_table_name",
+        }
+        assert test_sample == expected_result
+
+
+@pytest.mark.usefixtures("spark")
+@pytest.mark.usefixtures("read_test_result_as_dict")
+class TestExtractAfwijkingData:
+    def test_extract_afwijking_data_raises_type_error(self, spark):
+        with pytest.raises(TypeError):
+            mock_data = [("str1", "str2")]
+            mock_df = spark.createDataFrame(
+                mock_data, ["the_string", "the_other_string"]
+            )
+            extract_afwijking_data(
+                df=mock_df,
+                unique_identifier="id",
+                table_name="table_name",
+                dataset_name="dataset_name",
+                run_time=datetime.now(),
+                dq_result="123",
+            )
+
+    def test_extract_afwijking_data_returns_correct_list(
+        self, spark, read_test_result_as_dict
+    ):
+        input_data = [("id1", None), ("id2", "the_value")]
+        input_df = spark.createDataFrame(
+            input_data, ["the_key", "the_column"]
+        )
+        test_output = extract_afwijking_data(
+            df=input_df,
+            unique_identifier="the_key",
+            table_name="table_name",
+            dataset_name="dataset_name",
+            run_time=datetime.now(),
+            dq_result=read_test_result_as_dict,
+        )
+        test_sample = test_output[0]
+        del test_sample["dqDatum"] #timestamp will be impossible to get right
+        expected_result = {
+                    "identifierVeldWaarde": [["id1"]],
+                    "afwijkendeAttribuutWaarde": None,
+                    "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
+                    "regelParameters": {
+                        "column": "the_column",
+                        "value_set": [1, 2, 3]
+                    },
+                    "bronTabelId": "dataset_name_table_name",
+                }
+        assert test_sample == expected_result

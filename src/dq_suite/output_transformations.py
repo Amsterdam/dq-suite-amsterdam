@@ -56,10 +56,10 @@ def construct_regel_id(
     return df_with_id.select(*output_columns_list)
 
 
-def create_parameter_list_from_results(result: dict) -> list[dict]:
+def get_parameters_from_results(result: dict) -> list[dict]:
     parameters = result["kwargs"]
     parameters.pop("batch_id", None)
-    return [parameters]
+    return parameters
 
 
 def get_target_attr_for_rule(result: dict) -> str:
@@ -115,28 +115,87 @@ def get_grouped_ids_per_deviating_value(
     ]
 
 
-def extract_dq_validatie_data(
+def extract_dataset_data(dq_rules_dict: dict) -> list[dict]:
+    name = dq_rules_dict["dataset"]["name"]
+    layer = dq_rules_dict["dataset"]["layer"]
+    return [{"bronDatasetId": name, "medaillonLaag": layer}]
+
+
+def extract_table_data(dq_rules_dict: dict) -> list[dict]:
+    extracted_data = []
+    dataset_name = dq_rules_dict["dataset"]["name"]
+    for param in dq_rules_dict["tables"]:
+        table_name = param["table_name"]
+        tabel_id = f"{dataset_name}_{table_name}"
+        unique_identifier = param["unique_identifier"]
+        extracted_data.append(
+            {
+                "bronTabelId": tabel_id,
+                "tabelNaam": table_name,
+                "uniekeSleutel": unique_identifier,
+            }
+        )
+    return extracted_data
+
+
+def extract_attribute_data(dq_rules_dict: dict) -> list[dict]:
+    extracted_data = []
+    dataset_name = dq_rules_dict["dataset"]["name"]
+    used_ids = set()  # To keep track of used IDs
+    for param in dq_rules_dict["tables"]:
+        table_name = param["table_name"]
+        tabel_id = f"{dataset_name}_{table_name}"
+        for rule in param["rules"]:
+            parameters = rule.get("parameters", [])
+            if isinstance(parameters, dict) and "column" in parameters:
+                attribute_name = parameters["column"]
+                # Create a unique ID
+                unique_id = f"{tabel_id}_{attribute_name}"
+                # Check if the ID is already used
+                if unique_id not in used_ids:
+                    used_ids.add(unique_id)
+                    extracted_data.append(
+                        {
+                            "bronAttribuutId": unique_id,
+                            "attribuutNaam": attribute_name,
+                            "bronTabelId": tabel_id,
+                        }
+                    )
+    return extracted_data
+
+
+def extract_regel_data(dq_rules_dict: dict) -> list[dict]:
+    extracted_data = []
+    dataset_name = dq_rules_dict["dataset"]["name"]
+    for table in dq_rules_dict["tables"]:
+        table_name = table["table_name"]
+        tabel_id = f"{dataset_name}_{table_name}"
+        for rule in table["rules"]:
+            rule_name = rule["rule_name"]
+            parameters = rule.get("parameters")
+            norm = rule.get("norm", None)
+            column = parameters.get("column", None)
+            extracted_data.append(
+                {
+                    "regelNaam": rule_name,
+                    "regelParameters": parameters,
+                    "norm": norm,
+                    "bronTabelId": tabel_id,
+                    "attribuut": column,
+                }
+            )
+    return extracted_data
+
+
+def extract_validatie_data(
     table_name: str,
     dataset_name: str,
     run_time: datetime,
     dq_result: CheckpointDescriptionDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    [insert explanation here]
-
-    :param table_name: Name of the tables
-    :param dataset_name:
-    :param run_time:
-    :param dq_result:  # TODO: add dataclass?
-    :param catalog_name:
-    :param spark_session:
-    """
-    tabel_id = f"{dataset_name}_{table_name}"
-
+) -> list[dict]:
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
+    tabel_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
     for validation_result in dq_result:
@@ -149,7 +208,7 @@ def extract_dq_validatie_data(
             )
             aantal_valide_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
-            parameter_list = create_parameter_list_from_results(
+            parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
             expectation_result["kwargs"].get("column")
@@ -167,60 +226,20 @@ def extract_dq_validatie_data(
                     "bronTabelId": tabel_id,
                 }
             )
-
-    df_validatie = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=PRE_VALIDATIE_SCHEMA,
-    )
-    df_validatie_with_id_ordered = construct_regel_id(
-        df=df_validatie,
-        output_columns_list=[
-            "regelId",
-            "aantalValideRecords",
-            "aantalReferentieRecords",
-            "dqDatum",
-            "dqResultaat",
-        ],
-    )
-    if not is_empty_dataframe(df=df_validatie_with_id_ordered):
-        write_to_unity_catalog(
-            df=df_validatie_with_id_ordered,
-            catalog_name=catalog_name,
-            table_name="validatie",
-            schema=VALIDATIE_SCHEMA,
-        )
-    else:
-        # TODO: implement (raise error?)
-        pass
+    return extracted_data
 
 
-def extract_dq_afwijking_data(
-    table_name: str,
-    dataset_name: str,
-    dq_result: CheckpointDescriptionDict,
+def extract_afwijking_data(
     df: DataFrame,
     unique_identifier: str,
+    table_name: str,
+    dataset_name: str,
     run_time: datetime,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    [insert explanation here]
-
-    :param table_name: Name of the table
-    :param dataset_name:
-    :param dq_result:
-    :param df: A DataFrame containing the invalid (deviated) result
-    :param unique_identifier:
-    :param run_time:
-    :param catalog_name:
-    :param spark_session:
-    """
-    tabel_id = f"{dataset_name}_{table_name}"
-
+    dq_result: CheckpointDescriptionDict,
+) -> list[dict]:
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
+    tabel_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
     if not isinstance(unique_identifier, list):
@@ -229,7 +248,7 @@ def extract_dq_afwijking_data(
     for validation_result in dq_result:
         for expectation_result in validation_result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
-            parameter_list = create_parameter_list_from_results(
+            parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
             attribute = get_target_attr_for_rule(result=expectation_result)
@@ -258,7 +277,90 @@ def extract_dq_afwijking_data(
                         "bronTabelId": tabel_id,
                     }
                 )
+    return extracted_data
 
+
+def create_dq_validatie(
+    table_name: str,
+    dataset_name: str,
+    run_time: datetime,
+    dq_result: CheckpointDescriptionDict,
+    catalog_name: str,
+    spark_session: SparkSession,
+) -> None:
+    """
+    [insert explanation here]
+
+    :param table_name: Name of the tables
+    :param dataset_name:
+    :param run_time:
+    :param dq_result:  # TODO: add dataclass?
+    :param catalog_name:
+    :param spark_session:
+    """
+    extracted_data = extract_validatie_data(
+        table_name=table_name,
+        dataset_name=dataset_name,
+        run_time=run_time,
+        dq_result=dq_result,
+    )
+    df_validatie = list_of_dicts_to_df(
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=PRE_VALIDATIE_SCHEMA,
+    )
+    df_validatie_with_id_ordered = construct_regel_id(
+        df=df_validatie,
+        output_columns_list=[
+            "regelId",
+            "aantalValideRecords",
+            "aantalReferentieRecords",
+            "dqDatum",
+            "dqResultaat",
+        ],
+    )
+    if not is_empty_dataframe(df=df_validatie_with_id_ordered):
+        write_to_unity_catalog(
+            df=df_validatie_with_id_ordered,
+            catalog_name=catalog_name,
+            table_name="validatie",
+            schema=VALIDATIE_SCHEMA,
+        )
+    else:
+        # TODO: implement (raise error?)
+        pass
+
+
+def create_dq_afwijking(
+    table_name: str,
+    dataset_name: str,
+    dq_result: CheckpointDescriptionDict,
+    df: DataFrame,
+    unique_identifier: str,
+    run_time: datetime,
+    catalog_name: str,
+    spark_session: SparkSession,
+) -> None:
+    """
+    [insert explanation here]
+
+    :param table_name: Name of the table
+    :param dataset_name:
+    :param dq_result:
+    :param df: A DataFrame containing the invalid (deviated) result
+    :param unique_identifier:
+    :param run_time:
+    :param catalog_name:
+    :param spark_session:
+    """
+    extracted_data = extract_afwijking_data(
+        df=df,
+        unique_identifier=unique_identifier,
+        table_name=table_name,
+        dataset_name=dataset_name,
+        run_time=run_time,
+        dq_result=dq_result,
+    )
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
@@ -298,9 +400,7 @@ def create_brondataset(
     :param catalog_name:
     :param spark_session:
     """
-    name = dq_rules_dict["dataset"]["name"]
-    layer = dq_rules_dict["dataset"]["layer"]
-    extracted_data = [{"bronDatasetId": name, "medaillonLaag": layer}]
+    extracted_data = extract_dataset_data(dq_rules_dict=dq_rules_dict)
 
     df_brondataset = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -335,19 +435,7 @@ def create_brontabel(
     :param catalog_name:
     :param spark_session:
     """
-    extracted_data = []
-    dataset_name = dq_rules_dict["dataset"]["name"]
-    for param in dq_rules_dict["tables"]:
-        table_name = param["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
-        unique_identifier = param["unique_identifier"]
-        extracted_data.append(
-            {
-                "bronTabelId": tabel_id,
-                "tabelNaam": table_name,
-                "uniekeSleutel": unique_identifier,
-            }
-        )
+    extracted_data = extract_table_data(dq_rules_dict=dq_rules_dict)
 
     df_brontabel = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -383,29 +471,7 @@ def create_bronattribute(
     :param catalog_name:
     :param spark_session:
     """
-    extracted_data = []
-    dataset_name = dq_rules_dict["dataset"]["name"]
-    used_ids = set()  # To keep track of used IDs
-    for param in dq_rules_dict["tables"]:
-        table_name = param["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
-        for rule in param["rules"]:
-            parameters = rule.get("parameters", [])
-            for parameter in parameters:
-                if isinstance(parameter, dict) and "column" in parameter:
-                    attribute_name = parameter["column"]
-                    # Create a unique ID
-                    unique_id = f"{tabel_id}_{attribute_name}"
-                    # Check if the ID is already used
-                    if unique_id not in used_ids:
-                        used_ids.add(unique_id)
-                        extracted_data.append(
-                            {
-                                "bronAttribuutId": unique_id,
-                                "attribuutNaam": attribute_name,
-                                "bronTabelId": tabel_id,
-                            }
-                        )
+    extracted_data = extract_attribute_data(dq_rules_dict=dq_rules_dict)
 
     df_bronattribuut = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -442,24 +508,7 @@ def create_dq_regel(
     :param catalog_name:
     :param spark_session:
     """
-    extracted_data = []
-    dataset_name = dq_rules_dict["dataset"]["name"]
-    for table in dq_rules_dict["tables"]:
-        table_name = table["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
-        for rule in table["rules"]:
-            rule_name = rule["rule_name"]
-            parameters = rule.get("parameters", [])
-            for param_set in parameters:
-                column = param_set.get("column")
-                extracted_data.append(
-                    {
-                        "regelNaam": rule_name,
-                        "regelParameters": parameters,
-                        "bronTabelId": tabel_id,
-                        "attribuut": column,
-                    }
-                )
+    extracted_data = extract_regel_data(dq_rules_dict=dq_rules_dict)
 
     df_regel = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -528,7 +577,7 @@ def write_validation_table(
     unique_identifier: str,
     run_time: datetime,
 ):
-    extract_dq_validatie_data(
+    create_dq_validatie(
         validation_settings_obj.table_name,
         dataset_name,
         validation_output,
@@ -536,7 +585,7 @@ def write_validation_table(
         validation_settings_obj.catalog_name,
         validation_settings_obj.spark_session,
     )
-    extract_dq_afwijking_data(
+    create_dq_afwijking(
         validation_settings_obj.table_name,
         dataset_name,
         validation_output,

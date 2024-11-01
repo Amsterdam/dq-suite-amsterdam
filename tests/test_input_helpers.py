@@ -1,5 +1,4 @@
 import pytest
-from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.input_helpers import (
     load_data_quality_rules_from_json_string,
@@ -14,13 +13,8 @@ from src.dq_suite.input_helpers import (
 
 
 @pytest.fixture
-def real_file_path():
-    return f"{TEST_DATA_FOLDER}/dq_rules.json"
-
-
-@pytest.fixture
-def data_quality_rules_json_string(real_file_path):
-    return read_data_quality_rules_from_json(file_path=real_file_path)
+def data_quality_rules_json_string(rules_file_path):
+    return read_data_quality_rules_from_json(file_path=rules_file_path)
 
 
 @pytest.fixture
@@ -35,7 +29,7 @@ def rules_dict(data_quality_rules_dict):
     return data_quality_rules_dict["tables"][0]
 
 
-@pytest.mark.usefixtures("real_file_path")
+@pytest.mark.usefixtures("rules_file_path")
 class TestReadDataQualityRulesFromJson:
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
         self,
@@ -44,10 +38,10 @@ class TestReadDataQualityRulesFromJson:
             read_data_quality_rules_from_json(file_path="nonexistent_file_path")
 
     def test_read_data_quality_rules_from_json_returns_json_string(
-        self, real_file_path
+        self, rules_file_path
     ):
         data_quality_rules_json_string = read_data_quality_rules_from_json(
-            file_path=real_file_path
+            file_path=rules_file_path
         )
         assert isinstance(data_quality_rules_json_string, str)
 
