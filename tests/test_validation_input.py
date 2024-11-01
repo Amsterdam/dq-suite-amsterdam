@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from tests import TEST_DATA_FOLDER
 
@@ -14,13 +16,18 @@ from src.dq_suite.validation_input import (
 
 
 @pytest.fixture
-def real_file_path():
+def real_json_file_path():
     return f"{TEST_DATA_FOLDER}/dq_rules.json"
 
 
 @pytest.fixture
-def data_quality_rules_json_string(real_file_path):
-    return read_data_quality_rules_from_json(file_path=real_file_path)
+def real_non_json_file_path():
+    return f"{TEST_DATA_FOLDER}/test_schema.py"
+
+
+@pytest.fixture
+def data_quality_rules_json_string(real_json_file_path):
+    return read_data_quality_rules_from_json(file_path=real_json_file_path)
 
 
 @pytest.fixture
@@ -35,11 +42,8 @@ def rules_dict(data_quality_rules_dict):
     return data_quality_rules_dict["tables"][0]
 
 
-class TestExportSchema:
-    pass
-
-
-@pytest.mark.usefixtures("real_file_path")
+@pytest.mark.usefixtures("real_json_file_path")
+@pytest.mark.usefixtures("real_non_json_file_path")
 class TestReadDataQualityRulesFromJson:
     def test_read_data_quality_rules_from_json_raises_file_not_found_error(
         self,
@@ -48,12 +52,20 @@ class TestReadDataQualityRulesFromJson:
             read_data_quality_rules_from_json(file_path="nonexistent_file_path")
 
     def test_read_data_quality_rules_from_json_returns_json_string(
-        self, real_file_path
+        self, real_json_file_path
     ):
         data_quality_rules_json_string = read_data_quality_rules_from_json(
-            file_path=real_file_path
+            file_path=real_json_file_path
         )
         assert isinstance(data_quality_rules_json_string, str)
+
+
+    def test_read_data_quality_rules_from_json_raises_value_error_for_non_json_file(self, real_non_json_file_path):
+        non_json_string = read_data_quality_rules_from_json(
+            file_path=real_non_json_file_path)
+        assert isinstance(non_json_string, str)  # It's a string...
+        with pytest.raises(ValueError):  # ... but not valid JSON
+            json.loads(non_json_string)
 
 
 @pytest.mark.usefixtures("data_quality_rules_json_string")
