@@ -8,22 +8,13 @@ from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
 
-from .common import DataQualityRulesDict, Rule, RulesDict, ValidationSettings
-from .input_helpers import get_data_quality_rules_dict
+from .common import Rule, RulesDict, ValidationSettings
+from .input_helpers import get_data_quality_rules_dict, \
+    filter_validation_dict_by_table_name, validate_data_quality_rules_dict
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
 )
-
-
-def filter_validation_dict_by_table_name(
-    validation_dict: DataQualityRulesDict, table_name: str
-) -> RulesDict | None:
-    for rules_dict in validation_dict["tables"]:
-        if rules_dict["table_name"] == table_name:
-            # Only one RulesDict per table expected, so return the first match
-            return rules_dict
-    return None
 
 
 def get_or_add_validation_definition(
@@ -199,6 +190,9 @@ def run(
 
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
+    validate_data_quality_rules_dict(
+        data_quality_rules_dict=validation_dict
+    )
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=validation_settings_obj.table_name,

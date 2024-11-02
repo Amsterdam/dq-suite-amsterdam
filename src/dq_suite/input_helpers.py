@@ -7,7 +7,7 @@ import validators
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
-from .common import DataQualityRulesDict, Rule
+from .common import DataQualityRulesDict, Rule, RulesDict
 
 
 def export_schema(dataset: str, spark: SparkSession) -> str:
@@ -252,10 +252,6 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     data_quality_rules_dict = load_data_quality_rules_from_json_string(
         dq_rules_json_string=dq_rules_json_string
     )
-    validate_data_quality_rules_dict(
-        data_quality_rules_dict=data_quality_rules_dict
-    )
-
     return data_quality_rules_dict
 
 
@@ -382,3 +378,13 @@ def validate_rule(rule: dict) -> None:
     # of the dataclass, but adding 'repeated' expectations
     if not isinstance(rule["parameters"], dict):
         raise TypeError(f"In {rule}, 'parameters' should be of type 'dict'")
+
+
+def filter_validation_dict_by_table_name(
+    validation_dict: DataQualityRulesDict, table_name: str
+) -> RulesDict | None:
+    for rules_dict in validation_dict["tables"]:
+        if rules_dict["table_name"] == table_name:
+            # Only one RulesDict per table expected, so return the first match
+            return rules_dict
+    return None

@@ -1,4 +1,6 @@
 import pytest
+
+from src.dq_suite.common import DataQualityRulesDict
 from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.input_helpers import (
@@ -9,7 +11,7 @@ from src.dq_suite.input_helpers import (
     validate_rule,
     validate_rules_dict,
     validate_table_schema,
-    validate_tables,
+    validate_tables, filter_validation_dict_by_table_name,
 )
 
 
@@ -28,6 +30,16 @@ def data_quality_rules_dict(data_quality_rules_json_string):
     return load_data_quality_rules_from_json_string(
         dq_rules_json_string=data_quality_rules_json_string
     )
+
+
+@pytest.fixture
+def validated_data_quality_rules_dict(data_quality_rules_dict):
+    """
+    Note: the normal flow validates the data quality rules dict before
+    using it - hence this fixture.
+    """
+    validate_data_quality_rules_dict(data_quality_rules_dict=data_quality_rules_dict)
+    return data_quality_rules_dict
 
 
 @pytest.fixture
@@ -281,3 +293,21 @@ class TestValidateRule:
                 "parameters": {"some_key": "some_value"},
             }
         )
+
+
+@pytest.mark.usefixtures("validated_data_quality_rules_dict")
+class TestFilterValidationDictByTableName:
+    def test_filter_validation_dict_by_table_name_returns_none_for_nonexistent_table(self, validated_data_quality_rules_dict):
+        the_table_dict = filter_validation_dict_by_table_name(
+            validation_dict=validated_data_quality_rules_dict,
+            table_name="the_nonexistent_table")
+        assert the_table_dict is None
+
+    def test_filter_validation_dict_by_table_name(self, validated_data_quality_rules_dict):
+        the_table_dict = filter_validation_dict_by_table_name(
+            validation_dict=validated_data_quality_rules_dict,
+            table_name="the_table")
+        assert the_table_dict is not None
+        assert "unique_identifier" in the_table_dict
+        assert "table_name" in the_table_dict
+        assert "rules" in the_table_dict

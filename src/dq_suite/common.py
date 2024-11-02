@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal
+from typing import Literal
 
 from delta.tables import *
 from great_expectations import ExpectationSuite, get_context
