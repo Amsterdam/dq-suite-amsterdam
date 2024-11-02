@@ -10,8 +10,8 @@ from src.dq_suite.common import (
     Rule,
     RulesDict,
     ValidationSettings,
-    get_full_table_name, )
-from src.dq_suite.input_helpers import filter_validation_dict_by_table_name
+    get_full_table_name,
+)
 
 
 class TestRule:

@@ -9,8 +9,11 @@ from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
 
 from .common import Rule, RulesDict, ValidationSettings
-from .input_helpers import get_data_quality_rules_dict, \
-    filter_validation_dict_by_table_name, validate_data_quality_rules_dict
+from .input_helpers import (
+    filter_validation_dict_by_table_name,
+    get_data_quality_rules_dict,
+    validate_data_quality_rules_dict,
+)
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
@@ -190,9 +193,7 @@ def run(
 
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
-    validate_data_quality_rules_dict(
-        data_quality_rules_dict=validation_dict
-    )
+    validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=validation_settings_obj.table_name,
