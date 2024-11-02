@@ -298,10 +298,10 @@ class TestValidateRule:
 @pytest.mark.usefixtures("validated_data_quality_rules_dict")
 class TestFilterValidationDictByTableName:
     def test_filter_validation_dict_by_table_name_returns_none_for_nonexistent_table(self, validated_data_quality_rules_dict):
-        the_table_dict = filter_validation_dict_by_table_name(
+        the_nonexistent_table_dict = filter_validation_dict_by_table_name(
             validation_dict=validated_data_quality_rules_dict,
             table_name="the_nonexistent_table")
-        assert the_table_dict is None
+        assert the_nonexistent_table_dict is None
 
     def test_filter_validation_dict_by_table_name(self, validated_data_quality_rules_dict):
         the_table_dict = filter_validation_dict_by_table_name(
