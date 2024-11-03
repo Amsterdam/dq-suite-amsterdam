@@ -1,3 +1,9 @@
+from unittest.mock import Mock, patch, MagicMock
+
+import pytest
+from pyspark.sql import SparkSession
+
+from src.dq_suite import ValidationSettings
 from src.dq_suite.validation import (
     create_action_list,
     create_and_configure_expectations,
@@ -8,9 +14,25 @@ from src.dq_suite.validation import (
 )
 
 
+@pytest.fixture
+def validation_settings_obj():
+    spark_session_mock = Mock(spec=SparkSession)
+    validation_settings_obj = ValidationSettings(
+        spark_session=spark_session_mock,
+        catalog_name="the_catalog",
+        table_name="the_table",
+        check_name="the_check",
+    )
+    validation_settings_obj.initialise_or_update_attributes()
+    return validation_settings_obj
+
+
 class TestGetOrAddValidationDefinition:
-    def test_get_or_add_validation_definition(self):
-        get_or_add_validation_definition
+    def test_get_or_add_validation_definition(self, validation_settings_obj):
+        with (patch.object(target=validation_settings_obj,
+                           attribute='create_batch_definition',
+                           return_value="test") as mock_method):
+            get_or_add_validation_definition(validation_settings_obj=validation_settings_obj)
 
 
 class TestCreateActionList:
