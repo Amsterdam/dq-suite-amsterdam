@@ -286,7 +286,7 @@ class ValidationSettings:
 
         # Finally, add/retrieve the suite to/from the data context
         try:
-            self.data_context.suites.get(name=self.expectation_suite_name)
+            _ = self.data_context.suites.get(name=self.expectation_suite_name)
         except DataContextError:
             self.data_context.suites.add(
                 suite=ExpectationSuite(name=self.expectation_suite_name)
