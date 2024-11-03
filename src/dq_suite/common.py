@@ -306,7 +306,14 @@ class ValidationSettings:
 
     def create_batch_definition(self, data_source_name: str) \
             -> BatchDefinition:  # pragma: no cover - uses part of GX
-        self.initialise_or_update_attributes()
+        if self.data_context is None:
+            self.initialise_or_update_attributes()
+
+        try:
+            _ = self.data_context.suites.get(name=self.expectation_suite_name)
+        except DataContextError:
+            self.initialise_or_update_attributes()
+
         self.data_source = self.data_context.data_sources.add_or_update_spark(
             name=data_source_name)
         self.dataframe_asset = self.data_source.add_dataframe_asset(
