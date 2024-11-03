@@ -23,17 +23,9 @@ from .output_transformations import (
 def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
 ) -> ValidationDefinition:
-    dataframe_datasource = (
-        validation_settings_obj.data_context.data_sources.add_or_update_spark(
-            name=f"spark_datasource_" f"{validation_settings_obj.check_name}"
-        )
-    )
-
-    df_asset = dataframe_datasource.add_dataframe_asset(
-        name=validation_settings_obj.check_name
-    )
-    batch_definition = df_asset.add_batch_definition_whole_dataframe(
-        name=f"{validation_settings_obj.check_name}_batch_definition"
+    batch_definition = (
+        validation_settings_obj.create_batch_definition(
+            data_source_name=f"spark_datasource_{validation_settings_obj.check_name}")
     )
 
     validation_definition_name = (

@@ -3,11 +3,14 @@ from typing import Literal
 
 from delta.tables import *
 from great_expectations import ExpectationSuite, get_context
+from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     InMemoryStoreBackendDefaults,
 )
+from great_expectations.datasource.fluent import SparkDatasource
+from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
@@ -245,6 +248,8 @@ class ValidationSettings:
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
     data_context: AbstractDataContext | None = None
+    data_source: SparkDatasource | None = None
+    dataframe_asset: DataFrameAsset | None = None
     expectation_suite_name: str | None = None
     checkpoint_name: str | None = None
     run_name: str | None = None
@@ -298,3 +303,16 @@ class ValidationSettings:
 
     def _set_run_name(self):
         self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
+
+    def create_batch_definition(self, data_source_name: str) \
+            -> BatchDefinition:  # pragma: no cover - uses part of GX
+        self.initialise_or_update_attributes()
+        self.data_source = self.data_context.data_sources.add_or_update_spark(
+            name=data_source_name)
+        self.dataframe_asset = self.data_source.add_dataframe_asset(
+            name=self.check_name
+        )
+
+        return self.dataframe_asset.add_batch_definition_whole_dataframe(
+            name=f"{self.check_name}_batch_definition"
+        )
