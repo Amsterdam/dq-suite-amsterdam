@@ -210,10 +210,6 @@ class ValidationSettings:
     check_name: name of data quality check
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
-    data_context: a data context object
-    expectation_suite_name: name of the GX expectation suite
-    checkpoint_name: name of the GX checkpoint
-    run_name: name of the data quality run
     send_slack_notification: indicator to use GX's built-in Slack
     notification action
     slack_webhook: webhook, recommended to store in key vault
@@ -229,19 +225,11 @@ class ValidationSettings:
     table_name: str
     check_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
-    data_source_name: str | None = None
-    expectation_suite_name: str | None = None
-    checkpoint_name: str | None = None
-    run_name: str | None = None
-    validation_definition_name: str | None = None
-    batch_definition_name: str | None = None
     send_slack_notification: bool = False
     slack_webhook: str | None = None
     send_ms_teams_notification: bool = False
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
-    # TODO: change all variables to private, once all logic has been moved
-    #  inside this class
 
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
@@ -278,21 +266,21 @@ class ValidationSettings:
         self._set_batch_definition_name()
 
     def _set_expectation_suite_name(self):
-        self.expectation_suite_name = f"{self.check_name}_expectation_suite"
+        self._expectation_suite_name = f"{self.check_name}_expectation_suite"
 
     def _set_checkpoint_name(self):
-        self.checkpoint_name = f"{self.check_name}_checkpoint"
+        self._checkpoint_name = f"{self.check_name}_checkpoint"
 
     def _set_run_name(self):
-        self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
+        self._run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
 
     def _set_data_source_name(self):
-        self.data_source_name = f"spark_data_source_{self.check_name}"
+        self._data_source_name = f"spark_data_source_{self.check_name}"
 
     def _set_validation_definition_name(self):
-        self.validation_definition_name = (
+        self._validation_definition_name = (
             f"{self.check_name}_validation_definition"
         )
 
     def _set_batch_definition_name(self):
-        self.batch_definition_name = f"{self.check_name}_batch_definition"
+        self._batch_definition_name = f"{self.check_name}_batch_definition"

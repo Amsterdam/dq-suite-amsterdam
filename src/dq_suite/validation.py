@@ -49,6 +49,26 @@ class ValidationRunner:
         action_list: List | None = None,
     ):  # TODO: change all variables to private, once all logic has been moved
         #  inside this class
+        """
+           spark_session: SparkSession object
+           catalog_name: name of unity catalog
+           table_name: name of table in unity catalog
+           check_name: name of data quality check
+           data_context_root_dir: path to write GX data
+           context - default "/dbfs/great_expectations/"
+           data_context: a data context object
+           expectation_suite_name: name of the GX expectation suite
+           checkpoint_name: name of the GX checkpoint
+           run_name: name of the data quality run
+           send_slack_notification: indicator to use GX's built-in Slack
+           notification action
+           slack_webhook: webhook, recommended to store in key vault
+           send_ms_teams_notification: indicator to use GX's built-in Microsoft
+           Teams notification action
+           ms_teams_webhook: webhook, recommended to store in key vault
+           notify_on: when to send notifications, can be equal to "all",
+           "success" or "failure"
+           """
 
         if validation_settings_obj is None:
             raise ValueError(
@@ -67,17 +87,17 @@ class ValidationRunner:
         self.data_context_root_dir = (
             validation_settings_obj.data_context_root_dir
         )
-        self.data_source_name = validation_settings_obj.data_source_name
+        self.data_source_name = validation_settings_obj._data_source_name
         self.expectation_suite_name = (
-            validation_settings_obj.expectation_suite_name
+            validation_settings_obj._expectation_suite_name
         )
-        self.checkpoint_name = validation_settings_obj.checkpoint_name
-        self.run_name = validation_settings_obj.run_name
+        self.checkpoint_name = validation_settings_obj._checkpoint_name
+        self.run_name = validation_settings_obj._run_name
         self.validation_definition_name = (
-            validation_settings_obj.validation_definition_name
+            validation_settings_obj._validation_definition_name
         )
         self.batch_definition_name = (
-            validation_settings_obj.batch_definition_name
+            validation_settings_obj._batch_definition_name
         )
         self.send_slack_notification = (
             validation_settings_obj.send_slack_notification
