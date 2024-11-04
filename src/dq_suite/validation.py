@@ -84,13 +84,14 @@ class ValidationRunner:
         self.ms_teams_webhook = validation_settings_obj.ms_teams_webhook
         self.notify_on = validation_settings_obj.notify_on
 
-        # ValidationRunner parameters
+        # ValidationRunner-specific parameters
         self.data_context = data_context
         self.data_source = data_source
         self.dataframe_asset = dataframe_asset
         self.batch_definition = batch_definition
         self.validation_definition = validation_definition
 
+        self._set_data_context()
         self._get_or_add_expectation_suite()
 
     def _set_data_context(self):  # pragma: no cover - uses part of GX
@@ -101,11 +102,8 @@ class ValidationRunner:
             )
         )
 
-    def _get_or_add_expectation_suite(self):  # pragma: no cover - complex
-        # function
-        self._set_data_context()
-
-        # Finally, add/retrieve the suite to/from the data context
+    def _get_or_add_expectation_suite(self):  # pragma: no cover - uses part
+        # of GX
         try:
             _ = self.data_context.suites.get(name=self.expectation_suite_name)
         except DataContextError:
