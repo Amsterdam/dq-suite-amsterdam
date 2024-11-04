@@ -23,23 +23,17 @@ from .output_transformations import (
 def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
 ) -> ValidationDefinition:
-    batch_definition = (
-        validation_settings_obj.create_batch_definition(
-            data_source_name=f"spark_datasource_{validation_settings_obj.check_name}")
-    )
+    batch_definition = validation_settings_obj.create_batch_definition()
 
-    validation_definition_name = (
-        f"{validation_settings_obj.check_name}" f"_validation_definition"
-    )
     try:
         validation_definition = (
             validation_settings_obj.data_context.validation_definitions.get(
-                name=validation_definition_name
+                name=validation_settings_obj.validation_definition_name
             )
         )
     except DataContextError:
         validation_definition = ValidationDefinition(
-            name=validation_definition_name,
+            name=validation_settings_obj.validation_definition_name,
             data=batch_definition,
             suite=validation_settings_obj.data_context.suites.get(
                 validation_settings_obj.expectation_suite_name

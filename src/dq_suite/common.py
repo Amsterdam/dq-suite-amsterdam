@@ -249,10 +249,12 @@ class ValidationSettings:
     data_context_root_dir: str = "/dbfs/great_expectations/"
     data_context: AbstractDataContext | None = None
     data_source: SparkDatasource | None = None
+    data_source_name: str | None = None
     dataframe_asset: DataFrameAsset | None = None
     expectation_suite_name: str | None = None
     checkpoint_name: str | None = None
     run_name: str | None = None
+    validation_definition_name: str | None = None
     send_slack_notification: bool = False
     slack_webhook: str | None = None
     send_ms_teams_notification: bool = False
@@ -283,6 +285,8 @@ class ValidationSettings:
         self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
+        self._set_data_source_name()
+        self._set_validation_definition_name()
 
         # Finally, add/retrieve the suite to/from the data context
         try:
@@ -304,7 +308,13 @@ class ValidationSettings:
     def _set_run_name(self):
         self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
 
-    def create_batch_definition(self, data_source_name: str) \
+    def _set_data_source_name(self):
+        self.data_source_name = f"spark_data_source_{self.check_name}"
+
+    def _set_validation_definition_name(self):
+        self.validation_definition_name = f"{self.check_name}_validation_definition"
+
+    def create_batch_definition(self) \
             -> BatchDefinition:  # pragma: no cover - uses part of GX
         if self.data_context is None:
             self.initialise_or_update_attributes()
@@ -315,7 +325,7 @@ class ValidationSettings:
             self.initialise_or_update_attributes()
 
         self.data_source = self.data_context.data_sources.add_or_update_spark(
-            name=data_source_name)
+            name=self.data_source_name)
         self.dataframe_asset = self.data_source.add_dataframe_asset(
             name=self.check_name
         )
