@@ -22,7 +22,7 @@ def validation_settings_obj():
         table_name="the_table",
         check_name="the_check",
     )
-    validation_settings_obj.initialise_or_update_attributes()
+    validation_settings_obj.initialise_or_update_name_parameters()
     return validation_settings_obj
 
 

@@ -2,11 +2,31 @@ import datetime
 from typing import List
 
 import great_expectations
-from great_expectations import Checkpoint
+from great_expectations import Checkpoint, ValidationDefinition, \
+    ExpectationSuite
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
+from great_expectations.core.batch_definition import BatchDefinition
+from great_expectations.data_context import AbstractDataContext
+from great_expectations.datasource.fluent import SparkDatasource
+from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame
+
+from great_expectations import (
+    ExpectationSuite,
+    ValidationDefinition,
+    get_context,
+)
+from great_expectations.core.batch_definition import BatchDefinition
+from great_expectations.data_context import AbstractDataContext
+from great_expectations.data_context.types.base import (
+    DataContextConfig,
+    InMemoryStoreBackendDefaults,
+)
+from great_expectations.datasource.fluent import SparkDatasource
+from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
+from great_expectations.exceptions import DataContextError
 
 from .common import Rule, RulesDict, ValidationSettings
 from .input_helpers import (
@@ -18,6 +38,115 @@ from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
 )
+
+
+class ValidationRunner:
+    def __init__(
+            self,
+            validation_settings_obj: ValidationSettings | None = None,
+            data_context: AbstractDataContext | None = None,
+            data_source: SparkDatasource | None = None,
+            dataframe_asset: DataFrameAsset | None = None,
+            validation_definition: ValidationDefinition | None = None,
+            batch_definition: BatchDefinition | None = None,
+    ):  # TODO: change all variables to private, once all logic has been moved
+        #  inside this class
+
+        if validation_settings_obj is None:
+            raise ValueError("No ValidationSettings instance has been "
+                             "provided.")
+        if not isinstance(validation_settings_obj, ValidationSettings):
+            raise ValueError("No ValidationSettings instance has been "
+                             "provided.")
+
+        # Copy ValidationSettings parameters
+        self.spark_session = validation_settings_obj.spark_session
+        self.catalog_name = validation_settings_obj.catalog_name
+        self.table_name = validation_settings_obj.table_name
+        self.check_name = validation_settings_obj.check_name
+        self.data_context_root_dir = (
+            validation_settings_obj.data_context_root_dir)
+        self.data_source_name = validation_settings_obj.data_source_name
+        self.expectation_suite_name = (
+            validation_settings_obj.expectation_suite_name)
+        self.checkpoint_name = validation_settings_obj.checkpoint_name
+        self.run_name = validation_settings_obj.run_name
+        self.validation_definition_name = validation_settings_obj.validation_definition_name
+        self.batch_definition_name = validation_settings_obj.batch_definition_name
+        self.send_slack_notification = validation_settings_obj.send_slack_notification
+        self.slack_webhook = validation_settings_obj.slack_webhook
+        self.send_ms_teams_notification = validation_settings_obj.send_ms_teams_notification
+        self.ms_teams_webhook = validation_settings_obj.ms_teams_webhook
+        self.notify_on = validation_settings_obj.notify_on
+
+        # ValidationRunner parameters
+        self.data_context = data_context
+        self.data_source = data_source
+        self.dataframe_asset = dataframe_asset
+        self.batch_definition = batch_definition
+        self.validation_definition = validation_definition
+
+        self._get_or_add_expectation_suite()
+
+    def _set_data_context(self):  # pragma: no cover - uses part of GX
+        self.data_context = get_context(
+            project_config=DataContextConfig(
+                store_backend_defaults=InMemoryStoreBackendDefaults(),
+                analytics_enabled=False,
+            )
+        )
+
+    def _get_or_add_expectation_suite(self):  # pragma: no cover - complex
+        # function
+        self._set_data_context()
+
+        # Finally, add/retrieve the suite to/from the data context
+        try:
+            _ = self.data_context.suites.get(name=self.expectation_suite_name)
+        except DataContextError:
+            self.data_context.suites.add(
+                suite=ExpectationSuite(name=self.expectation_suite_name)
+            )
+
+    def create_batch_definition(self):  # pragma: no cover - uses part of GX
+        self.data_source = self.data_context.data_sources.add_or_update_spark(
+            name=self.data_source_name
+        )
+        self.dataframe_asset = self.data_source.add_dataframe_asset(
+            name=self.check_name
+        )
+
+        self.batch_definition = (
+            self.dataframe_asset.add_batch_definition_whole_dataframe(
+                name=self.batch_definition_name
+            )
+        )
+
+    def create_validation_definition(
+            self,
+    ):  # pragma: no cover - uses part of GX
+        try:
+            validation_definition = (
+                self.data_context.validation_definitions.get(
+                    name=self.validation_definition_name
+                )
+            )
+        except DataContextError:
+            # Note: a validation definition combines data with a suite of
+            # expectations
+            validation_definition = ValidationDefinition(
+                name=self.validation_definition_name,
+                data=self.batch_definition,
+                suite=self.data_context.suites.get(
+                    self.expectation_suite_name),
+            )
+            validation_definition = (
+                self.data_context.validation_definitions.add(
+                    validation=validation_definition
+                )
+            )
+
+        self.validation_definition = validation_definition
 
 
 def create_action_list(
@@ -121,8 +250,8 @@ def validate(
     data quality rules to be evaluated.
     :param validation_settings_obj: [explanation goes here]
     """
-    # Make sure all attributes are aligned before validating
-    validation_settings_obj.initialise_or_update_attributes()
+    validation_runner_obj = ValidationRunner(
+        validation_settings_obj=validation_settings_obj)
 
     # Configure validation definition
     create_and_configure_expectations(
@@ -130,8 +259,8 @@ def validate(
         validation_settings_obj=validation_settings_obj,
     )
 
-    validation_settings_obj.create_batch_definition()
-    validation_settings_obj.create_validation_definition()
+    validation_runner_obj.create_batch_definition()
+    validation_runner_obj.create_validation_definition()
 
     # Execute
     print("***Starting validation definition run***")

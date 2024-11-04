@@ -215,18 +215,7 @@ def merge_df_with_unity_table(
     ).execute()
 
 
-def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
-    return get_context(
-        project_config=DataContextConfig(
-            store_backend_defaults=InMemoryStoreBackendDefaults(),
-            analytics_enabled=False,
-        )
-    )
-
-
-# TODO: separate into a ValidationSettings dataclass, and a ValidationRunner
-#  class, which inherits the ValidationSettings, for performing all the
-#  logic? This would include the initialisation step
+@dataclass()
 class ValidationSettings:
     """
     spark_session: SparkSession object
@@ -256,17 +245,12 @@ class ValidationSettings:
         table_name: str,
         check_name: str,
         data_context_root_dir: str = "/dbfs/great_expectations/",
-        data_context: AbstractDataContext | None = None,
-        data_source: SparkDatasource | None = None,
         data_source_name: str | None = None,
-        dataframe_asset: DataFrameAsset | None = None,
         expectation_suite_name: str | None = None,
         checkpoint_name: str | None = None,
         run_name: str | None = None,
         validation_definition_name: str | None = None,
-        validation_definition: ValidationDefinition | None = None,
         batch_definition_name: str | None = None,
-        batch_definition: BatchDefinition | None = None,
         send_slack_notification: bool = False,
         slack_webhook: str | None = None,
         send_ms_teams_notification: bool = False,
@@ -279,17 +263,12 @@ class ValidationSettings:
         self.table_name = table_name
         self.check_name = check_name
         self.data_context_root_dir = data_context_root_dir
-        self.data_context = data_context
-        self.data_source = data_source
         self.data_source_name = data_source_name
-        self.dataframe_asset = dataframe_asset
         self.expectation_suite_name = expectation_suite_name
         self.checkpoint_name = checkpoint_name
         self.run_name = run_name
         self.validation_definition_name = validation_definition_name
-        self.validation_definition = validation_definition
         self.batch_definition_name = batch_definition_name
-        self.batch_definition = batch_definition
         self.send_slack_notification = send_slack_notification
         self.slack_webhook = slack_webhook
         self.send_ms_teams_notification = send_ms_teams_notification
@@ -311,10 +290,7 @@ class ValidationSettings:
                 "'notify_on' should be equal to 'all', 'success' or 'failure'"
             )
 
-    def initialise_or_update_attributes(self):  # pragma: no cover - complex
-        # function
-        self._set_data_context()
-
+    def initialise_or_update_name_parameters(self):
         # TODO/check: nearly all names are related to 'check_name' - do we want
         #  to allow for custom names via parameters?
         self._set_expectation_suite_name()
@@ -323,17 +299,6 @@ class ValidationSettings:
         self._set_data_source_name()
         self._set_validation_definition_name()
         self._set_batch_definition_name()
-
-        # Finally, add/retrieve the suite to/from the data context
-        try:
-            _ = self.data_context.suites.get(name=self.expectation_suite_name)
-        except DataContextError:
-            self.data_context.suites.add(
-                suite=ExpectationSuite(name=self.expectation_suite_name)
-            )
-
-    def _set_data_context(self):  # pragma: no cover - uses part of GX
-        self.data_context = get_data_context()
 
     def _set_expectation_suite_name(self):
         self.expectation_suite_name = f"{self.check_name}_expectation_suite"
@@ -354,50 +319,3 @@ class ValidationSettings:
 
     def _set_batch_definition_name(self):
         self.batch_definition_name = f"{self.check_name}_batch_definition"
-
-    def create_batch_definition(self):  # pragma: no cover - uses part of GX
-        if self.data_context is None:
-            self.initialise_or_update_attributes()
-
-        try:
-            _ = self.data_context.suites.get(name=self.expectation_suite_name)
-        except DataContextError:
-            self.initialise_or_update_attributes()
-
-        self.data_source = self.data_context.data_sources.add_or_update_spark(
-            name=self.data_source_name
-        )
-        self.dataframe_asset = self.data_source.add_dataframe_asset(
-            name=self.check_name
-        )
-
-        self.batch_definition = (
-            self.dataframe_asset.add_batch_definition_whole_dataframe(
-                name=self.batch_definition_name
-            )
-        )
-
-    def create_validation_definition(
-        self,
-    ):  # pragma: no cover - uses part of GX
-        try:
-            validation_definition = (
-                self.data_context.validation_definitions.get(
-                    name=self.validation_definition_name
-                )
-            )
-        except DataContextError:
-            # Note: a validation definition combines data with a suite of
-            # expectations
-            validation_definition = ValidationDefinition(
-                name=self.validation_definition_name,
-                data=self.batch_definition,
-                suite=self.data_context.suites.get(self.expectation_suite_name),
-            )
-            validation_definition = (
-                self.data_context.validation_definitions.add(
-                    validation=validation_definition
-                )
-            )
-
-        self.validation_definition = validation_definition
