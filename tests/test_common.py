@@ -241,28 +241,31 @@ class TestValidationSettings:
             )
 
     def test_set_expectation_suite_name(self):
-        assert self.validation_settings_obj.expectation_suite_name is None
+        assert not hasattr(self.validation_settings_obj,
+                           "_expectation_suite_name")
 
         self.validation_settings_obj._set_expectation_suite_name()
         assert (
-            self.validation_settings_obj.expectation_suite_name
+            self.validation_settings_obj._expectation_suite_name
             == f"{self.validation_settings_obj.check_name}_expectation_suite"
         )
 
     def test_set_checkpoint_name(self):
-        assert self.validation_settings_obj.checkpoint_name is None
+        assert not hasattr(self.validation_settings_obj,
+                           "_checkpoint_name")
 
         self.validation_settings_obj._set_checkpoint_name()
         assert (
-            self.validation_settings_obj.checkpoint_name
+            self.validation_settings_obj._checkpoint_name
             == f"{self.validation_settings_obj.check_name}_checkpoint"
         )
 
     def test_set_run_name(self):
-        assert self.validation_settings_obj.run_name is None
+        assert not hasattr(self.validation_settings_obj,
+                           "_run_name")
 
         self.validation_settings_obj._set_run_name()
         assert (
-            self.validation_settings_obj.run_name
+            self.validation_settings_obj._run_name
             == f"%Y%m%d-%H%M%S-{self.validation_settings_obj.check_name}"
         )
