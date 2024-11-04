@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from typing import Literal
 
 from delta.tables import *
-from great_expectations import ExpectationSuite, get_context, \
-    ValidationDefinition
+from great_expectations import (
+    ExpectationSuite,
+    ValidationDefinition,
+    get_context,
+)
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.data_context.types.base import (
@@ -350,9 +353,7 @@ class ValidationSettings:
         )
 
     def _set_batch_definition_name(self):
-        self.batch_definition_name = (
-            f"{self.check_name}_batch_definition"
-        )
+        self.batch_definition_name = f"{self.check_name}_batch_definition"
 
     def create_batch_definition(self):  # pragma: no cover - uses part of GX
         if self.data_context is None:
@@ -370,11 +371,15 @@ class ValidationSettings:
             name=self.check_name
         )
 
-        self.batch_definition = (self.dataframe_asset.add_batch_definition_whole_dataframe(
-            name=self.batch_definition_name
-        ))
+        self.batch_definition = (
+            self.dataframe_asset.add_batch_definition_whole_dataframe(
+                name=self.batch_definition_name
+            )
+        )
 
-    def create_validation_definition(self):  # pragma: no cover - uses part of GX
+    def create_validation_definition(
+        self,
+    ):  # pragma: no cover - uses part of GX
         try:
             validation_definition = (
                 self.data_context.validation_definitions.get(
@@ -387,9 +392,7 @@ class ValidationSettings:
             validation_definition = ValidationDefinition(
                 name=self.validation_definition_name,
                 data=self.batch_definition,
-                suite=self.data_context.suites.get(
-                    self.expectation_suite_name
-                ),
+                suite=self.data_context.suites.get(self.expectation_suite_name),
             )
             validation_definition = (
                 self.data_context.validation_definitions.add(

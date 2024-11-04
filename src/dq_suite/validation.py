@@ -2,7 +2,7 @@ import datetime
 from typing import List
 
 import great_expectations
-from great_expectations import Checkpoint, ValidationDefinition
+from great_expectations import Checkpoint
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.exceptions import DataContextError
@@ -79,7 +79,8 @@ def get_or_add_checkpoint(
         checkpoint = Checkpoint(
             name=validation_settings_obj.checkpoint_name,
             validation_definitions=[
-                validation_settings_obj.validation_definition],
+                validation_settings_obj.validation_definition
+            ],
             actions=action_list,
         )  # Note: a checkpoint combines validations with actions
 
