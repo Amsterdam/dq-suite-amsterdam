@@ -154,18 +154,18 @@ class ValidationRunner:
 
 
 def create_action_list(
-    validation_settings_obj: ValidationSettings,
+    validation_runner_obj: ValidationRunner,
 ) -> List[CheckpointAction]:
     action_list = list()
 
-    if validation_settings_obj.send_slack_notification & (
-        validation_settings_obj.slack_webhook is not None
+    if validation_runner_obj.send_slack_notification & (
+            validation_runner_obj.slack_webhook is not None
     ):
         action_list.append(
             great_expectations.checkpoint.SlackNotificationAction(
                 name="send_slack_notification",
-                slack_webhook=validation_settings_obj.slack_webhook,
-                notify_on=validation_settings_obj.notify_on,
+                slack_webhook=validation_runner_obj.slack_webhook,
+                notify_on=validation_runner_obj.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
@@ -173,14 +173,14 @@ def create_action_list(
             )
         )
 
-    if validation_settings_obj.send_ms_teams_notification & (
-        validation_settings_obj.ms_teams_webhook is not None
+    if validation_runner_obj.send_ms_teams_notification & (
+            validation_runner_obj.ms_teams_webhook is not None
     ):
         action_list.append(
             great_expectations.checkpoint.MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
-                microsoft_teams_webhook=validation_settings_obj.ms_teams_webhook,
-                notify_on=validation_settings_obj.notify_on,
+                microsoft_teams_webhook=validation_runner_obj.ms_teams_webhook,
+                notify_on=validation_runner_obj.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
                     "class_name": "MicrosoftTeamsRenderer",
@@ -192,27 +192,27 @@ def create_action_list(
 
 
 def get_or_add_checkpoint(
-    validation_settings_obj: ValidationSettings,
+    validation_runner_obj: ValidationRunner,
 ) -> Checkpoint:
     try:
-        checkpoint = validation_settings_obj.data_context.checkpoints.get(
-            name=validation_settings_obj.checkpoint_name
+        checkpoint = validation_runner_obj.data_context.checkpoints.get(
+            name=validation_runner_obj.checkpoint_name
         )
     except DataContextError:
         action_list = create_action_list(
-            validation_settings_obj=validation_settings_obj
+            validation_runner_obj=validation_runner_obj
         )
         checkpoint = Checkpoint(
-            name=validation_settings_obj.checkpoint_name,
+            name=validation_runner_obj.checkpoint_name,
             validation_definitions=[
-                validation_settings_obj.validation_definition
+                validation_runner_obj.validation_definition
             ],
             actions=action_list,
         )  # Note: a checkpoint combines validations with actions
 
         # Add checkpoint to data context for future use
         (
-            validation_settings_obj.data_context.checkpoints.add(
+            validation_runner_obj.data_context.checkpoints.add(
                 checkpoint=checkpoint
             )
         )
@@ -221,11 +221,10 @@ def get_or_add_checkpoint(
 
 def create_and_configure_expectations(
     validation_rules_list: List[Rule],
-    validation_settings_obj: ValidationSettings,
+    validation_runner_obj: ValidationRunner,
 ) -> None:
-    # The suite should exist by now
-    suite = validation_settings_obj.data_context.suites.get(
-        name=validation_settings_obj.expectation_suite_name
+    suite = validation_runner_obj.data_context.suites.get(
+        name=validation_runner_obj.expectation_suite_name
     )
 
     for validation_rule in validation_rules_list:
@@ -261,7 +260,7 @@ def validate(
     # Configure validation definition
     create_and_configure_expectations(
         validation_rules_list=rules_dict["rules"],
-        validation_settings_obj=validation_settings_obj,
+        validation_runner_obj=validation_runner_obj,
     )
 
     validation_runner_obj.create_batch_definition()
@@ -270,7 +269,7 @@ def validate(
     # Execute
     print("***Starting validation definition run***")
     checkpoint = get_or_add_checkpoint(
-        validation_settings_obj=validation_settings_obj,
+        validation_runner_obj=validation_runner_obj,
     )
 
     batch_params = {"dataframe": df}
