@@ -2,20 +2,6 @@ from dataclasses import dataclass
 from typing import Literal
 
 from delta.tables import *
-from great_expectations import (
-    ExpectationSuite,
-    ValidationDefinition,
-    get_context,
-)
-from great_expectations.core.batch_definition import BatchDefinition
-from great_expectations.data_context import AbstractDataContext
-from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    InMemoryStoreBackendDefaults,
-)
-from great_expectations.datasource.fluent import SparkDatasource
-from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
-from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
