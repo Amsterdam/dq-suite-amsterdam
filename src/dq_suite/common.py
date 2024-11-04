@@ -220,6 +220,9 @@ def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
     )
 
 
+# TODO: separate into a ValidationSettings dataclass, and a ValidationRunner
+#  class, which inherits the ValidationSettings, for performing all the
+#  logic? This would include the initialisation step
 class ValidationSettings:
     """
     spark_session: SparkSession object
