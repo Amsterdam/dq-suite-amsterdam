@@ -46,6 +46,7 @@ class ValidationRunner:
         dataframe_asset: DataFrameAsset | None = None,
         validation_definition: ValidationDefinition | None = None,
         batch_definition: BatchDefinition | None = None,
+        action_list: List | None = None,
     ):  # TODO: change all variables to private, once all logic has been moved
         #  inside this class
 
@@ -94,6 +95,7 @@ class ValidationRunner:
         self.dataframe_asset = dataframe_asset
         self.batch_definition = batch_definition
         self.validation_definition = validation_definition
+        self.action_list = action_list
 
         self._set_data_context()
 
@@ -153,20 +155,12 @@ class ValidationRunner:
 
         self.validation_definition = validation_definition
 
-
-def create_action_list(
-    validation_runner_obj: ValidationRunner,
-) -> List[CheckpointAction]:
-    action_list = list()
-
-    if validation_runner_obj.send_slack_notification & (
-        validation_runner_obj.slack_webhook is not None
-    ):
-        action_list.append(
+    def _add_slack_notification_to_action_list(self):  # pragma: no cover - uses part of GX
+        self.action_list.append(
             SlackNotificationAction(
                 name="send_slack_notification",
-                slack_webhook=validation_runner_obj.slack_webhook,
-                notify_on=validation_runner_obj.notify_on,
+                slack_webhook=self.slack_webhook,
+                notify_on=self.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
@@ -174,14 +168,12 @@ def create_action_list(
             )
         )
 
-    if validation_runner_obj.send_ms_teams_notification & (
-        validation_runner_obj.ms_teams_webhook is not None
-    ):
-        action_list.append(
+    def _add_microsoft_teams_notification_to_action_list(self):  # pragma: no cover - uses part of GX
+        self.action_list.append(
             MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
-                microsoft_teams_webhook=validation_runner_obj.ms_teams_webhook,
-                notify_on=validation_runner_obj.notify_on,
+                microsoft_teams_webhook=self.ms_teams_webhook,
+                notify_on=self.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
                     "class_name": "MicrosoftTeamsRenderer",
@@ -189,7 +181,16 @@ def create_action_list(
             )
         )
 
-    return action_list
+    def create_action_list(self):
+        if self.send_slack_notification & (
+                self.slack_webhook is not None
+        ):
+            self._add_slack_notification_to_action_list()
+
+        if self.send_ms_teams_notification & (
+                self.ms_teams_webhook is not None
+        ):
+            self._add_microsoft_teams_notification_to_action_list()
 
 
 def get_or_add_checkpoint(
