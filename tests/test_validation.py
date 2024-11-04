@@ -5,11 +5,12 @@ from pyspark.sql import SparkSession
 
 from src.dq_suite import ValidationSettings
 from src.dq_suite.validation import (
+    ValidationRunner,
     create_action_list,
     create_and_configure_expectations,
     get_or_add_checkpoint,
     run,
-    validate, ValidationRunner,
+    validate,
 )
 
 
@@ -46,8 +47,10 @@ class TestValidationRunner:
             attribute="_set_data_context",
         ) as mock_method:
             validation_runner_obj = ValidationRunner(
-                validation_settings_obj=validation_settings_obj)
+                validation_settings_obj=validation_settings_obj
+            )
             mock_method.assert_called_once()
+
 
 class TestCreateActionList:
     def test_create_action_list(self):

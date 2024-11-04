@@ -7,7 +7,10 @@ from great_expectations import (
     ValidationDefinition,
     get_context,
 )
-from great_expectations.checkpoint import SlackNotificationAction, MicrosoftTeamsNotificationAction
+from great_expectations.checkpoint import (
+    MicrosoftTeamsNotificationAction,
+    SlackNotificationAction,
+)
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
@@ -157,7 +160,7 @@ def create_action_list(
     action_list = list()
 
     if validation_runner_obj.send_slack_notification & (
-            validation_runner_obj.slack_webhook is not None
+        validation_runner_obj.slack_webhook is not None
     ):
         action_list.append(
             SlackNotificationAction(
@@ -172,7 +175,7 @@ def create_action_list(
         )
 
     if validation_runner_obj.send_ms_teams_notification & (
-            validation_runner_obj.ms_teams_webhook is not None
+        validation_runner_obj.ms_teams_webhook is not None
     ):
         action_list.append(
             MicrosoftTeamsNotificationAction(
