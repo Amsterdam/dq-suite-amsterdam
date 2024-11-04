@@ -1,13 +1,13 @@
 import datetime
 from typing import List
 
-import great_expectations
 from great_expectations import (
     Checkpoint,
     ExpectationSuite,
     ValidationDefinition,
     get_context,
 )
+from great_expectations.checkpoint import SlackNotificationAction, MicrosoftTeamsNotificationAction
 from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
@@ -19,6 +19,7 @@ from great_expectations.data_context.types.base import (
 from great_expectations.datasource.fluent import SparkDatasource
 from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
+from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame
 
 from .common import Rule, RulesDict, ValidationSettings
@@ -160,7 +161,7 @@ def create_action_list(
             validation_runner_obj.slack_webhook is not None
     ):
         action_list.append(
-            great_expectations.checkpoint.SlackNotificationAction(
+            SlackNotificationAction(
                 name="send_slack_notification",
                 slack_webhook=validation_runner_obj.slack_webhook,
                 notify_on=validation_runner_obj.notify_on,
@@ -175,7 +176,7 @@ def create_action_list(
             validation_runner_obj.ms_teams_webhook is not None
     ):
         action_list.append(
-            great_expectations.checkpoint.MicrosoftTeamsNotificationAction(
+            MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
                 microsoft_teams_webhook=validation_runner_obj.ms_teams_webhook,
                 notify_on=validation_runner_obj.notify_on,
@@ -232,7 +233,7 @@ def create_and_configure_expectations(
 
         # Get the actual expectation as defined by GX
         gx_expectation = getattr(
-            great_expectations.expectations.core,
+            gx_core,
             gx_expectation_name,
         )
         suite.add_expectation(gx_expectation(**gx_expectation_parameters))
