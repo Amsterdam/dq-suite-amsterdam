@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Literal
 
 from delta.tables import *
-from great_expectations import ExpectationSuite, get_context
+from great_expectations import ExpectationSuite, get_context, \
+    ValidationDefinition
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.data_context.types.base import (
@@ -260,6 +261,9 @@ class ValidationSettings:
         checkpoint_name: str | None = None,
         run_name: str | None = None,
         validation_definition_name: str | None = None,
+        validation_definition: ValidationDefinition | None = None,
+        batch_definition_name: str | None = None,
+        batch_definition: BatchDefinition | None = None,
         send_slack_notification: bool = False,
         slack_webhook: str | None = None,
         send_ms_teams_notification: bool = False,
@@ -280,6 +284,9 @@ class ValidationSettings:
         self.checkpoint_name = checkpoint_name
         self.run_name = run_name
         self.validation_definition_name = validation_definition_name
+        self.validation_definition = validation_definition
+        self.batch_definition_name = batch_definition_name
+        self.batch_definition = batch_definition
         self.send_slack_notification = send_slack_notification
         self.slack_webhook = slack_webhook
         self.send_ms_teams_notification = send_ms_teams_notification
@@ -312,6 +319,7 @@ class ValidationSettings:
         self._set_run_name()
         self._set_data_source_name()
         self._set_validation_definition_name()
+        self._set_batch_definition_name()
 
         # Finally, add/retrieve the suite to/from the data context
         try:
@@ -341,9 +349,12 @@ class ValidationSettings:
             f"{self.check_name}_validation_definition"
         )
 
-    def create_batch_definition(
-        self,
-    ) -> BatchDefinition:  # pragma: no cover - uses part of GX
+    def _set_batch_definition_name(self):
+        self.batch_definition_name = (
+            f"{self.check_name}_batch_definition"
+        )
+
+    def create_batch_definition(self):  # pragma: no cover - uses part of GX
         if self.data_context is None:
             self.initialise_or_update_attributes()
 
@@ -359,6 +370,31 @@ class ValidationSettings:
             name=self.check_name
         )
 
-        return self.dataframe_asset.add_batch_definition_whole_dataframe(
-            name=f"{self.check_name}_batch_definition"
-        )  # TODO: create a self.batch_definition field, keep it self-contained
+        self.batch_definition = (self.dataframe_asset.add_batch_definition_whole_dataframe(
+            name=self.batch_definition_name
+        ))
+
+    def create_validation_definition(self):  # pragma: no cover - uses part of GX
+        try:
+            validation_definition = (
+                self.data_context.validation_definitions.get(
+                    name=self.validation_definition_name
+                )
+            )
+        except DataContextError:
+            # Note: a validation definition combines data with a suite of
+            # expectations
+            validation_definition = ValidationDefinition(
+                name=self.validation_definition_name,
+                data=self.batch_definition,
+                suite=self.data_context.suites.get(
+                    self.expectation_suite_name
+                ),
+            )
+            validation_definition = (
+                self.data_context.validation_definitions.add(
+                    validation=validation_definition
+                )
+            )
+
+        self.validation_definition = validation_definition

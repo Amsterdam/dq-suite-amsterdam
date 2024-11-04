@@ -22,31 +22,9 @@ from .output_transformations import (
 
 def get_or_add_validation_definition(
     validation_settings_obj: ValidationSettings,
-) -> ValidationDefinition:
-    batch_definition = validation_settings_obj.create_batch_definition()
-
-    try:
-        validation_definition = (
-            validation_settings_obj.data_context.validation_definitions.get(
-                name=validation_settings_obj.validation_definition_name
-            )
-        )
-    except DataContextError:
-        validation_definition = ValidationDefinition(
-            name=validation_settings_obj.validation_definition_name,
-            data=batch_definition,
-            suite=validation_settings_obj.data_context.suites.get(
-                validation_settings_obj.expectation_suite_name
-            ),
-        )  # Note: a validation definition combines data with a suite of
-        # expectations
-        validation_definition = (
-            validation_settings_obj.data_context.validation_definitions.add(
-                validation=validation_definition
-            )
-        )
-
-    return validation_definition
+) -> None:
+    validation_settings_obj.create_batch_definition()
+    validation_settings_obj.create_validation_definition()
 
 
 def create_action_list(
@@ -89,7 +67,6 @@ def create_action_list(
 
 def get_or_add_checkpoint(
     validation_settings_obj: ValidationSettings,
-    validation_definition: ValidationDefinition,
 ) -> Checkpoint:
     try:
         checkpoint = validation_settings_obj.data_context.checkpoints.get(
@@ -101,7 +78,8 @@ def get_or_add_checkpoint(
         )
         checkpoint = Checkpoint(
             name=validation_settings_obj.checkpoint_name,
-            validation_definitions=[validation_definition],
+            validation_definitions=[
+                validation_settings_obj.validation_definition],
             actions=action_list,
         )  # Note: a checkpoint combines validations with actions
 
@@ -152,19 +130,19 @@ def validate(
     # Make sure all attributes are aligned before validating
     validation_settings_obj.initialise_or_update_attributes()
 
+    # Configure validation definition
     create_and_configure_expectations(
         validation_rules_list=rules_dict["rules"],
         validation_settings_obj=validation_settings_obj,
     )
 
-    validation_definition = get_or_add_validation_definition(
-        validation_settings_obj=validation_settings_obj,
-    )
+    validation_settings_obj.create_batch_definition()
+    validation_settings_obj.create_validation_definition()
+
+    # Execute
     print("***Starting validation definition run***")
-    print(validation_definition.run(batch_parameters={"dataframe": df}))
     checkpoint = get_or_add_checkpoint(
         validation_settings_obj=validation_settings_obj,
-        validation_definition=validation_definition,
     )
 
     batch_params = {"dataframe": df}
