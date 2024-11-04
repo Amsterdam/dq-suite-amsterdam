@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pyspark.sql import SparkSession
@@ -9,7 +9,7 @@ from src.dq_suite.validation import (
     create_and_configure_expectations,
     get_or_add_checkpoint,
     run,
-    validate,
+    validate, ValidationRunner,
 )
 
 
@@ -25,6 +25,29 @@ def validation_settings_obj():
     validation_settings_obj.initialise_or_update_name_parameters()
     return validation_settings_obj
 
+
+@pytest.mark.usefixtures("validation_settings_obj")
+class TestValidationRunner:
+    def test_initialisation_with_none_valued_validation_settings_raises_value_error(
+        self,
+    ):
+        with pytest.raises(ValueError):
+            assert ValidationRunner(validation_settings_obj=None)
+
+    def test_initialisation_with_wrong_typed_validation_settings_raises_value_error(
+        self,
+    ):
+        with pytest.raises(ValueError):
+            assert ValidationRunner(validation_settings_obj=123)
+
+    def test_bla(self, validation_settings_obj):
+        with patch.object(
+            target=ValidationRunner,
+            attribute="_set_data_context",
+        ) as mock_method:
+            validation_runner_obj = ValidationRunner(
+                validation_settings_obj=validation_settings_obj)
+            mock_method.assert_called_once()
 
 class TestCreateActionList:
     def test_create_action_list(self):

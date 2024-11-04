@@ -93,7 +93,6 @@ class ValidationRunner:
         self.validation_definition = validation_definition
 
         self._set_data_context()
-        self._get_or_add_expectation_suite()
 
     def _set_data_context(self):  # pragma: no cover - uses part of GX
         self.data_context = get_context(
@@ -103,7 +102,7 @@ class ValidationRunner:
             )
         )
 
-    def _get_or_add_expectation_suite(self):  # pragma: no cover - uses part
+    def get_or_add_expectation_suite(self):  # pragma: no cover - uses part
         # of GX
         try:
             _ = self.data_context.suites.get(name=self.expectation_suite_name)
