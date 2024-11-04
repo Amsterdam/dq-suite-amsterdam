@@ -213,6 +213,9 @@ class ValidationRunner:
             self._add_microsoft_teams_notification_to_action_list()
 
 
+def create_action_list():
+    pass
+
 def get_or_add_checkpoint(
     validation_runner_obj: ValidationRunner,
 ) -> Checkpoint:
