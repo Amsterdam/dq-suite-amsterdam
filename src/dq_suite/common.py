@@ -220,7 +220,6 @@ def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
     )
 
 
-@dataclass()
 class ValidationSettings:
     """
     spark_session: SparkSession object
