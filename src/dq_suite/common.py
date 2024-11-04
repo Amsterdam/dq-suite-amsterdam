@@ -254,6 +254,14 @@ class ValidationSettings:
             raise TypeError("'check_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
+        if not isinstance(self.send_slack_notification, bool):
+            raise TypeError("'send_slack_notification' should be of type bool")
+        if not isinstance(self.slack_webhook, str):
+            raise TypeError("'slack_webhook' should be of type str")
+        if not isinstance(self.send_ms_teams_notification, bool):
+            raise TypeError("'send_ms_teams_notification' should be of type bool")
+        if not isinstance(self.ms_teams_webhook, str):
+            raise TypeError("'ms_teams_webhook' should be of type str")
         if self.notify_on not in ["all", "success", "failure"]:
             raise ValueError(
                 "'notify_on' should be equal to 'all', 'success' or 'failure'"
