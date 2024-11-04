@@ -224,43 +224,26 @@ class ValidationSettings:
     "success" or "failure"
     """
 
-    def __init__(
-        self,
-        spark_session: SparkSession,
-        catalog_name: str,
-        table_name: str,
-        check_name: str,
-        data_context_root_dir: str = "/dbfs/great_expectations/",
-        data_source_name: str | None = None,
-        expectation_suite_name: str | None = None,
-        checkpoint_name: str | None = None,
-        run_name: str | None = None,
-        validation_definition_name: str | None = None,
-        batch_definition_name: str | None = None,
-        send_slack_notification: bool = False,
-        slack_webhook: str | None = None,
-        send_ms_teams_notification: bool = False,
-        ms_teams_webhook: str | None = None,
-        notify_on: Literal["all", "success", "failure"] = "failure",
-    ):  # TODO: change all variables to private, once all logic has been moved
-        #  inside this class
-        self.spark_session = spark_session
-        self.catalog_name = catalog_name
-        self.table_name = table_name
-        self.check_name = check_name
-        self.data_context_root_dir = data_context_root_dir
-        self.data_source_name = data_source_name
-        self.expectation_suite_name = expectation_suite_name
-        self.checkpoint_name = checkpoint_name
-        self.run_name = run_name
-        self.validation_definition_name = validation_definition_name
-        self.batch_definition_name = batch_definition_name
-        self.send_slack_notification = send_slack_notification
-        self.slack_webhook = slack_webhook
-        self.send_ms_teams_notification = send_ms_teams_notification
-        self.ms_teams_webhook = ms_teams_webhook
-        self.notify_on = notify_on
+    spark_session: SparkSession
+    catalog_name: str
+    table_name: str
+    check_name: str
+    data_context_root_dir: str = "/dbfs/great_expectations/"
+    data_source_name: str | None = None
+    expectation_suite_name: str | None = None
+    checkpoint_name: str | None = None
+    run_name: str | None = None
+    validation_definition_name: str | None = None
+    batch_definition_name: str | None = None
+    send_slack_notification: bool = False
+    slack_webhook: str | None = None
+    send_ms_teams_notification: bool = False
+    ms_teams_webhook: str | None = None
+    notify_on: Literal["all", "success", "failure"] = "failure"
+    # TODO: change all variables to private, once all logic has been moved
+    #  inside this class
 
+    def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
             raise TypeError("'spark_session' should be of type SparkSession")
         if not isinstance(self.catalog_name, str):
