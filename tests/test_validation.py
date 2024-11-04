@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 from pyspark.sql import SparkSession
@@ -29,10 +29,14 @@ def validation_settings_obj():
 
 class TestGetOrAddValidationDefinition:
     def test_get_or_add_validation_definition(self, validation_settings_obj):
-        with (patch.object(target=validation_settings_obj,
-                           attribute='create_batch_definition',
-                           return_value="test") as mock_method):
-            get_or_add_validation_definition(validation_settings_obj=validation_settings_obj)
+        with patch.object(
+            target=validation_settings_obj,
+            attribute="create_batch_definition",
+            return_value="test",
+        ) as mock_method:
+            get_or_add_validation_definition(
+                validation_settings_obj=validation_settings_obj
+            )
 
 
 class TestCreateActionList:
