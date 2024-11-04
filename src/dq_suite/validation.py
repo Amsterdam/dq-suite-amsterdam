@@ -20,13 +20,6 @@ from .output_transformations import (
 )
 
 
-def get_or_add_validation_definition(
-    validation_settings_obj: ValidationSettings,
-) -> None:
-    validation_settings_obj.create_batch_definition()
-    validation_settings_obj.create_validation_definition()
-
-
 def create_action_list(
     validation_settings_obj: ValidationSettings,
 ) -> List[CheckpointAction]:
