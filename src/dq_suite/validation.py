@@ -171,6 +171,7 @@ def validate(
     return checkpoint.run(batch_parameters=batch_params)
 
 
+# TODO: modify so that validation_settings_obj is no longer an argument
 def run(
     json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
 ) -> None:

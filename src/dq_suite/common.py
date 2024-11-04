@@ -131,6 +131,7 @@ class DataQualityRulesDict:
         raise KeyError(key)
 
 
+# TODO: replace by df.isEmpty()
 def is_empty_dataframe(df: DataFrame) -> bool:
     return len(df.take(1)) == 0
 
@@ -281,7 +282,8 @@ class ValidationSettings:
         # function
         self._set_data_context()
 
-        # TODO/check: do we want to allow for custom names via parameters?
+        # TODO/check: nearly all names are related to 'check_name' - do we want
+        #  to allow for custom names via parameters?
         self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
@@ -332,4 +334,4 @@ class ValidationSettings:
 
         return self.dataframe_asset.add_batch_definition_whole_dataframe(
             name=f"{self.check_name}_batch_definition"
-        )
+        )  # TODO: create a self.batch_definition field, keep it self-contained
