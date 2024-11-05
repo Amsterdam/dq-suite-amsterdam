@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Dict
+from typing import Dict, List
 
 from great_expectations import (
     Checkpoint,
@@ -136,7 +136,9 @@ class ValidationRunner:
             )
 
     @staticmethod
-    def _get_gx_expectation_object(validation_rule: Rule):  # pragma: no cover - uses part of GX
+    def _get_gx_expectation_object(
+        validation_rule: Rule,
+    ):  # pragma: no cover - uses part of GX
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
@@ -147,14 +149,18 @@ class ValidationRunner:
         gx_expectation_parameters: dict = validation_rule["parameters"]
         return gx_expectation_class(**gx_expectation_parameters)
 
-    def add_expectations_to_suite(self, validation_rules_list: List[Rule]):  #pragma: no cover - uses part of GX
+    def add_expectations_to_suite(
+        self, validation_rules_list: List[Rule]
+    ):  # pragma: no cover - uses part of GX
         self._add_expectation_suite()  # Add if it does not exist
         expectation_suite_obj = self.data_context.suites.get(
-            name=self.expectation_suite_name)
+            name=self.expectation_suite_name
+        )
 
         for validation_rule in validation_rules_list:
             gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule)
+                validation_rule=validation_rule
+            )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
     def create_batch_definition(self):  # pragma: no cover - uses part of GX
@@ -186,7 +192,6 @@ class ValidationRunner:
                 )
             )
         except DataContextError:
-
             validation_definition = ValidationDefinition(
                 name=self.validation_definition_name,
                 data=self.batch_definition,
@@ -243,27 +248,21 @@ class ValidationRunner:
     def _get_or_add_checkpoint(self) -> Checkpoint:
         try:
             checkpoint = self.data_context.checkpoints.get(
-                name=self.checkpoint_name)
+                name=self.checkpoint_name
+            )
         except DataContextError:
             self._create_action_list()
             checkpoint = Checkpoint(
                 name=self.checkpoint_name,
-                validation_definitions=[
-                    self.validation_definition
-                ],
+                validation_definitions=[self.validation_definition],
                 actions=self.action_list,
             )  # Note: a checkpoint combines validations with actions
 
             # Add checkpoint to data context for future use
-            (
-                self.data_context.checkpoints.add(
-                    checkpoint=checkpoint
-                )
-            )
+            (self.data_context.checkpoints.add(checkpoint=checkpoint))
         return checkpoint
 
-    def run(self, batch_parameters: Dict[str, DataFrame]) -> (
-            CheckpointResult):
+    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:
         checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
 
@@ -286,7 +285,8 @@ def validate(
     )
 
     validation_runner_obj.add_expectations_to_suite(
-        validation_rules_list=rules_dict["rules"])
+        validation_rules_list=rules_dict["rules"]
+    )
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
