@@ -273,7 +273,9 @@ def validate(
     validation_settings_obj: ValidationSettings,
 ) -> CheckpointResult:
     """
-    [explanation goes here]
+    Uses the rules_dict to populate an expectation suite, and applies these
+    rules to a Spark Dataframe containing the data of interest. Returns the
+    results of the validation.
 
     :param df: A list of DataFrame instances to process.
     :param rules_dict: a RulesDict object containing the
@@ -300,7 +302,8 @@ def run(
     table_name: str,
     check_name: str,
     data_context_root_dir: str = "/dbfs/great_expectations/",
-    send_slack_notification: bool = False,
+    send_slack_notification: bool = False,  # TODO/check: can we assume the
+        # user *always* wants a validation if a webhook is supplied?
     slack_webhook: str | None = None,
     send_ms_teams_notification: bool = False,
     ms_teams_webhook: str | None = None,
