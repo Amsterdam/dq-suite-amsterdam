@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pyspark.sql import SparkSession
 
-from src.dq_suite import ValidationSettings
+from src.dq_suite.common import ValidationSettings
 from src.dq_suite.validation import (
     ValidationRunner,
     run,
@@ -18,7 +18,7 @@ def validation_settings_obj():
         spark_session=spark_session_mock,
         catalog_name="the_catalog",
         table_name="the_table",
-        check_name="the_check",
+        validation_name="the_validation",
     )
     return validation_settings_obj
 

@@ -197,7 +197,7 @@ class TestValidationSettings:
         spark_session=spark_session_mock,
         catalog_name="the_catalog",
         table_name="the_table",
-        validation_name="the_check",
+        validation_name="the_validation",
     )
 
     def test_initialisation_with_wrong_typed_spark_session_raises_type_error(
@@ -208,7 +208,7 @@ class TestValidationSettings:
                 spark_session=123,
                 catalog_name="the_catalog",
                 table_name="the_table",
-                validation_name="the_check",
+                validation_name="the_validation",
             )
 
     def test_initialisation_with_wrong_typed_catalog_name_raises_type_error(
@@ -219,7 +219,7 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name=123,
                 table_name="the_table",
-                validation_name="the_check",
+                validation_name="the_validation",
             )
 
     def test_initialisation_with_wrong_typed_table_name_raises_type_error(self):
@@ -228,10 +228,10 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name="the_catalog",
                 table_name=123,
-                validation_name="the_check",
+                validation_name="the_validation",
             )
 
-    def test_initialisation_with_wrong_typed_check_name_raises_type_error(self):
+    def test_initialisation_with_wrong_typed_validation_name_raises_type_error(self):
         with pytest.raises(TypeError):
             assert ValidationSettings(
                 spark_session=self.spark_session_mock,
