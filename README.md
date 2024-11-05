@@ -36,15 +36,17 @@ pip install dq-suite-amsterdam
 ```python
 import dq_suite
 
-validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, 
-                                                      catalog_name=catalog_name,
-                                                      table_name=table_name,
-                                                      check_name="name_of_check_goes_here")
-dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validation_settings_obj)
+dq_suite.run(json_path=dq_rule_json_path, 
+             df=df, 
+             spark_session=spark,
+             catalog_name=catalog_name,
+             table_name=table_name,
+             check_name="my_first_dq_check",
+             )
 ```
-Note: Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
+Note: Looping over multiple data frames may require a redefinition of some of the parameters (`json_path` for different expectations, `table_name` for obvious reasons, etc). 
 
-See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation.
+See the documentation of `dq_suite.run` for what other parameters can be passed.
 
 
 # Known exceptions
