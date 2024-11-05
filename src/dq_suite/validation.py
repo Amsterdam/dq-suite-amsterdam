@@ -126,7 +126,7 @@ class ValidationRunner:
             )
         )
 
-    def get_or_add_expectation_suite(self):  # pragma: no cover - uses part
+    def _add_expectation_suite(self):  # pragma: no cover - uses part
         # of GX
         try:
             _ = self.data_context.suites.get(name=self.expectation_suite_name)
@@ -134,6 +134,28 @@ class ValidationRunner:
             self.data_context.suites.add(
                 suite=ExpectationSuite(name=self.expectation_suite_name)
             )
+
+    @staticmethod
+    def _get_gx_expectation_object(validation_rule: Rule):  # pragma: no cover - uses part of GX
+        """
+        From great_expectations.expectations.core, get the relevant class and
+        instantiate an expectation object with the user-defined parameters
+        """
+        gx_expectation_name = validation_rule["rule_name"]
+        gx_expectation_class = getattr(gx_core, gx_expectation_name)
+
+        gx_expectation_parameters: dict = validation_rule["parameters"]
+        return gx_expectation_class(**gx_expectation_parameters)
+
+    def add_expectations_to_suite(self, validation_rules_list: List[Rule]):  #pragma: no cover - uses part of GX
+        self._add_expectation_suite()  # Add if it does not exist
+        expectation_suite_obj = self.data_context.suites.get(
+            name=self.expectation_suite_name)
+
+        for validation_rule in validation_rules_list:
+            gx_expectation_obj = self._get_gx_expectation_object(
+                validation_rule=validation_rule)
+            expectation_suite_obj.add_expectation(gx_expectation_obj)
 
     def create_batch_definition(self):  # pragma: no cover - uses part of GX
         self.data_source = self.data_context.data_sources.add_or_update_spark(
@@ -248,27 +270,6 @@ def get_or_add_checkpoint(
     return checkpoint
 
 
-def create_and_configure_expectations(
-    validation_rules_list: List[Rule],
-    validation_runner_obj: ValidationRunner,
-) -> None:
-    suite = validation_runner_obj.data_context.suites.get(
-        name=validation_runner_obj.expectation_suite_name
-    )
-
-    for validation_rule in validation_rules_list:
-        # Get the name of expectation as defined by GX
-        gx_expectation_name = validation_rule["rule_name"]
-        gx_expectation_parameters: dict = validation_rule["parameters"]
-
-        # Get the actual expectation as defined by GX
-        gx_expectation = getattr(
-            gx_core,
-            gx_expectation_name,
-        )
-        suite.add_expectation(gx_expectation(**gx_expectation_parameters))
-
-
 def validate(
     df: DataFrame,
     rules_dict: RulesDict,
@@ -286,16 +287,11 @@ def validate(
         validation_settings_obj=validation_settings_obj
     )
 
-    # Configure validation definition
-    create_and_configure_expectations(
-        validation_rules_list=rules_dict["rules"],
-        validation_runner_obj=validation_runner_obj,
-    )
-
+    validation_runner_obj.add_expectations_to_suite(
+        validation_rules_list=rules_dict["rules"])
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
-    # Execute
     print("***Starting validation definition run***")
     checkpoint = get_or_add_checkpoint(
         validation_runner_obj=validation_runner_obj,
