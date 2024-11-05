@@ -207,7 +207,7 @@ class ValidationSettings:
     spark_session: SparkSession object
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
-    check_name: name of data quality check
+    validation_name: name of data quality check
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     send_slack_notification: indicator to use GX's built-in Slack
@@ -223,7 +223,7 @@ class ValidationSettings:
     spark_session: SparkSession
     catalog_name: str
     table_name: str
-    check_name: str
+    validation_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
     send_slack_notification: bool = False
     slack_webhook: str | None = None
@@ -238,8 +238,8 @@ class ValidationSettings:
             raise TypeError("'catalog_name' should be of type str")
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
-        if not isinstance(self.check_name, str):
-            raise TypeError("'check_name' should be of type str")
+        if not isinstance(self.validation_name, str):
+            raise TypeError("'validation_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
         if not isinstance(self.send_slack_notification, bool):
@@ -261,7 +261,7 @@ class ValidationSettings:
         self._initialise_or_update_name_parameters()
 
     def _initialise_or_update_name_parameters(self):
-        # TODO/check: nearly all names are related to 'check_name' - do we want
+        # TODO/check: nearly all names are related to 'validation_name' - do we want
         #  to allow for custom names via parameters?
         self._set_expectation_suite_name()
         self._set_checkpoint_name()
@@ -271,21 +271,21 @@ class ValidationSettings:
         self._set_batch_definition_name()
 
     def _set_expectation_suite_name(self):
-        self._expectation_suite_name = f"{self.check_name}_expectation_suite"
+        self._expectation_suite_name = f"{self.validation_name}_expectation_suite"
 
     def _set_checkpoint_name(self):
-        self._checkpoint_name = f"{self.check_name}_checkpoint"
+        self._checkpoint_name = f"{self.validation_name}_checkpoint"
 
     def _set_run_name(self):
-        self._run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
+        self._run_name = f"%Y%m%d-%H%M%S-{self.validation_name}"
 
     def _set_data_source_name(self):
-        self._data_source_name = f"spark_data_source_{self.check_name}"
+        self._data_source_name = f"spark_data_source_{self.validation_name}"
 
     def _set_validation_definition_name(self):
         self._validation_definition_name = (
-            f"{self.check_name}_validation_definition"
+            f"{self.validation_name}_validation_definition"
         )
 
     def _set_batch_definition_name(self):
-        self._batch_definition_name = f"{self.check_name}_batch_definition"
+        self._batch_definition_name = f"{self.validation_name}_batch_definition"

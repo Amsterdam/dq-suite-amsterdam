@@ -82,7 +82,7 @@ class ValidationRunner:
         self.spark_session = validation_settings_obj.spark_session
         self.catalog_name = validation_settings_obj.catalog_name
         self.table_name = validation_settings_obj.table_name
-        self.check_name = validation_settings_obj.check_name
+        self.check_name = validation_settings_obj.validation_name
         self.data_context_root_dir = (
             validation_settings_obj.data_context_root_dir
         )
@@ -310,7 +310,7 @@ def run(
         spark_session=spark_session,
         catalog_name=catalog_name,
         table_name=table_name,
-        check_name=check_name,
+        validation_name=check_name,
         data_context_root_dir=data_context_root_dir,
         send_slack_notification=send_slack_notification,
         slack_webhook=slack_webhook,

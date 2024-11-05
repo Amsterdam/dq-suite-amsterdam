@@ -41,7 +41,7 @@ dq_suite.run(json_path=dq_rule_json_path,
              spark_session=spark,
              catalog_name=catalog_name,
              table_name=table_name,
-             check_name="my_first_dq_check",
+             validation_name="my_validation_name",
              )
 ```
 Note: Looping over multiple data frames may require a redefinition of some of the parameters (`json_path` for different expectations, `table_name` for obvious reasons, etc). 

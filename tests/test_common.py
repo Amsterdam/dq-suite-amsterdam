@@ -197,7 +197,7 @@ class TestValidationSettings:
         spark_session=spark_session_mock,
         catalog_name="the_catalog",
         table_name="the_table",
-        check_name="the_check",
+        validation_name="the_check",
     )
 
     def test_initialisation_with_wrong_typed_spark_session_raises_type_error(
@@ -208,7 +208,7 @@ class TestValidationSettings:
                 spark_session=123,
                 catalog_name="the_catalog",
                 table_name="the_table",
-                check_name="the_check",
+                validation_name="the_check",
             )
 
     def test_initialisation_with_wrong_typed_catalog_name_raises_type_error(
@@ -219,7 +219,7 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name=123,
                 table_name="the_table",
-                check_name="the_check",
+                validation_name="the_check",
             )
 
     def test_initialisation_with_wrong_typed_table_name_raises_type_error(self):
@@ -228,7 +228,7 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name="the_catalog",
                 table_name=123,
-                check_name="the_check",
+                validation_name="the_check",
             )
 
     def test_initialisation_with_wrong_typed_check_name_raises_type_error(self):
@@ -237,7 +237,7 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name="the_catalog",
                 table_name="the_table",
-                check_name=123,
+                validation_name=123,
             )
 
     def test_set_expectation_suite_name(self):
@@ -246,7 +246,7 @@ class TestValidationSettings:
         self.validation_settings_obj._set_expectation_suite_name()
         assert (
             self.validation_settings_obj._expectation_suite_name
-            == f"{self.validation_settings_obj.check_name}_expectation_suite"
+            == f"{self.validation_settings_obj.validation_name}_expectation_suite"
         )
 
     def test_set_checkpoint_name(self):
@@ -255,7 +255,7 @@ class TestValidationSettings:
         self.validation_settings_obj._set_checkpoint_name()
         assert (
             self.validation_settings_obj._checkpoint_name
-            == f"{self.validation_settings_obj.check_name}_checkpoint"
+            == f"{self.validation_settings_obj.validation_name}_checkpoint"
         )
 
     def test_set_run_name(self):
@@ -264,5 +264,5 @@ class TestValidationSettings:
         self.validation_settings_obj._set_run_name()
         assert (
             self.validation_settings_obj._run_name
-            == f"%Y%m%d-%H%M%S-{self.validation_settings_obj.check_name}"
+            == f"%Y%m%d-%H%M%S-{self.validation_settings_obj.validation_name}"
         )
