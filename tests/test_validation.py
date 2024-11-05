@@ -5,12 +5,8 @@ import pytest
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 
-from src.dq_suite.common import ValidationSettings, Rule
-from src.dq_suite.validation import (
-    ValidationRunner,
-    run,
-    validate,
-)
+from src.dq_suite.common import Rule, ValidationSettings
+from src.dq_suite.validation import ValidationRunner, run, validate
 
 
 @pytest.fixture
@@ -60,20 +56,26 @@ class TestValidationRunner:
             set_data_context_mock_method.assert_called_once()
 
     def test_get_gx_expectation_object(self, validation_runner_obj):
-        the_rule = Rule(rule_name="ExpectColumnDistinctValuesToEqualSet",
-                        parameters={"column": "the_column",
-                                    "value_set": [1, 2, 3]})
+        the_rule = Rule(
+            rule_name="ExpectColumnDistinctValuesToEqualSet",
+            parameters={"column": "the_column", "value_set": [1, 2, 3]},
+        )
         the_expectation_object = (
             validation_runner_obj._get_gx_expectation_object(
-            validation_rule=the_rule))
+                validation_rule=the_rule
+            )
+        )
 
-        assert isinstance(the_expectation_object, ExpectColumnDistinctValuesToEqualSet)
+        assert isinstance(
+            the_expectation_object, ExpectColumnDistinctValuesToEqualSet
+        )
         assert the_expectation_object.column == the_rule["parameters"]["column"]
-        assert the_expectation_object.value_set == the_rule["parameters"]["value_set"]
+        assert (
+            the_expectation_object.value_set
+            == the_rule["parameters"]["value_set"]
+        )
 
-    def test_create_action_list_with_slack_webhook(
-        self, validation_runner_obj
-    ):
+    def test_create_action_list_with_slack_webhook(self, validation_runner_obj):
         with patch.object(
             target=ValidationRunner,
             attribute="_add_slack_notification_to_action_list",
@@ -123,6 +125,7 @@ class TestValidationRunner:
             # validation_runner_obj._get_or_add_checkpoint()
             # create_checkpoint_mock.assert_called_once()
             pass  # TODO: implement
+
 
 class TestValidate:
     def test_validate(self):

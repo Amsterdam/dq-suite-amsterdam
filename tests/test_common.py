@@ -231,7 +231,9 @@ class TestValidationSettings:
                 validation_name="the_validation",
             )
 
-    def test_initialisation_with_wrong_typed_validation_name_raises_type_error(self):
+    def test_initialisation_with_wrong_typed_validation_name_raises_type_error(
+        self,
+    ):
         with pytest.raises(TypeError):
             assert ValidationSettings(
                 spark_session=self.spark_session_mock,

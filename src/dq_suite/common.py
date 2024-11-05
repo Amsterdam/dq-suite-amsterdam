@@ -261,7 +261,9 @@ class ValidationSettings:
         self._set_batch_definition_name()
 
     def _set_expectation_suite_name(self):
-        self._expectation_suite_name = f"{self.validation_name}_expectation_suite"
+        self._expectation_suite_name = (
+            f"{self.validation_name}_expectation_suite"
+        )
 
     def _set_checkpoint_name(self):
         self._checkpoint_name = f"{self.validation_name}_checkpoint"

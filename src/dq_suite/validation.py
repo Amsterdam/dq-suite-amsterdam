@@ -247,7 +247,9 @@ class ValidationRunner:
             (self.data_context.checkpoints.add(checkpoint=checkpoint))
         return checkpoint
 
-    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:  # pragma: no cover - only GX functions
+    def run(
+        self, batch_parameters: Dict[str, DataFrame]
+    ) -> CheckpointResult:  # pragma: no cover - only GX functions
         checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
 
@@ -282,14 +284,16 @@ def validate(
 
 
 def run(
-    json_path: str, df: DataFrame,
-    spark_session: SparkSession, catalog_name: str,
+    json_path: str,
+    df: DataFrame,
+    spark_session: SparkSession,
+    catalog_name: str,
     table_name: str,
     check_name: str,
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
-    notify_on: Literal["all", "success", "failure"] = "failure"
+    notify_on: Literal["all", "success", "failure"] = "failure",
 ) -> None:
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -299,7 +303,7 @@ def run(
         data_context_root_dir=data_context_root_dir,
         slack_webhook=slack_webhook,
         ms_teams_webhook=ms_teams_webhook,
-        notify_on=notify_on
+        notify_on=notify_on,
     )
 
     if not hasattr(df, "table_name"):
