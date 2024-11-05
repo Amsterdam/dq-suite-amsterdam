@@ -6,8 +6,6 @@ from pyspark.sql import SparkSession
 from src.dq_suite import ValidationSettings
 from src.dq_suite.validation import (
     ValidationRunner,
-    create_and_configure_expectations,
-    get_or_add_checkpoint,
     run,
     validate,
 )
@@ -154,16 +152,6 @@ class TestValidationRunner:
             validation_runner_obj.ms_teams_webhook = None
             validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
-
-
-class TestGetOrAddCheckpoint:
-    def test_get_or_add_checkpoint(self):
-        get_or_add_checkpoint
-
-
-class TestCreateAndConfigureExpectations:
-    def test_create_and_configure_expectations(self):
-        create_and_configure_expectations
 
 
 class TestValidate:

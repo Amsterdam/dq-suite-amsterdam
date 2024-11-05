@@ -245,7 +245,7 @@ class ValidationRunner:
         ):
             self._add_microsoft_teams_notification_to_action_list()
 
-    def _get_or_add_checkpoint(self) -> Checkpoint:
+    def _get_or_add_checkpoint(self) -> Checkpoint:  # pragma: no cover - uses part of GX
         try:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name
@@ -262,7 +262,7 @@ class ValidationRunner:
             (self.data_context.checkpoints.add(checkpoint=checkpoint))
         return checkpoint
 
-    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:
+    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:  # pragma: no cover - uses part of GX
         checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
 
