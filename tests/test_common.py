@@ -241,8 +241,7 @@ class TestValidationSettings:
             )
 
     def test_set_expectation_suite_name(self):
-        assert not hasattr(self.validation_settings_obj,
-                           "_expectation_suite_name")
+        assert hasattr(self.validation_settings_obj, "_expectation_suite_name")
 
         self.validation_settings_obj._set_expectation_suite_name()
         assert (
@@ -251,8 +250,7 @@ class TestValidationSettings:
         )
 
     def test_set_checkpoint_name(self):
-        assert not hasattr(self.validation_settings_obj,
-                           "_checkpoint_name")
+        assert hasattr(self.validation_settings_obj, "_checkpoint_name")
 
         self.validation_settings_obj._set_checkpoint_name()
         assert (
@@ -261,8 +259,7 @@ class TestValidationSettings:
         )
 
     def test_set_run_name(self):
-        assert not hasattr(self.validation_settings_obj,
-                           "_run_name")
+        assert hasattr(self.validation_settings_obj, "_run_name")
 
         self.validation_settings_obj._set_run_name()
         assert (

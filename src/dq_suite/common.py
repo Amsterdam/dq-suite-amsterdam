@@ -248,7 +248,9 @@ class ValidationSettings:
             if self.slack_webhook is not None:
                 raise TypeError("'slack_webhook' should be of type str")
         if not isinstance(self.send_ms_teams_notification, bool):
-            raise TypeError("'send_ms_teams_notification' should be of type bool")
+            raise TypeError(
+                "'send_ms_teams_notification' should be of type bool"
+            )
         if not isinstance(self.ms_teams_webhook, str):
             if self.ms_teams_webhook is not None:
                 raise TypeError("'ms_teams_webhook' should be of type str")
@@ -256,8 +258,9 @@ class ValidationSettings:
             raise ValueError(
                 "'notify_on' should be equal to 'all', 'success' or 'failure'"
             )
+        self._initialise_or_update_name_parameters()
 
-    def initialise_or_update_name_parameters(self):
+    def _initialise_or_update_name_parameters(self):
         # TODO/check: nearly all names are related to 'check_name' - do we want
         #  to allow for custom names via parameters?
         self._set_expectation_suite_name()

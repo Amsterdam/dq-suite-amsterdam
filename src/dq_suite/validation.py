@@ -11,7 +11,6 @@ from great_expectations.checkpoint import (
     MicrosoftTeamsNotificationAction,
     SlackNotificationAction,
 )
-from great_expectations.checkpoint.actions import CheckpointAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
@@ -50,25 +49,25 @@ class ValidationRunner:
     ):  # TODO: change all variables to private, once all logic has been moved
         #  inside this class
         """
-           spark_session: SparkSession object
-           catalog_name: name of unity catalog
-           table_name: name of table in unity catalog
-           check_name: name of data quality check
-           data_context_root_dir: path to write GX data
-           context - default "/dbfs/great_expectations/"
-           data_context: a data context object
-           expectation_suite_name: name of the GX expectation suite
-           checkpoint_name: name of the GX checkpoint
-           run_name: name of the data quality run
-           send_slack_notification: indicator to use GX's built-in Slack
-           notification action
-           slack_webhook: webhook, recommended to store in key vault
-           send_ms_teams_notification: indicator to use GX's built-in Microsoft
-           Teams notification action
-           ms_teams_webhook: webhook, recommended to store in key vault
-           notify_on: when to send notifications, can be equal to "all",
-           "success" or "failure"
-           """
+        spark_session: SparkSession object
+        catalog_name: name of unity catalog
+        table_name: name of table in unity catalog
+        check_name: name of data quality check
+        data_context_root_dir: path to write GX data
+        context - default "/dbfs/great_expectations/"
+        data_context: a data context object
+        expectation_suite_name: name of the GX expectation suite
+        checkpoint_name: name of the GX checkpoint
+        run_name: name of the data quality run
+        send_slack_notification: indicator to use GX's built-in Slack
+        notification action
+        slack_webhook: webhook, recommended to store in key vault
+        send_ms_teams_notification: indicator to use GX's built-in Microsoft
+        Teams notification action
+        ms_teams_webhook: webhook, recommended to store in key vault
+        notify_on: when to send notifications, can be equal to "all",
+        "success" or "failure"
+        """
 
         if validation_settings_obj is None:
             raise ValueError(
@@ -175,7 +174,9 @@ class ValidationRunner:
 
         self.validation_definition = validation_definition
 
-    def _add_slack_notification_to_action_list(self):  # pragma: no cover - uses part of GX
+    def _add_slack_notification_to_action_list(
+        self,
+    ):  # pragma: no cover - uses part of GX
         self.action_list.append(
             SlackNotificationAction(
                 name="send_slack_notification",
@@ -188,7 +189,9 @@ class ValidationRunner:
             )
         )
 
-    def _add_microsoft_teams_notification_to_action_list(self):  # pragma: no cover - uses part of GX
+    def _add_microsoft_teams_notification_to_action_list(
+        self,
+    ):  # pragma: no cover - uses part of GX
         self.action_list.append(
             MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
@@ -204,19 +207,18 @@ class ValidationRunner:
     def create_action_list(self):
         self.action_list = list()
 
-        if self.send_slack_notification & (
-                self.slack_webhook is not None
-        ):
+        if self.send_slack_notification & (self.slack_webhook is not None):
             self._add_slack_notification_to_action_list()
 
         if self.send_ms_teams_notification & (
-                self.ms_teams_webhook is not None
+            self.ms_teams_webhook is not None
         ):
             self._add_microsoft_teams_notification_to_action_list()
 
 
 def create_action_list():
     pass
+
 
 def get_or_add_checkpoint(
     validation_runner_obj: ValidationRunner,
