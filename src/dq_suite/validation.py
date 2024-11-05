@@ -174,6 +174,11 @@ class ValidationRunner:
     def create_validation_definition(
         self,
     ):  # pragma: no cover - uses part of GX
+        """
+        Note: a validation definition combines data with a suite of
+        expectations. Therefore, this function can only be called if a
+        batch definition and a (populated) expectation suite exist.
+        """
         try:
             validation_definition = (
                 self.data_context.validation_definitions.get(
@@ -181,8 +186,7 @@ class ValidationRunner:
                 )
             )
         except DataContextError:
-            # Note: a validation definition combines data with a suite of
-            # expectations
+
             validation_definition = ValidationDefinition(
                 name=self.validation_definition_name,
                 data=self.batch_definition,
@@ -193,7 +197,6 @@ class ValidationRunner:
                     validation=validation_definition
                 )
             )
-
         self.validation_definition = validation_definition
 
     def _add_slack_notification_to_action_list(
@@ -237,7 +240,7 @@ class ValidationRunner:
         ):
             self._add_microsoft_teams_notification_to_action_list()
 
-    def _get_or_add_checkpoint(self):
+    def _get_or_add_checkpoint(self) -> Checkpoint:
         try:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name)
@@ -259,7 +262,7 @@ class ValidationRunner:
             )
         return checkpoint
 
-    def run_validation(self, batch_parameters: Dict[str, DataFrame]) -> (
+    def run(self, batch_parameters: Dict[str, DataFrame]) -> (
             CheckpointResult):
         checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
@@ -288,7 +291,7 @@ def validate(
     validation_runner_obj.create_validation_definition()
 
     print("***Starting validation run***")
-    return validation_runner_obj.run_validation(batch_parameters={"dataframe": df})
+    return validation_runner_obj.run(batch_parameters={"dataframe": df})
 
 
 # TODO: modify so that validation_settings_obj is no longer an argument
