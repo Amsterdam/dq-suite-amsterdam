@@ -118,7 +118,7 @@ class ValidationRunner:
 
         self._set_data_context()
 
-    def _set_data_context(self):  # pragma: no cover - uses part of GX
+    def _set_data_context(self):  # pragma: no cover - only GX functions
         self.data_context = get_context(
             project_config=DataContextConfig(
                 store_backend_defaults=InMemoryStoreBackendDefaults(),
@@ -126,9 +126,8 @@ class ValidationRunner:
             )
         )
 
-    def _add_expectation_suite(self):  # pragma: no cover - uses part
-        # of GX
-        try:
+    def _add_expectation_suite(self):  # pragma: no cover - only GX functions
+        try:  # If expectation_suite_name exists in data_context
             _ = self.data_context.suites.get(name=self.expectation_suite_name)
         except DataContextError:
             self.data_context.suites.add(
@@ -136,9 +135,7 @@ class ValidationRunner:
             )
 
     @staticmethod
-    def _get_gx_expectation_object(
-        validation_rule: Rule,
-    ):  # pragma: no cover - uses part of GX
+    def _get_gx_expectation_object(validation_rule: Rule):
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
@@ -151,7 +148,7 @@ class ValidationRunner:
 
     def add_expectations_to_suite(
         self, validation_rules_list: List[Rule]
-    ):  # pragma: no cover - uses part of GX
+    ):  # pragma: no cover - only GX functions
         self._add_expectation_suite()  # Add if it does not exist
         expectation_suite_obj = self.data_context.suites.get(
             name=self.expectation_suite_name
@@ -163,7 +160,7 @@ class ValidationRunner:
             )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
-    def create_batch_definition(self):  # pragma: no cover - uses part of GX
+    def create_batch_definition(self):  # pragma: no cover - only GX functions
         self.data_source = self.data_context.data_sources.add_or_update_spark(
             name=self.data_source_name
         )
@@ -179,13 +176,13 @@ class ValidationRunner:
 
     def create_validation_definition(
         self,
-    ):  # pragma: no cover - uses part of GX
+    ):  # pragma: no cover - only GX functions
         """
         Note: a validation definition combines data with a suite of
         expectations. Therefore, this function can only be called if a
         batch definition and a (populated) expectation suite exist.
         """
-        try:
+        try:  # If validation_definition_name exists in data_context
             validation_definition = (
                 self.data_context.validation_definitions.get(
                     name=self.validation_definition_name
@@ -206,7 +203,7 @@ class ValidationRunner:
 
     def _add_slack_notification_to_action_list(
         self,
-    ):  # pragma: no cover - uses part of GX
+    ):  # pragma: no cover - only GX functions
         self.action_list.append(
             SlackNotificationAction(
                 name="send_slack_notification",
@@ -221,7 +218,7 @@ class ValidationRunner:
 
     def _add_microsoft_teams_notification_to_action_list(
         self,
-    ):  # pragma: no cover - uses part of GX
+    ):  # pragma: no cover - only GX functions
         self.action_list.append(
             MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
@@ -245,11 +242,11 @@ class ValidationRunner:
         ):
             self._add_microsoft_teams_notification_to_action_list()
 
-    def _get_or_add_checkpoint(self) -> Checkpoint:  # pragma: no cover - uses part of GX
+    def _get_or_add_checkpoint(self) -> Checkpoint:
         try:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name
-            )
+            )  # If checkpoint_name exists in data_context
         except DataContextError:
             self._create_action_list()
             checkpoint = Checkpoint(
@@ -262,7 +259,7 @@ class ValidationRunner:
             (self.data_context.checkpoints.add(checkpoint=checkpoint))
         return checkpoint
 
-    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:  # pragma: no cover - uses part of GX
+    def run(self, batch_parameters: Dict[str, DataFrame]) -> CheckpointResult:  # pragma: no cover - only GX functions
         checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
 
