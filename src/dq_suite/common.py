@@ -210,12 +210,10 @@ class ValidationSettings:
     validation_name: name of data quality check
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
-    send_slack_notification: indicator to use GX's built-in Slack
-    notification action
-    slack_webhook: webhook, recommended to store in key vault
-    send_ms_teams_notification: indicator to use GX's built-in Microsoft
-    Teams notification action
-    ms_teams_webhook: webhook, recommended to store in key vault
+    slack_webhook: webhook, recommended to store in key vault. If not None,
+    a Slack notification will be sent
+    ms_teams_webhook: webhook, recommended to store in key vault. If not None,
+    an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
     "success" or "failure"
     """
@@ -225,9 +223,7 @@ class ValidationSettings:
     table_name: str
     validation_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
-    send_slack_notification: bool = False
     slack_webhook: str | None = None
-    send_ms_teams_notification: bool = False
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
 
@@ -242,15 +238,9 @@ class ValidationSettings:
             raise TypeError("'validation_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
-        if not isinstance(self.send_slack_notification, bool):
-            raise TypeError("'send_slack_notification' should be of type bool")
         if not isinstance(self.slack_webhook, str):
             if self.slack_webhook is not None:
                 raise TypeError("'slack_webhook' should be of type str")
-        if not isinstance(self.send_ms_teams_notification, bool):
-            raise TypeError(
-                "'send_ms_teams_notification' should be of type bool"
-            )
         if not isinstance(self.ms_teams_webhook, str):
             if self.ms_teams_webhook is not None:
                 raise TypeError("'ms_teams_webhook' should be of type str")

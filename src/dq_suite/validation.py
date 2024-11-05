@@ -59,11 +59,7 @@ class ValidationRunner:
         expectation_suite_name: name of the GX expectation suite
         checkpoint_name: name of the GX checkpoint
         run_name: name of the data quality run
-        send_slack_notification: indicator to use GX's built-in Slack
-        notification action
         slack_webhook: webhook, recommended to store in key vault
-        send_ms_teams_notification: indicator to use GX's built-in Microsoft
-        Teams notification action
         ms_teams_webhook: webhook, recommended to store in key vault
         notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
@@ -98,13 +94,7 @@ class ValidationRunner:
         self.batch_definition_name = (
             validation_settings_obj._batch_definition_name
         )
-        self.send_slack_notification = (
-            validation_settings_obj.send_slack_notification
-        )
         self.slack_webhook = validation_settings_obj.slack_webhook
-        self.send_ms_teams_notification = (
-            validation_settings_obj.send_ms_teams_notification
-        )
         self.ms_teams_webhook = validation_settings_obj.ms_teams_webhook
         self.notify_on = validation_settings_obj.notify_on
 
@@ -234,12 +224,10 @@ class ValidationRunner:
     def _create_action_list(self):
         self.action_list = list()
 
-        if self.send_slack_notification & (self.slack_webhook is not None):
+        if self.slack_webhook is not None:
             self._add_slack_notification_to_action_list()
 
-        if self.send_ms_teams_notification & (
-            self.ms_teams_webhook is not None
-        ):
+        if self.ms_teams_webhook is not None:
             self._add_microsoft_teams_notification_to_action_list()
 
     def _get_or_add_checkpoint(self) -> Checkpoint:
@@ -299,10 +287,7 @@ def run(
     table_name: str,
     check_name: str,
     data_context_root_dir: str = "/dbfs/great_expectations/",
-    send_slack_notification: bool = False,  # TODO/check: can we assume the
-        # user *always* wants a validation if a webhook is supplied?
     slack_webhook: str | None = None,
-    send_ms_teams_notification: bool = False,
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure"
 ) -> None:
@@ -312,9 +297,7 @@ def run(
         table_name=table_name,
         validation_name=check_name,
         data_context_root_dir=data_context_root_dir,
-        send_slack_notification=send_slack_notification,
         slack_webhook=slack_webhook,
-        send_ms_teams_notification=send_ms_teams_notification,
         ms_teams_webhook=ms_teams_webhook,
         notify_on=notify_on
     )
