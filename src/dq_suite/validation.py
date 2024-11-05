@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List
+from typing import Dict, List, Literal
 
 from great_expectations import (
     Checkpoint,
@@ -22,7 +22,7 @@ from great_expectations.datasource.fluent import SparkDatasource
 from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import core as gx_core
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 
 from .common import Rule, RulesDict, ValidationSettings
 from .input_helpers import (
@@ -294,10 +294,31 @@ def validate(
     return validation_runner_obj.run(batch_parameters={"dataframe": df})
 
 
-# TODO: modify so that validation_settings_obj is no longer an argument
 def run(
-    json_path: str, df: DataFrame, validation_settings_obj: ValidationSettings
+    json_path: str, df: DataFrame,
+    spark_session: SparkSession, catalog_name: str,
+    table_name: str,
+    check_name: str,
+    data_context_root_dir: str = "/dbfs/great_expectations/",
+    send_slack_notification: bool = False,
+    slack_webhook: str | None = None,
+    send_ms_teams_notification: bool = False,
+    ms_teams_webhook: str | None = None,
+    notify_on: Literal["all", "success", "failure"] = "failure"
 ) -> None:
+    validation_settings_obj = ValidationSettings(
+        spark_session=spark_session,
+        catalog_name=catalog_name,
+        table_name=table_name,
+        check_name=check_name,
+        data_context_root_dir=data_context_root_dir,
+        send_slack_notification=send_slack_notification,
+        slack_webhook=slack_webhook,
+        send_ms_teams_notification=send_ms_teams_notification,
+        ms_teams_webhook=ms_teams_webhook,
+        notify_on=notify_on
+    )
+
     if not hasattr(df, "table_name"):
         df.table_name = validation_settings_obj.table_name
 
