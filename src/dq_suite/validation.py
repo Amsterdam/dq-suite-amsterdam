@@ -202,6 +202,8 @@ class ValidationRunner:
         )
 
     def create_action_list(self):
+        self.action_list = list()
+
         if self.send_slack_notification & (
                 self.slack_webhook is not None
         ):
