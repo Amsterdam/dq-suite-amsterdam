@@ -68,7 +68,7 @@ class TestValidationRunner:
         ) as add_slack_action_mock_method:
             validation_runner_obj.send_slack_notification = True
             validation_runner_obj.slack_webhook = "the_slack_webhook"
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_slack_action_mock_method.assert_called_once()
 
     def test_create_action_list_without_slack_notification_with_webhook(
@@ -80,7 +80,7 @@ class TestValidationRunner:
         ) as add_slack_action_mock_method:
             validation_runner_obj.send_slack_notification = False
             validation_runner_obj.slack_webhook = "the_slack_webhook"
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_slack_action_mock_method.assert_not_called()
 
     def test_create_action_list_with_slack_notification_without_webhook(
@@ -92,7 +92,7 @@ class TestValidationRunner:
         ) as add_slack_action_mock_method:
             validation_runner_obj.send_slack_notification = True
             validation_runner_obj.slack_webhook = None
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_slack_action_mock_method.assert_not_called()
 
     def test_create_action_list_without_slack_notification_without_webhook(
@@ -104,7 +104,7 @@ class TestValidationRunner:
         ) as add_slack_action_mock_method:
             validation_runner_obj.send_slack_notification = False
             validation_runner_obj.slack_webhook = None
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_slack_action_mock_method.assert_not_called()
 
     def test_create_action_list_with_ms_teams_notification_with_webhook(
@@ -116,7 +116,7 @@ class TestValidationRunner:
         ) as add_ms_teams_action_mock_method:
             validation_runner_obj.send_ms_teams_notification = True
             validation_runner_obj.ms_teams_webhook = "the_slack_webhook"
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_called_once()
 
     def test_create_action_list_without_ms_teams_notification_with_webhook(
@@ -128,7 +128,7 @@ class TestValidationRunner:
         ) as add_ms_teams_action_mock_method:
             validation_runner_obj.send_ms_teams_notification = False
             validation_runner_obj.ms_teams_webhook = "the_ms_teams_webhook"
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
 
     def test_create_action_list_with_ms_teams_notification_without_webhook(
@@ -140,7 +140,7 @@ class TestValidationRunner:
         ) as add_ms_teams_action_mock_method:
             validation_runner_obj.send_ms_teams_notification = True
             validation_runner_obj.ms_teams_webhook = None
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
 
     def test_create_action_list_without_ms_teams_notification_without_webhook(
@@ -152,7 +152,7 @@ class TestValidationRunner:
         ) as add_ms_teams_action_mock_method:
             validation_runner_obj.send_ms_teams_notification = False
             validation_runner_obj.ms_teams_webhook = None
-            validation_runner_obj.create_action_list()
+            validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
 
 

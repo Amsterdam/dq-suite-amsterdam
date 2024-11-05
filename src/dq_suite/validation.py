@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Dict
 
 from great_expectations import (
     Checkpoint,
@@ -226,7 +226,7 @@ class ValidationRunner:
             )
         )
 
-    def create_action_list(self):
+    def _create_action_list(self):
         self.action_list = list()
 
         if self.send_slack_notification & (self.slack_webhook is not None):
@@ -237,37 +237,32 @@ class ValidationRunner:
         ):
             self._add_microsoft_teams_notification_to_action_list()
 
+    def _get_or_add_checkpoint(self):
+        try:
+            checkpoint = self.data_context.checkpoints.get(
+                name=self.checkpoint_name)
+        except DataContextError:
+            self._create_action_list()
+            checkpoint = Checkpoint(
+                name=self.checkpoint_name,
+                validation_definitions=[
+                    self.validation_definition
+                ],
+                actions=self.action_list,
+            )  # Note: a checkpoint combines validations with actions
 
-def create_action_list():
-    pass
-
-
-def get_or_add_checkpoint(
-    validation_runner_obj: ValidationRunner,
-) -> Checkpoint:
-    try:
-        checkpoint = validation_runner_obj.data_context.checkpoints.get(
-            name=validation_runner_obj.checkpoint_name
-        )
-    except DataContextError:
-        action_list = create_action_list(
-            validation_runner_obj=validation_runner_obj
-        )
-        checkpoint = Checkpoint(
-            name=validation_runner_obj.checkpoint_name,
-            validation_definitions=[
-                validation_runner_obj.validation_definition
-            ],
-            actions=action_list,
-        )  # Note: a checkpoint combines validations with actions
-
-        # Add checkpoint to data context for future use
-        (
-            validation_runner_obj.data_context.checkpoints.add(
-                checkpoint=checkpoint
+            # Add checkpoint to data context for future use
+            (
+                self.data_context.checkpoints.add(
+                    checkpoint=checkpoint
+                )
             )
-        )
-    return checkpoint
+        return checkpoint
+
+    def run_validation(self, batch_parameters: Dict[str, DataFrame]) -> (
+            CheckpointResult):
+        checkpoint = self._get_or_add_checkpoint()
+        return checkpoint.run(batch_parameters=batch_parameters)
 
 
 def validate(
@@ -292,13 +287,8 @@ def validate(
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
-    print("***Starting validation definition run***")
-    checkpoint = get_or_add_checkpoint(
-        validation_runner_obj=validation_runner_obj,
-    )
-
-    batch_params = {"dataframe": df}
-    return checkpoint.run(batch_parameters=batch_params)
+    print("***Starting validation run***")
+    return validation_runner_obj.run_validation(batch_parameters={"dataframe": df})
 
 
 # TODO: modify so that validation_settings_obj is no longer an argument
