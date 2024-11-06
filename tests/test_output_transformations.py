@@ -410,6 +410,7 @@ class TestExtractValidatieData:
             "aantalValideRecords": 23537,
             "aantalReferentieRecords": 23538,
             "dqResultaat": "success",
+            "percentageValideRecords": 99,
             "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
             "regelParameters": {
                 "column": "the_column",
