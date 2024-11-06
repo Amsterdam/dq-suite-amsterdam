@@ -206,7 +206,10 @@ def extract_validatie_data(
             unexpected_count = int(
                 expectation_result["result"].get("unexpected_count", 0)
             )
-            aantal_valide_records = element_count - unexpected_count
+            percentage_of_valid_records = int(
+                100 - expectation_result["result"].get("unexpected_percent", 0)
+            )
+            number_of_valid_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
             parameter_list = get_parameters_from_results(
                 result=expectation_result
@@ -217,8 +220,9 @@ def extract_validatie_data(
             output_text = "success" if output else "failure"
             extracted_data.append(
                 {
-                    "aantalValideRecords": aantal_valide_records,
+                    "aantalValideRecords": number_of_valid_records,
                     "aantalReferentieRecords": element_count,
+                    "percentageValideRecords": percentage_of_valid_records,
                     "dqDatum": run_time,
                     "dqResultaat": output_text,
                     "regelNaam": expectation_type,
@@ -315,6 +319,7 @@ def create_dq_validatie(
             "regelId",
             "aantalValideRecords",
             "aantalReferentieRecords",
+            "percentageValideRecords",
             "dqDatum",
             "dqResultaat",
         ],
@@ -521,6 +526,7 @@ def create_dq_regel(
             "regelId",
             "regelNaam",
             "regelParameters",
+            "norm",
             "bronTabelId",
             "attribuut",
         ],
@@ -529,6 +535,7 @@ def create_dq_regel(
         "regelId": "regel_df.regelId",
         "regelNaam": "regel_df.regelNaam",
         "regelParameters": "regel_df.regelParameters",
+        "norm": "regel_df.norm",
         "bronTabelId": "regel_df.bronTabelId",
         "attribuut": "regel_df.attribuut",
     }
@@ -578,20 +585,20 @@ def write_validation_table(
     run_time: datetime,
 ):
     create_dq_validatie(
-        validation_settings_obj.table_name,
-        dataset_name,
-        validation_output,
-        run_time,
-        validation_settings_obj.catalog_name,
-        validation_settings_obj.spark_session,
+        table_name=validation_settings_obj.table_name,
+        dataset_name=dataset_name,
+        run_time=run_time,
+        dq_result=validation_output,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
     )
     create_dq_afwijking(
-        validation_settings_obj.table_name,
-        dataset_name,
-        validation_output,
-        df,
-        unique_identifier,
-        run_time,
-        validation_settings_obj.catalog_name,
-        validation_settings_obj.spark_session,
+        table_name=validation_settings_obj.table_name,
+        dataset_name=dataset_name,
+        dq_result=validation_output,
+        df=df,
+        unique_identifier=unique_identifier,
+        run_time=run_time,
+        catalog_name=validation_settings_obj.catalog_name,
+        spark_session=validation_settings_obj.spark_session,
     )

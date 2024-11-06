@@ -4,6 +4,7 @@ SCHEMA = (
     StructType()
     .add("aantalValideRecords", "long")
     .add("aantalReferentieRecords", "long")
+    .add("percentageValideRecords", "integer")
     .add("dqDatum", "timestamp")
     .add("dqResultaat", "string")
     .add("regelNaam", "string")
