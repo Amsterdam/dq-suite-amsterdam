@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from tests import TEST_DATA_FOLDER
 
 from src.dq_suite.validation_input import (
     get_data_quality_rules_dict,

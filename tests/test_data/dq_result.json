@@ -1,0 +1,30 @@
+{
+    "validation_results": [
+        {
+            "expectations": [
+                {
+                    "result": {
+                        "element_count": 23538,
+                        "unexpected_count": 1,
+                        "unexpected_percent": 0.00424844931599966,
+                        "partial_unexpected_list": [
+                            null
+                        ],
+                        "partial_unexpected_counts": [
+                            {
+                                "value": null,
+                                "count": 1
+                            }
+                        ]
+                    },
+                    "expectation_type": "ExpectColumnDistinctValuesToEqualSet",
+                    "kwargs": {
+                        "column": "the_column",
+                        "value_set": [1, 2, 3]
+                    },
+                    "success": "failure"
+                }
+            ]
+        }
+    ]
+}
