@@ -23,6 +23,10 @@ from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
+def snake_case_to_camel_case(snake_str):
+    return "".join(x.capitalize() for x in snake_str.lower().split("_"))
+
+
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
@@ -51,7 +55,7 @@ def construct_regel_id(
         raise TypeError("'output_columns_list' should be of type 'list'")
     df_with_id = df.withColumn(
         "regelId",
-        xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")),
+        xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")).substr(2, 20),
     )
     return df_with_id.select(*output_columns_list)
 
@@ -206,11 +210,13 @@ def extract_validatie_data(
             unexpected_count = int(
                 expectation_result["result"].get("unexpected_count", 0)
             )
-            percentage_of_valid_records = int(
-                100 - expectation_result["result"].get("unexpected_percent", 0)
+            percentage_of_valid_records = float(
+                int(100 - expectation_result["result"].get("unexpected_percent", 0)) / 100
             )
             number_of_valid_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
+            if "_" in expectation_type:
+                expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
@@ -252,6 +258,8 @@ def extract_afwijking_data(
     for validation_result in dq_result:
         for expectation_result in validation_result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
+            if "_" in expectation_type:
+                expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )

@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
   regelId STRING,
   aantalValideRecords BIGINT,
   aantalReferentieRecords BIGINT,
-  percentageValideRecords INT,
+  percentageValideRecords DOUBLE,
   dqDatum TIMESTAMP,
   dqResultaat STRING)
 USING delta

@@ -108,7 +108,7 @@ class TestConstructRegelId:
             ],
         )
 
-        expected_data = [(5287467170918921248, "test_regelNaam")]
+        expected_data = [("287467170918921248", "test_regelNaam")]
         expected_df = spark.createDataFrame(
             expected_data, ["regelId", "regelNaam"]
         )
@@ -410,7 +410,7 @@ class TestExtractValidatieData:
             "aantalValideRecords": 23537,
             "aantalReferentieRecords": 23538,
             "dqResultaat": "success",
-            "percentageValideRecords": 99,
+            "percentageValideRecords": 0.99,
             "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
             "regelParameters": {
                 "column": "the_column",
