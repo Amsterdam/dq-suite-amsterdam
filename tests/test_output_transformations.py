@@ -1,4 +1,3 @@
-
 import json
 from datetime import datetime
 
@@ -9,7 +8,6 @@ from pyspark.sql import SparkSession
 from src.dq_suite.output_transformations import (
     construct_regel_id,
     create_empty_dataframe,
-    get_parameters_from_results,
     extract_afwijking_data,
     extract_attribute_data,
     extract_dataset_data,
@@ -18,6 +16,7 @@ from src.dq_suite.output_transformations import (
     extract_validatie_data,
     filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
+    get_parameters_from_results,
     get_target_attr_for_rule,
     get_unique_deviating_values,
     list_of_dicts_to_df,
@@ -405,7 +404,7 @@ class TestExtractValidatieData:
             dq_result=read_test_result_as_dict,
         )
         test_sample = test_output[0]
-        del test_sample["dqDatum"] #timestamp will be impossible to get right
+        del test_sample["dqDatum"]  # timestamp will be impossible to get right
         expected_result = {
             "aantalValideRecords": 23537,
             "aantalReferentieRecords": 23538,
@@ -443,9 +442,7 @@ class TestExtractAfwijkingData:
         self, spark, read_test_result_as_dict
     ):
         input_data = [("id1", None), ("id2", "the_value")]
-        input_df = spark.createDataFrame(
-            input_data, ["the_key", "the_column"]
-        )
+        input_df = spark.createDataFrame(input_data, ["the_key", "the_column"])
         test_output = extract_afwijking_data(
             df=input_df,
             unique_identifier="the_key",
@@ -455,15 +452,12 @@ class TestExtractAfwijkingData:
             dq_result=read_test_result_as_dict,
         )
         test_sample = test_output[0]
-        del test_sample["dqDatum"] #timestamp will be impossible to get right
+        del test_sample["dqDatum"]  # timestamp will be impossible to get right
         expected_result = {
-                    "identifierVeldWaarde": [["id1"]],
-                    "afwijkendeAttribuutWaarde": None,
-                    "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
-                    "regelParameters": {
-                        "column": "the_column",
-                        "value_set": [1, 2, 3]
-                    },
-                    "bronTabelId": "dataset_name_table_name",
-                }
+            "identifierVeldWaarde": [["id1"]],
+            "afwijkendeAttribuutWaarde": None,
+            "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
+            "regelParameters": {"column": "the_column", "value_set": [1, 2, 3]},
+            "bronTabelId": "dataset_name_table_name",
+        }
         assert test_sample == expected_result

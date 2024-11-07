@@ -55,7 +55,9 @@ def construct_regel_id(
         raise TypeError("'output_columns_list' should be of type 'list'")
     df_with_id = df.withColumn(
         "regelId",
-        xxhash64(col("regelNaam"), col("regelParameters"), col("bronTabelId")).substr(2, 20),
+        xxhash64(
+            col("regelNaam"), col("regelParameters"), col("bronTabelId")
+        ).substr(2, 20),
     )
     return df_with_id.select(*output_columns_list)
 
@@ -211,7 +213,11 @@ def extract_validatie_data(
                 expectation_result["result"].get("unexpected_count", 0)
             )
             percentage_of_valid_records = float(
-                int(100 - expectation_result["result"].get("unexpected_percent", 0)) / 100
+                int(
+                    100
+                    - expectation_result["result"].get("unexpected_percent", 0)
+                )
+                / 100
             )
             number_of_valid_records = element_count - unexpected_count
             expectation_type = expectation_result["expectation_type"]
