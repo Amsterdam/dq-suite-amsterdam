@@ -214,7 +214,9 @@ def extract_validatie_data(
                 int(100 - expectation_result["result"].get("unexpected_percent", 0)) / 100
             )
             number_of_valid_records = element_count - unexpected_count
-            expectation_type = snake_case_to_camel_case(expectation_result["expectation_type"])
+            expectation_type = expectation_result["expectation_type"]
+            if "_" in expectation_type:
+                expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
@@ -255,7 +257,9 @@ def extract_afwijking_data(
 
     for validation_result in dq_result:
         for expectation_result in validation_result["expectations"]:
-            expectation_type = snake_case_to_camel_case(expectation_result["expectation_type"])
+            expectation_type = expectation_result["expectation_type"]
+            if "_" in expectation_type:
+                expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
