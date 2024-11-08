@@ -26,10 +26,12 @@ pip install dq-suite-amsterdam
 
 
 3. Get ready to validate your first table. To do so, define
-- `catalog_name` as the name of your catalog
-- `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
 - `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
 - `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
+- `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
+- `catalog_name` as the name of your catalog ('dpxx_dev' or 'dpxx_prd')
+- `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file at `dq_rule_json_path`
+
 
 
 4. Finally, perform the validation by running
