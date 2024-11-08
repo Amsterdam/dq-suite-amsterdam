@@ -16,6 +16,27 @@
                         }
                 }
             ]
+        },
+        {
+            "unique_identifier": "other_id",
+            "table_name": "the_other_table",
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "the_other_column",
+                        "min_value": 6,
+                        "max_value": 10000
+                    }
+                },
+                {
+                    "rule_name": "ExpectTableRowCountToBeBetween",
+                    "parameters": {
+                        "min_value": 1,
+                        "max_value": 1000
+                    }
+                }
+            ]
         }
     ]
 }
