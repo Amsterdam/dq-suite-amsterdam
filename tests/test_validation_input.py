@@ -104,6 +104,18 @@ class TestValidateDataQualityRulesDict:
                 data_quality_rules_dict="wrong_type"
             )
 
+    def test_rules_dict_without_rules_field_results_in_table_schema_validation(
+        self, data_quality_rules_dict
+    ):
+        with patch.object(
+            target=validation_input,
+            attribute="validate_table_schema",
+        ) as validate_table_schema_mock:
+            validate_data_quality_rules_dict(
+                data_quality_rules_dict=data_quality_rules_dict
+            )
+            validate_table_schema_mock.assert_called_once()
+
     def test_validate_data_quality_rules_dict(self, data_quality_rules_dict):
         validate_data_quality_rules_dict(
             data_quality_rules_dict=data_quality_rules_dict
