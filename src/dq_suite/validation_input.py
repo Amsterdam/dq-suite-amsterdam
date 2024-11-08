@@ -5,7 +5,7 @@ from typing import Any
 import humps
 import validators
 
-from .common import DataQualityRulesDict
+from .common import DataQualityRulesDict, RulesDict
 
 
 def read_data_quality_rules_from_json(file_path: str) -> str:
@@ -157,3 +157,13 @@ def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     )
 
     return data_quality_rules_dict
+
+
+def filter_validation_dict_by_table_name(
+    validation_dict: DataQualityRulesDict, table_name: str
+) -> RulesDict | None:
+    for rules_dict in validation_dict["tables"]:
+        if rules_dict["table_name"] == table_name:
+            # Only one RulesDict per table expected, so return the first match
+            return rules_dict
+    return None
