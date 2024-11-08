@@ -124,7 +124,7 @@ class TestValidationRunner:
         ) as create_checkpoint_mock:
             # validation_runner_obj._get_or_add_checkpoint()
             # create_checkpoint_mock.assert_called_once()
-            pass  # TODO: implement
+            pass  # TODO: implement. How to mock the contents of try/except?
 
 
 class TestValidate:
