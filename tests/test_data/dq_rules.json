@@ -40,8 +40,8 @@
         },
         {
             "unique_identifier": "id",
-            "table_name": "the_table_name",
-            "validate_table_schema": "the_table_name",
+            "table_name": "the_third_table_name",
+            "validate_table_schema": "the_third_table_name",
             "validate_table_schema_url": "https://www.someurl.nl",
             "rules": []
         }
