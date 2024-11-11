@@ -107,7 +107,7 @@ class DataQualityRulesDict:
     tables: RulesDictList
 
     def __post_init__(self):
-        if not isinstance(self.dataset, dict):
+        if not isinstance(self.dataset, DatasetDict):
             raise TypeError("'dataset' should be DatasetDict")
 
         if not isinstance(self.tables, list):
