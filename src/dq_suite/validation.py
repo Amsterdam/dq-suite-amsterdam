@@ -52,7 +52,7 @@ class ValidationRunner:
         spark_session: SparkSession object
         catalog_name: name of unity catalog
         table_name: name of table in unity catalog
-        check_name: name of data quality check
+        validation_name: name of data quality check
         data_context_root_dir: path to write GX data
         context - default "/dbfs/great_expectations/"
         data_context: a data context object
@@ -78,7 +78,7 @@ class ValidationRunner:
         self.spark_session = validation_settings_obj.spark_session
         self.catalog_name = validation_settings_obj.catalog_name
         self.table_name = validation_settings_obj.table_name
-        self.check_name = validation_settings_obj.validation_name
+        self.validation_name = validation_settings_obj.validation_name
         self.data_context_root_dir = (
             validation_settings_obj.data_context_root_dir
         )
@@ -155,7 +155,7 @@ class ValidationRunner:
             name=self.data_source_name
         )
         self.dataframe_asset = self.data_source.add_dataframe_asset(
-            name=self.check_name
+            name=self.validation_name
         )
 
         self.batch_definition = (
