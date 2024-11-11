@@ -38,7 +38,7 @@ pip install dq-suite-amsterdam
 ```python
 import dq_suite
 
-dq_suite.run(json_path=dq_rule_json_path, 
+dq_suite.validation.run(json_path=dq_rule_json_path, 
              df=df, 
              spark_session=spark,
              catalog_name=catalog_name,
