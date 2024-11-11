@@ -304,6 +304,19 @@ def run(
     Runs a validation (specified by the rules in the JSON file located at [
     json_path]) on a dataframe [df], and writes the results to a data_quality
     table in [catalog_name].
+
+    spark_session: SparkSession object
+    catalog_name: name of unity catalog
+    table_name: name of table in unity catalog
+    validation_name: name of data quality check
+    data_context_root_dir: path to write GX data
+    context - default "/dbfs/great_expectations/"
+    slack_webhook: webhook, recommended to store in key vault. If not None,
+        a Slack notification will be sent
+    ms_teams_webhook: webhook, recommended to store in key vault. If not None,
+        an MS Teams notification will be sent
+    notify_on: when to send notifications, can be equal to "all",
+        "success" or "failure"
     """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,

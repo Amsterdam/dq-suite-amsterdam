@@ -46,9 +46,7 @@ dq_suite.validation.run(json_path=dq_rule_json_path,
              validation_name="my_validation_name",
              )
 ```
-Note: Looping over multiple data frames may require a redefinition of some of the parameters (`json_path` for different expectations, `table_name` for obvious reasons, etc). 
-
-See the documentation of `dq_suite.run` for what other parameters can be passed.
+See the documentation of `dq_suite.validation.run` for what other parameters can be passed.
 
 
 # Known exceptions

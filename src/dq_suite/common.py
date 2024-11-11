@@ -214,11 +214,11 @@ class ValidationSettings:
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     slack_webhook: webhook, recommended to store in key vault. If not None,
-    a Slack notification will be sent
+        a Slack notification will be sent
     ms_teams_webhook: webhook, recommended to store in key vault. If not None,
-    an MS Teams notification will be sent
+        an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
-    "success" or "failure"
+        "success" or "failure"
     """
 
     spark_session: SparkSession
