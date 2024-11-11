@@ -317,6 +317,8 @@ def run(
     )
 
     if not hasattr(df, "table_name"):
+        # TODO/check: we can have df.table_name !=
+        #  validation_settings_obj.table_name: is this wrong?
         df.table_name = validation_settings_obj.table_name
 
     # 1) extract the data quality rules to be applied...
@@ -333,7 +335,7 @@ def run(
             f"{json_path}'."
         )
 
-    # 2) perform the validation on the dataframe
+    # 2) ... perform the validation on the dataframe...
     checkpoint_result = validate(
         df=df,
         rules_dict=rules_dict,
@@ -342,7 +344,7 @@ def run(
     validation_output = checkpoint_result.describe_dict()
     run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
 
-    # 3) write results to unity catalog
+    # 3) ... and write results to unity catalog
     write_non_validation_tables(
         dq_rules_dict=validation_dict,
         validation_settings_obj=validation_settings_obj,
