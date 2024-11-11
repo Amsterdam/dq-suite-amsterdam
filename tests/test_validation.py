@@ -23,16 +23,24 @@ def validation_settings_obj():
 
 @pytest.fixture
 def validation_runner_obj(validation_settings_obj):
-    with patch.object(
-        target=ValidationRunner,
-        attribute="_set_data_context",
-    ) as mock_method:
-        return ValidationRunner(validation_settings_obj=validation_settings_obj)
+    return ValidationRunner(validation_settings_obj=validation_settings_obj)
 
 
 @pytest.mark.usefixtures("validation_settings_obj")
 @pytest.mark.usefixtures("validation_runner_obj")
 class TestValidationRunner:
+    """
+    Note: the following methods are not tested, because they consist entirely of
+    (a sequence of calls to) GX methods/functions:
+    - _add_expectation_suite
+    - add_expectations_to_suite
+    - create_batch_definition
+    - create_validation_definition
+    - _add_slack_notification_to_action_list
+    - _add_microsoft_teams_notification_to_action_list
+    - _get_or_add_checkpoint
+    - run
+    """
     def test_initialisation_with_none_valued_validation_settings_raises_value_error(
         self,
     ):

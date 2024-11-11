@@ -230,7 +230,7 @@ class ValidationRunner:
         if self.ms_teams_webhook is not None:
             self._add_microsoft_teams_notification_to_action_list()
 
-    def _get_or_add_checkpoint(self) -> Checkpoint:
+    def _get_or_add_checkpoint(self) -> Checkpoint:  # pragma: no cover - only GX functions
         try:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name
@@ -267,7 +267,8 @@ def validate(
     :param df: A list of DataFrame instances to process.
     :param rules_dict: a RulesDict object containing the
     data quality rules to be evaluated.
-    :param validation_settings_obj: [explanation goes here]
+    :param validation_settings_obj: ValidationSettings object, contains all
+    user input required for running a validation.
     """
     validation_runner_obj = ValidationRunner(
         validation_settings_obj=validation_settings_obj
@@ -295,6 +296,13 @@ def run(
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
 ) -> None:
+    """
+    Main function for users of dq_suite.
+
+    Runs a validation (specified by the rules in the JSON file located at [
+    json_path]) on a dataframe [df], and writes the results to a data_quality
+    table in [catalog_name].
+    """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
         catalog_name=catalog_name,

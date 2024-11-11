@@ -204,6 +204,9 @@ def merge_df_with_unity_table(
 @dataclass()
 class ValidationSettings:
     """
+    Contains all user input required for running a validation. Typically,
+    this means catalog, table and validation names and a SparkSession object.
+
     spark_session: SparkSession object
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
