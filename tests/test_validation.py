@@ -1,12 +1,11 @@
 from unittest.mock import Mock, patch
 
-import great_expectations
 import pytest
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 
 from src.dq_suite.common import Rule, ValidationSettings
-from src.dq_suite.validation import ValidationRunner, run, validate
+from src.dq_suite.validation import ValidationRunner
 
 
 @pytest.fixture
@@ -41,6 +40,7 @@ class TestValidationRunner:
     - _get_or_add_checkpoint
     - run
     """
+
     def test_initialisation_with_none_valued_validation_settings_raises_value_error(
         self,
     ):
@@ -128,9 +128,9 @@ class TestValidationRunner:
 
 class TestValidate:
     def test_validate(self):
-        validate
+        pass
 
 
 class TestRun:
     def test_run(self):
-        run
+        pass

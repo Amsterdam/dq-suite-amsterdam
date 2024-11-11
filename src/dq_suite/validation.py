@@ -230,7 +230,9 @@ class ValidationRunner:
         if self.ms_teams_webhook is not None:
             self._add_microsoft_teams_notification_to_action_list()
 
-    def _get_or_add_checkpoint(self) -> Checkpoint:  # pragma: no cover - only GX functions
+    def _get_or_add_checkpoint(
+        self,
+    ) -> Checkpoint:  # pragma: no cover - only GX functions
         try:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name
