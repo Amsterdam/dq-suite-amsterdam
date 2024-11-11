@@ -260,7 +260,7 @@ def validate(
     df: DataFrame,
     rules_dict: RulesDict,
     validation_settings_obj: ValidationSettings,
-) -> CheckpointResult:
+) -> CheckpointResult:  # pragma: no cover - only GX functions
     """
     Uses the rules_dict to populate an expectation suite, and applies these
     rules to a Spark Dataframe containing the data of interest. Returns the
@@ -297,7 +297,7 @@ def run(
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
-) -> None:
+) -> None:  # pragma: no cover - only GX functions
     """
     Main function for users of dq_suite.
 

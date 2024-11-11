@@ -29,8 +29,8 @@ def validation_runner_obj(validation_settings_obj):
 @pytest.mark.usefixtures("validation_runner_obj")
 class TestValidationRunner:
     """
-    Note: the following methods are not tested, because they consist entirely of
-    (a sequence of calls to) GX methods/functions:
+    Note: the following methods are not yet tested, because they consist
+    entirely of (a sequence of calls to) GX methods/functions:
     - _add_expectation_suite
     - add_expectations_to_suite
     - create_batch_definition
@@ -127,10 +127,20 @@ class TestValidationRunner:
 
 
 class TestValidate:
+    """
+    Note: this function is not yet tested, because it consists entirely of
+    (a sequence of calls to) GX methods/functions.
+    """
+
     def test_validate(self):
         pass
 
 
 class TestRun:
+    """
+    Note: this function is not yet tested, because it consists entirely of
+    (a sequence of calls to) GX methods/functions.
+    """
+
     def test_run(self):
         pass
