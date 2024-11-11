@@ -125,15 +125,6 @@ class TestValidationRunner:
             validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
 
-    def test_get_or_add_checkpoint(self, validation_runner_obj):
-        with patch.object(
-            target=great_expectations,
-            attribute="Checkpoint",
-        ) as create_checkpoint_mock:
-            # validation_runner_obj._get_or_add_checkpoint()
-            # create_checkpoint_mock.assert_called_once()
-            pass  # TODO: implement. How to mock the contents of try/except?
-
 
 class TestValidate:
     def test_validate(self):
