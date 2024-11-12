@@ -214,7 +214,7 @@ class ValidationRunner:
         self.action_list.append(
             MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
-                microsoft_teams_webhook=self.ms_teams_webhook,
+                teams_webhook=self.ms_teams_webhook,
                 notify_on=self.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
