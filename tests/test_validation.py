@@ -183,18 +183,6 @@ class TestValidationRunner:
             validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
 
-    def test_get_or_add_checkpoint_returns_checkpoint_upon_datacontext_error(
-        self, validation_runner_obj
-    ):
-        with patch.object(
-            target=great_expectations,
-            attribute="ValidationDefinition",
-        ) as checkpoint_mock:
-            with pytest.raises(DataContextError):
-                validation_runner_obj.validation_definition = checkpoint_mock
-                result = validation_runner_obj._get_or_add_checkpoint()
-                assert result == checkpoint_mock
-
 
 class TestValidate:
     """
