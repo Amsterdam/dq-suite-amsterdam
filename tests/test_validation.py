@@ -89,8 +89,9 @@ class TestValidationRunner:
         assert len(suites_list) == 1
         assert suites_list[0]["name"] == expected_expectation_suite_name
 
-    def test_get_nonexistent_gx_expectation_object_raises_attribute_error(self,
-                                                    validation_runner_obj):
+    def test_get_nonexistent_gx_expectation_object_raises_attribute_error(
+        self, validation_runner_obj
+    ):
         with pytest.raises(AttributeError):
             the_rule = Rule(
                 rule_name="NonExistentExpectation",
@@ -98,7 +99,7 @@ class TestValidationRunner:
             )
 
             validation_runner_obj._get_gx_expectation_object(
-                    validation_rule=the_rule
+                validation_rule=the_rule
             )
 
     def test_get_gx_expectation_object(self, validation_runner_obj):
@@ -121,19 +122,24 @@ class TestValidationRunner:
             == the_rule["parameters"]["value_set"]
         )
 
-    def test_add_expectations_to_suite_works_as_expected(self,
-                                                    validation_runner_obj):
-        validation_rules_list = [Rule(
-            rule_name="ExpectColumnDistinctValuesToEqualSet",
-            parameters={"column": "the_column", "value_set": [1, 2, 3]},
-        )]
+    def test_add_expectations_to_suite_works_as_expected(
+        self, validation_runner_obj
+    ):
+        validation_rules_list = [
+            Rule(
+                rule_name="ExpectColumnDistinctValuesToEqualSet",
+                parameters={"column": "the_column", "value_set": [1, 2, 3]},
+            )
+        ]
         validation_runner_obj.add_expectations_to_suite(
-            validation_rules_list=validation_rules_list)
+            validation_rules_list=validation_rules_list
+        )
         suites_list = list(validation_runner_obj.data_context.suites.all())
         expectations_list = suites_list[0]["expectations"]
         assert len(expectations_list) == 1
-        assert isinstance(expectations_list[0], ExpectColumnDistinctValuesToEqualSet)
-
+        assert isinstance(
+            expectations_list[0], ExpectColumnDistinctValuesToEqualSet
+        )
 
     def test_create_action_list_with_slack_webhook(self, validation_runner_obj):
         with patch.object(
