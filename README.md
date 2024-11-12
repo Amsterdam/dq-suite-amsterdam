@@ -50,7 +50,7 @@ dq_suite.validation.run(
 See the documentation of `dq_suite.validation.run` for what other parameters can be passed.
 
 
-# Known exceptions
+# Known exceptions / issues
 - The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. 
 Using a Shared Compute Cluster will result in an error, as it does not have the permissions that Great Expectations requires.
 
@@ -60,7 +60,7 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 
 - At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project.
 
-- The run_time is defined separately from Great Expectations in df_checker. We plan on fixing it when Great Expectations has documented how to access it from the RunIdentifier object.
+- The `run_time` value is defined separately from Great Expectations in `validation.py`. We plan on fixing this when Great Expectations has documented how to access it from the RunIdentifier object.
 
 
 # Updates
