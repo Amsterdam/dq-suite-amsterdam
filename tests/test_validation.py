@@ -1,8 +1,6 @@
 from unittest.mock import Mock, patch
 
-import great_expectations
 import pytest
-from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 
@@ -65,9 +63,10 @@ class TestValidationRunner:
             )
             set_data_context_mock_method.assert_called_once()
 
-    def test_get_or_add_expectation_suite_creates_expectationsuite_upon_datacontext_error(
+    def test_get_or_add_expectation_suite_works_as_expected(
         self, validation_runner_obj
     ):
+        # Initially, no suites exist in the data context
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 0
 
@@ -79,11 +78,13 @@ class TestValidationRunner:
             expected_expectation_suite_name
         )
         validation_runner_obj._get_or_add_expectation_suite()
+
+        # Now, there should be 1 suite
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
         assert suites_list[0]["name"] == expected_expectation_suite_name
 
-        # Get the existing validation suite
+        # Calling the function again should return the existing validation suite
         validation_runner_obj._get_or_add_expectation_suite()
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
@@ -141,6 +142,19 @@ class TestValidationRunner:
             expectations_list[0], ExpectColumnDistinctValuesToEqualSet
         )
 
+    def test_create_batch_definition(self, validation_runner_obj):
+        # Initially, no batch definitions exist in the data context
+
+        # validation_runner_obj.create_batch_definition()
+
+        # TODO: mock use of spark for
+        #  data_context.data_sources.add_or_update_spark
+        pass
+
+    def test_create_validation_definition(self, validation_runner_obj):
+        # TODO: mock use of batch_definition for ValidationDefinition
+        pass
+
     def test_create_action_list_with_slack_webhook(self, validation_runner_obj):
         with patch.object(
             target=ValidationRunner,
@@ -182,6 +196,10 @@ class TestValidationRunner:
             validation_runner_obj.ms_teams_webhook = None
             validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
+
+    def test_get_or_add_checkpoint(self, validation_runner_obj):
+        # TODO: mock use of ValidationDefinition for Checkpoint
+        pass
 
 
 class TestValidate:
