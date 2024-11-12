@@ -108,7 +108,7 @@ class ValidationRunner:
 
         self._set_data_context()
 
-    def _set_data_context(self):  # pragma: no cover - only GX functions
+    def _set_data_context(self):
         self.data_context = get_context(
             project_config=DataContextConfig(
                 store_backend_defaults=InMemoryStoreBackendDefaults(),
@@ -116,10 +116,7 @@ class ValidationRunner:
             )
         )
 
-    def _get_or_add_expectation_suite(
-        self,
-    ) -> ExpectationSuite:  # pragma: no cover - only
-        # GX functions
+    def _get_or_add_expectation_suite(self) -> ExpectationSuite:
         try:  # If expectation_suite_name exists in data_context
             suite = self.data_context.suites.get(
                 name=self.expectation_suite_name
@@ -145,9 +142,7 @@ class ValidationRunner:
         gx_expectation_parameters: dict = validation_rule["parameters"]
         return gx_expectation_class(**gx_expectation_parameters)
 
-    def add_expectations_to_suite(
-        self, validation_rules_list: List[Rule]
-    ):  # pragma: no cover - only GX functions
+    def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
         expectation_suite_obj = self._get_or_add_expectation_suite()  # Add if
         # it does not exist
 
@@ -200,7 +195,7 @@ class ValidationRunner:
 
     def _add_slack_notification_to_action_list(
         self,
-    ):  # pragma: no cover - only GX functions
+    ):
         self.action_list.append(
             SlackNotificationAction(
                 name="send_slack_notification",
@@ -215,7 +210,7 @@ class ValidationRunner:
 
     def _add_microsoft_teams_notification_to_action_list(
         self,
-    ):  # pragma: no cover - only GX functions
+    ):
         self.action_list.append(
             MicrosoftTeamsNotificationAction(
                 name="send_ms_teams_notification",
