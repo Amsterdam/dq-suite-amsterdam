@@ -116,13 +116,22 @@ class ValidationRunner:
             )
         )
 
-    def _add_expectation_suite(self):  # pragma: no cover - only GX functions
+    def _get_or_add_expectation_suite(
+        self,
+    ) -> ExpectationSuite:  # pragma: no cover - only
+        # GX functions
         try:  # If expectation_suite_name exists in data_context
-            _ = self.data_context.suites.get(name=self.expectation_suite_name)
+            suite = self.data_context.suites.get(
+                name=self.expectation_suite_name
+            )
         except DataContextError:
             self.data_context.suites.add(
                 suite=ExpectationSuite(name=self.expectation_suite_name)
             )
+            suite = self.data_context.suites.get(
+                name=self.expectation_suite_name
+            )
+        return suite
 
     @staticmethod
     def _get_gx_expectation_object(validation_rule: Rule):
@@ -139,10 +148,8 @@ class ValidationRunner:
     def add_expectations_to_suite(
         self, validation_rules_list: List[Rule]
     ):  # pragma: no cover - only GX functions
-        self._add_expectation_suite()  # Add if it does not exist
-        expectation_suite_obj = self.data_context.suites.get(
-            name=self.expectation_suite_name
-        )
+        expectation_suite_obj = self._get_or_add_expectation_suite()  # Add if
+        # it does not exist
 
         for validation_rule in validation_rules_list:
             gx_expectation_obj = self._get_gx_expectation_object(

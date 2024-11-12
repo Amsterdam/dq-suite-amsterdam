@@ -1,6 +1,8 @@
 from unittest.mock import Mock, patch
 
+import great_expectations
 import pytest
+from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 
@@ -63,6 +65,30 @@ class TestValidationRunner:
             )
             set_data_context_mock_method.assert_called_once()
 
+    def test_get_or_add_expectation_suite_creates_expectationsuite_upon_datacontext_error(
+        self, validation_runner_obj
+    ):
+        suites_list = list(validation_runner_obj.data_context.suites.all())
+        assert len(suites_list) == 0
+
+        # Create a new validation suite
+        expected_expectation_suite_name = (
+            "previously_undefined_validation_suite"
+        )
+        validation_runner_obj.expectation_suite_name = (
+            expected_expectation_suite_name
+        )
+        validation_runner_obj._get_or_add_expectation_suite()
+        suites_list = list(validation_runner_obj.data_context.suites.all())
+        assert len(suites_list) == 1
+        assert suites_list[0]["name"] == expected_expectation_suite_name
+
+        # Get the existing validation suite
+        validation_runner_obj._get_or_add_expectation_suite()
+        suites_list = list(validation_runner_obj.data_context.suites.all())
+        assert len(suites_list) == 1
+        assert suites_list[0]["name"] == expected_expectation_suite_name
+
     def test_get_gx_expectation_object(self, validation_runner_obj):
         the_rule = Rule(
             rule_name="ExpectColumnDistinctValuesToEqualSet",
@@ -124,6 +150,18 @@ class TestValidationRunner:
             validation_runner_obj.ms_teams_webhook = None
             validation_runner_obj._create_action_list()
             add_ms_teams_action_mock_method.assert_not_called()
+
+    def test_get_or_add_checkpoint_returns_checkpoint_upon_datacontext_error(
+        self, validation_runner_obj
+    ):
+        with patch.object(
+            target=great_expectations,
+            attribute="ValidationDefinition",
+        ) as checkpoint_mock:
+            with pytest.raises(DataContextError):
+                validation_runner_obj.validation_definition = checkpoint_mock
+                result = validation_runner_obj._get_or_add_checkpoint()
+                assert result == checkpoint_mock
 
 
 class TestValidate:
