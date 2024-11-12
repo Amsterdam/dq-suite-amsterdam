@@ -121,6 +121,20 @@ class TestValidationRunner:
             == the_rule["parameters"]["value_set"]
         )
 
+    def test_add_expectations_to_suite_works_as_expected(self,
+                                                    validation_runner_obj):
+        validation_rules_list = [Rule(
+            rule_name="ExpectColumnDistinctValuesToEqualSet",
+            parameters={"column": "the_column", "value_set": [1, 2, 3]},
+        )]
+        validation_runner_obj.add_expectations_to_suite(
+            validation_rules_list=validation_rules_list)
+        suites_list = list(validation_runner_obj.data_context.suites.all())
+        expectations_list = suites_list[0]["expectations"]
+        assert len(expectations_list) == 1
+        assert isinstance(expectations_list[0], ExpectColumnDistinctValuesToEqualSet)
+
+
     def test_create_action_list_with_slack_webhook(self, validation_runner_obj):
         with patch.object(
             target=ValidationRunner,
