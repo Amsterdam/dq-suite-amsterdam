@@ -89,6 +89,18 @@ class TestValidationRunner:
         assert len(suites_list) == 1
         assert suites_list[0]["name"] == expected_expectation_suite_name
 
+    def test_get_nonexistent_gx_expectation_object_raises_attribute_error(self,
+                                                    validation_runner_obj):
+        with pytest.raises(AttributeError):
+            the_rule = Rule(
+                rule_name="NonExistentExpectation",
+                parameters={"column": "the_column", "value_set": [1, 2, 3]},
+            )
+
+            validation_runner_obj._get_gx_expectation_object(
+                    validation_rule=the_rule
+            )
+
     def test_get_gx_expectation_object(self, validation_runner_obj):
         the_rule = Rule(
             rule_name="ExpectColumnDistinctValuesToEqualSet",
