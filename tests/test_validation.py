@@ -1,6 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from great_expectations.checkpoint import (
+    MicrosoftTeamsNotificationAction,
+    SlackNotificationAction,
+)
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 
@@ -156,46 +160,61 @@ class TestValidationRunner:
         pass
 
     def test_create_action_list_with_slack_webhook(self, validation_runner_obj):
-        with patch.object(
-            target=ValidationRunner,
-            attribute="_add_slack_notification_to_action_list",
-        ) as add_slack_action_mock_method:
-            validation_runner_obj.slack_webhook = "the_slack_webhook"
-            validation_runner_obj._create_action_list()
-            add_slack_action_mock_method.assert_called_once()
+        # Initially, there are no actions in the action_list parameter
+        assert validation_runner_obj.action_list is None
+
+        validation_runner_obj.slack_webhook = "the_slack_webhook"
+        validation_runner_obj._create_action_list()
+
+        # Now there should be 1 SlackNotificationAction in the action_list
+        assert isinstance(validation_runner_obj.action_list, list)
+        assert len(validation_runner_obj.action_list) == 1
+        assert isinstance(
+            validation_runner_obj.action_list[0], SlackNotificationAction
+        )
 
     def test_create_action_list_without_slack_webhook(
         self, validation_runner_obj
     ):
-        with patch.object(
-            target=ValidationRunner,
-            attribute="_add_slack_notification_to_action_list",
-        ) as add_slack_action_mock_method:
-            validation_runner_obj.slack_webhook = None
-            validation_runner_obj._create_action_list()
-            add_slack_action_mock_method.assert_not_called()
+        # Initially, there are no actions in the action_list parameter
+        assert validation_runner_obj.action_list is None
+
+        validation_runner_obj.slack_webhook = None
+        validation_runner_obj._create_action_list()
+
+        # Now there should still be no actions in the action_list parameter
+        assert isinstance(validation_runner_obj.action_list, list)
+        assert len(validation_runner_obj.action_list) == 0
 
     def test_create_action_list_with_ms_teams_webhook(
         self, validation_runner_obj
     ):
-        with patch.object(
-            target=ValidationRunner,
-            attribute="_add_microsoft_teams_notification_to_action_list",
-        ) as add_ms_teams_action_mock_method:
-            validation_runner_obj.ms_teams_webhook = "the_ms_teams_webhook"
-            validation_runner_obj._create_action_list()
-            add_ms_teams_action_mock_method.assert_called_once()
+        # Initially, there are no actions in the action_list parameter
+        assert validation_runner_obj.action_list is None
+
+        validation_runner_obj.ms_teams_webhook = "the_ms_teams_webhook"
+        validation_runner_obj._create_action_list()
+
+        # Now there should be 1 MicrosoftTeamsNotificationAction in the action_list
+        assert isinstance(validation_runner_obj.action_list, list)
+        assert len(validation_runner_obj.action_list) == 1
+        assert isinstance(
+            validation_runner_obj.action_list[0],
+            MicrosoftTeamsNotificationAction,
+        )
 
     def test_create_action_list_without_ms_teams_webhook(
         self, validation_runner_obj
     ):
-        with patch.object(
-            target=ValidationRunner,
-            attribute="_add_microsoft_teams_notification_to_action_list",
-        ) as add_ms_teams_action_mock_method:
-            validation_runner_obj.ms_teams_webhook = None
-            validation_runner_obj._create_action_list()
-            add_ms_teams_action_mock_method.assert_not_called()
+        # Initially, there are no actions in the action_list parameter
+        assert validation_runner_obj.action_list is None
+
+        validation_runner_obj.ms_teams_webhook = None
+        validation_runner_obj._create_action_list()
+
+        # Now there should still be no actions in the action_list parameter
+        assert isinstance(validation_runner_obj.action_list, list)
+        assert len(validation_runner_obj.action_list) == 0
 
     def test_get_or_add_checkpoint(self, validation_runner_obj):
         # TODO: mock use of ValidationDefinition for Checkpoint
