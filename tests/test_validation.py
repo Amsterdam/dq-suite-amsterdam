@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from great_expectations.checkpoint import (
@@ -58,14 +58,12 @@ class TestValidationRunner:
             assert ValidationRunner(validation_settings_obj=123)
 
     def test_initialisation_works_as_expected(self, validation_settings_obj):
-        with patch.object(
-            target=ValidationRunner,
-            attribute="_set_data_context",
-        ) as set_data_context_mock_method:
-            validation_runner_obj = ValidationRunner(
-                validation_settings_obj=validation_settings_obj
-            )
-            set_data_context_mock_method.assert_called_once()
+        validation_runner_obj = ValidationRunner(
+            validation_settings_obj=validation_settings_obj
+        )
+
+        # After setting all attribute values, a data_context should be created
+        assert validation_runner_obj.data_context is not None
 
     def test_get_or_add_expectation_suite_works_as_expected(
         self, validation_runner_obj
@@ -81,15 +79,15 @@ class TestValidationRunner:
         validation_runner_obj.expectation_suite_name = (
             expected_expectation_suite_name
         )
-        validation_runner_obj._get_or_add_expectation_suite()
+        _ = validation_runner_obj._get_or_add_expectation_suite()
 
-        # Now, there should be 1 suite
+        # Now, there should be 1 suite in the data context
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
         assert suites_list[0]["name"] == expected_expectation_suite_name
 
         # Calling the function again should return the existing validation suite
-        validation_runner_obj._get_or_add_expectation_suite()
+        _ = validation_runner_obj._get_or_add_expectation_suite()
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
         assert suites_list[0]["name"] == expected_expectation_suite_name
