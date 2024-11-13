@@ -79,18 +79,19 @@ class TestValidationRunner:
         validation_runner_obj.expectation_suite_name = (
             expected_expectation_suite_name
         )
-        _ = validation_runner_obj._get_or_add_expectation_suite()
+        first_suite = validation_runner_obj._get_or_add_expectation_suite()
 
         # Now, there should be 1 suite in the data context
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
-        assert suites_list[0]["name"] == expected_expectation_suite_name
+        assert suites_list[0] == first_suite
 
         # Calling the function again should return the existing validation suite
-        _ = validation_runner_obj._get_or_add_expectation_suite()
+        second_suite = validation_runner_obj._get_or_add_expectation_suite()
         suites_list = list(validation_runner_obj.data_context.suites.all())
         assert len(suites_list) == 1
-        assert suites_list[0]["name"] == expected_expectation_suite_name
+        assert suites_list[0] == first_suite
+        assert first_suite == second_suite
 
     def test_get_nonexistent_gx_expectation_object_raises_attribute_error(
         self, validation_runner_obj
