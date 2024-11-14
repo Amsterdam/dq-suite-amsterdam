@@ -1,9 +1,12 @@
 import json
+from unittest.mock import patch
 
 import pytest
 from tests import TEST_DATA_FOLDER
 
+from src.dq_suite import validation_input
 from src.dq_suite.validation_input import (
+    filter_validation_dict_by_table_name,
     get_data_quality_rules_dict,
     read_data_quality_rules_from_json,
     validate_data_quality_rules_dict,
@@ -38,6 +41,18 @@ def data_quality_rules_json_string(real_json_file_path):
 @pytest.fixture
 def data_quality_rules_dict(data_quality_rules_json_string):
     return json.loads(data_quality_rules_json_string)
+
+
+@pytest.fixture
+def validated_data_quality_rules_dict(data_quality_rules_dict):
+    """
+    Note: the normal flow validates the data quality rules dict before
+    using it - hence this fixture.
+    """
+    validate_data_quality_rules_dict(
+        data_quality_rules_dict=data_quality_rules_dict
+    )
+    return data_quality_rules_dict
 
 
 @pytest.fixture
@@ -88,6 +103,18 @@ class TestValidateDataQualityRulesDict:
             validate_data_quality_rules_dict(
                 data_quality_rules_dict="wrong_type"
             )
+
+    def test_rules_dict_without_rules_field_results_in_table_schema_validation(
+        self, data_quality_rules_dict
+    ):
+        with patch.object(
+            target=validation_input,
+            attribute="validate_table_schema",
+        ) as validate_table_schema_mock:
+            validate_data_quality_rules_dict(
+                data_quality_rules_dict=data_quality_rules_dict
+            )
+            validate_table_schema_mock.assert_called_once()
 
     def test_validate_data_quality_rules_dict(self, data_quality_rules_dict):
         validate_data_quality_rules_dict(
@@ -314,3 +341,27 @@ class TestGetDataQualityRulesDict:
             file_path=real_json_file_path
         )
         assert isinstance(data_quality_rules_dict, dict)
+
+
+@pytest.mark.usefixtures("validated_data_quality_rules_dict")
+class TestFilterValidationDictByTableName:
+    def test_filter_validation_dict_by_table_name_returns_none_for_nonexistent_table(
+        self, validated_data_quality_rules_dict
+    ):
+        the_nonexistent_table_dict = filter_validation_dict_by_table_name(
+            validation_dict=validated_data_quality_rules_dict,
+            table_name="the_nonexistent_table",
+        )
+        assert the_nonexistent_table_dict is None
+
+    def test_filter_validation_dict_by_table_name(
+        self, validated_data_quality_rules_dict
+    ):
+        the_table_dict = filter_validation_dict_by_table_name(
+            validation_dict=validated_data_quality_rules_dict,
+            table_name="the_table",
+        )
+        assert the_table_dict is not None
+        assert "unique_identifier" in the_table_dict
+        assert "table_name" in the_table_dict
+        assert "rules" in the_table_dict

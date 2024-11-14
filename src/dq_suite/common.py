@@ -1,14 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal
+from typing import Literal
 
 from delta.tables import *
-from great_expectations import ExpectationSuite, get_context
-from great_expectations.data_context import AbstractDataContext
-from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    InMemoryStoreBackendDefaults,
-)
-from great_expectations.exceptions import DataContextError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
@@ -114,7 +107,7 @@ class DataQualityRulesDict:
     tables: RulesDictList
 
     def __post_init__(self):
-        if not isinstance(self.dataset, dict):
+        if not isinstance(self.dataset, DatasetDict):
             raise TypeError("'dataset' should be DatasetDict")
 
         if not isinstance(self.tables, list):
@@ -128,6 +121,7 @@ class DataQualityRulesDict:
         raise KeyError(key)
 
 
+# TODO: replace by df.isEmpty()
 def is_empty_dataframe(df: DataFrame) -> bool:
     return len(df.take(1)) == 0
 
@@ -207,50 +201,32 @@ def merge_df_with_unity_table(
     ).execute()
 
 
-def get_data_context() -> AbstractDataContext:  # pragma: no cover - part of GX
-    return get_context(
-        project_config=DataContextConfig(
-            store_backend_defaults=InMemoryStoreBackendDefaults(),
-            analytics_enabled=False,
-        )
-    )
-
-
 @dataclass()
 class ValidationSettings:
     """
+    Contains all user input required for running a validation. Typically,
+    this means catalog, table and validation names and a SparkSession object.
+
     spark_session: SparkSession object
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
-    check_name: name of data quality check
+    validation_name: name of data quality check
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
-    data_context: a data context object
-    expectation_suite_name: name of the GX expectation suite
-    checkpoint_name: name of the GX checkpoint
-    run_name: name of the data quality run
-    send_slack_notification: indicator to use GX's built-in Slack
-    notification action
-    slack_webhook: webhook, recommended to store in key vault
-    send_ms_teams_notification: indicator to use GX's built-in Microsoft
-    Teams notification action
-    ms_teams_webhook: webhook, recommended to store in key vault
+    slack_webhook: webhook, recommended to store in key vault. If not None,
+        a Slack notification will be sent
+    ms_teams_webhook: webhook, recommended to store in key vault. If not None,
+        an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
-    "success" or "failure"
+        "success" or "failure"
     """
 
     spark_session: SparkSession
     catalog_name: str
     table_name: str
-    check_name: str
+    validation_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
-    data_context: AbstractDataContext | None = None
-    expectation_suite_name: str | None = None
-    checkpoint_name: str | None = None
-    run_name: str | None = None
-    send_slack_notification: bool = False
     slack_webhook: str | None = None
-    send_ms_teams_notification: bool = False
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
 
@@ -261,40 +237,50 @@ class ValidationSettings:
             raise TypeError("'catalog_name' should be of type str")
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
-        if not isinstance(self.check_name, str):
-            raise TypeError("'check_name' should be of type str")
+        if not isinstance(self.validation_name, str):
+            raise TypeError("'validation_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
+        if not isinstance(self.slack_webhook, str):
+            if self.slack_webhook is not None:
+                raise TypeError("'slack_webhook' should be of type str")
+        if not isinstance(self.ms_teams_webhook, str):
+            if self.ms_teams_webhook is not None:
+                raise TypeError("'ms_teams_webhook' should be of type str")
         if self.notify_on not in ["all", "success", "failure"]:
             raise ValueError(
                 "'notify_on' should be equal to 'all', 'success' or 'failure'"
             )
+        self._initialise_or_update_name_parameters()
 
-    def initialise_or_update_attributes(self):  # pragma: no cover - complex
-        # function
-        self._set_data_context()
-
-        # TODO/check: do we want to allow for custom names via parameters?
+    def _initialise_or_update_name_parameters(self):
+        # TODO/check: nearly all names are related to 'validation_name' - do we want
+        #  to allow for custom names via parameters?
         self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
-
-        # Finally, add/retrieve the suite to/from the data context
-        try:
-            self.data_context.suites.get(name=self.expectation_suite_name)
-        except DataContextError:
-            self.data_context.suites.add(
-                suite=ExpectationSuite(name=self.expectation_suite_name)
-            )
-
-    def _set_data_context(self):  # pragma: no cover - uses part of GX
-        self.data_context = get_data_context()
+        self._set_data_source_name()
+        self._set_validation_definition_name()
+        self._set_batch_definition_name()
 
     def _set_expectation_suite_name(self):
-        self.expectation_suite_name = f"{self.check_name}_expectation_suite"
+        self._expectation_suite_name = (
+            f"{self.validation_name}_expectation_suite"
+        )
 
     def _set_checkpoint_name(self):
-        self.checkpoint_name = f"{self.check_name}_checkpoint"
+        self._checkpoint_name = f"{self.validation_name}_checkpoint"
 
     def _set_run_name(self):
-        self.run_name = f"%Y%m%d-%H%M%S-{self.check_name}"
+        self._run_name = f"%Y%m%d-%H%M%S-{self.validation_name}"
+
+    def _set_data_source_name(self):
+        self._data_source_name = f"spark_data_source_{self.validation_name}"
+
+    def _set_validation_definition_name(self):
+        self._validation_definition_name = (
+            f"{self.validation_name}_validation_definition"
+        )
+
+    def _set_batch_definition_name(self):
+        self._batch_definition_name = f"{self.validation_name}_batch_definition"

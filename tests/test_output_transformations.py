@@ -309,6 +309,11 @@ class TestExtractTableData:
                 "tabelNaam": "the_other_table",
                 "uniekeSleutel": "other_id",
             },
+            {
+                "bronTabelId": "the_dataset_the_third_table_name",
+                "tabelNaam": "the_third_table_name",
+                "uniekeSleutel": "id",
+            },
         ]
         assert test_output == expected_result
 

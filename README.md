@@ -26,28 +26,31 @@ pip install dq-suite-amsterdam
 
 
 3. Get ready to validate your first table. To do so, define
-- `catalog_name` as the name of your catalog
-- `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file
 - `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
 - `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
+- `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
+- `catalog_name` as the name of your catalog ('dpxx_dev' or 'dpxx_prd')
+- `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file at `dq_rule_json_path`
+
 
 
 4. Finally, perform the validation by running
 ```python
 import dq_suite
 
-validation_settings_obj = dq_suite.ValidationSettings(spark_session=spark, 
-                                                      catalog_name=catalog_name,
-                                                      table_name=table_name,
-                                                      check_name="name_of_check_goes_here")
-dq_suite.run(json_path=dq_rule_json_path, df=df, validation_settings_obj=validation_settings_obj)
+dq_suite.validation.run(
+    json_path=dq_rule_json_path,
+    df=df, 
+    spark_session=spark,
+    catalog_name=catalog_name,
+    table_name=table_name,
+    validation_name="my_validation_name",
+)
 ```
-Note: Looping over multiple data frames may require a redefinition of the `json_path` and `validation_settings` variables. 
-
-See the documentation of `ValidationSettings` for what other parameters can be passed upon intialisation.
+See the documentation of `dq_suite.validation.run` for what other parameters can be passed.
 
 
-# Known exceptions
+# Known exceptions / issues
 - The functions can run on Databricks using a Personal Compute Cluster or using a Job Cluster. 
 Using a Shared Compute Cluster will result in an error, as it does not have the permissions that Great Expectations requires.
 
@@ -57,7 +60,7 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 
 - At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project.
 
-- The run_time is defined separately from Great Expectations in df_checker. We plan on fixing it when Great Expectations has documented how to access it from the RunIdentifier object.
+- The `run_time` value is defined separately from Great Expectations in `validation.py`. We plan on fixing this when Great Expectations has documented how to access it from the RunIdentifier object.
 
 
 # Updates

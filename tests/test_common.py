@@ -139,10 +139,6 @@ class TestDataQualityRulesDict:
     dataset_obj = DatasetDict(
         name=expected_dataset_name, layer=expected_layer_name
     )
-    dataset_obj = {"name": "the_dataset", "layer": "brons"}
-    data_quality_rules_dict = DataQualityRulesDict(
-        dataset=dataset_obj, tables=expected_rules_dict_obj_list
-    )
 
     def test_initialisation_with_wrong_typed_dataset_raises_type_error(self):
         with pytest.raises(TypeError):
@@ -161,21 +157,30 @@ class TestDataQualityRulesDict:
 
     def test_initialisation_with_wrong_typed_tables_raises_type_error(self):
         with pytest.raises(TypeError):
-            assert DataQualityRulesDict(
-                dataset={"name": "the_dataset", "layer": "brons"}, tables=123
-            )
+            assert DataQualityRulesDict(dataset=self.dataset_obj, tables=123)
 
     def test_get_value_from_data_quality_rules_dict_by_existing_key(self):
+        data_quality_rules_dict = DataQualityRulesDict(
+            dataset=self.dataset_obj, tables=self.expected_rules_dict_obj_list
+        )
+        assert data_quality_rules_dict["dataset"] == self.dataset_obj
         assert (
-            self.data_quality_rules_dict["tables"]
+            data_quality_rules_dict["tables"]
             == self.expected_rules_dict_obj_list
         )
 
     def test_get_value_from_rule_dict_by_non_existing_key_raises_key_error(
         self,
     ):
+        data_quality_rules_dict = DataQualityRulesDict(
+            dataset=self.dataset_obj, tables=self.expected_rules_dict_obj_list
+        )
         with pytest.raises(KeyError):
-            assert self.data_quality_rules_dict["wrong_key"]
+            assert data_quality_rules_dict["wrong_key"]
+
+
+def test_is_empty_dataframe():
+    pass  # TODO: implement
 
 
 def test_get_full_table_name():
@@ -191,13 +196,25 @@ def test_get_full_table_name():
         )
 
 
+def test_enforce_column_order():
+    pass  # TODO: implement
+
+
+def test_enforce_schema():
+    pass  # TODO: implement
+
+
+def test_merge_df_with_unity_table():
+    pass  # TODO: implement
+
+
 class TestValidationSettings:
     spark_session_mock = Mock(spec=SparkSession)
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session_mock,
         catalog_name="the_catalog",
         table_name="the_table",
-        check_name="the_check",
+        validation_name="the_validation",
     )
 
     def test_initialisation_with_wrong_typed_spark_session_raises_type_error(
@@ -208,7 +225,7 @@ class TestValidationSettings:
                 spark_session=123,
                 catalog_name="the_catalog",
                 table_name="the_table",
-                check_name="the_check",
+                validation_name="the_validation",
             )
 
     def test_initialisation_with_wrong_typed_catalog_name_raises_type_error(
@@ -219,7 +236,7 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name=123,
                 table_name="the_table",
-                check_name="the_check",
+                validation_name="the_validation",
             )
 
     def test_initialisation_with_wrong_typed_table_name_raises_type_error(self):
@@ -228,41 +245,91 @@ class TestValidationSettings:
                 spark_session=self.spark_session_mock,
                 catalog_name="the_catalog",
                 table_name=123,
-                check_name="the_check",
+                validation_name="the_validation",
             )
 
-    def test_initialisation_with_wrong_typed_check_name_raises_type_error(self):
+    def test_initialisation_with_wrong_typed_validation_name_raises_type_error(
+        self,
+    ):
         with pytest.raises(TypeError):
             assert ValidationSettings(
                 spark_session=self.spark_session_mock,
                 catalog_name="the_catalog",
                 table_name="the_table",
-                check_name=123,
+                validation_name=123,
+            )
+
+    def test_initialisation_with_wrong_typed_data_context_root_dir_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation_name",
+                data_context_root_dir=123,
+            )
+
+    def test_initialisation_with_wrong_typed_slack_webhook_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation_name",
+                slack_webhook=123,
+            )
+
+    def test_initialisation_with_wrong_typed_ms_teams_webhook_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation_name",
+                ms_teams_webhook=123,
+            )
+
+    def test_initialisation_with_wrong_valued_notify_on_raises_value_error(
+        self,
+    ):
+        with pytest.raises(ValueError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation_name",
+                notify_on="haha_this_is_wrong",
             )
 
     def test_set_expectation_suite_name(self):
-        assert self.validation_settings_obj.expectation_suite_name is None
+        assert hasattr(self.validation_settings_obj, "_expectation_suite_name")
 
         self.validation_settings_obj._set_expectation_suite_name()
         assert (
-            self.validation_settings_obj.expectation_suite_name
-            == f"{self.validation_settings_obj.check_name}_expectation_suite"
+            self.validation_settings_obj._expectation_suite_name
+            == f"{self.validation_settings_obj.validation_name}_expectation_suite"
         )
 
     def test_set_checkpoint_name(self):
-        assert self.validation_settings_obj.checkpoint_name is None
+        assert hasattr(self.validation_settings_obj, "_checkpoint_name")
 
         self.validation_settings_obj._set_checkpoint_name()
         assert (
-            self.validation_settings_obj.checkpoint_name
-            == f"{self.validation_settings_obj.check_name}_checkpoint"
+            self.validation_settings_obj._checkpoint_name
+            == f"{self.validation_settings_obj.validation_name}_checkpoint"
         )
 
     def test_set_run_name(self):
-        assert self.validation_settings_obj.run_name is None
+        assert hasattr(self.validation_settings_obj, "_run_name")
 
         self.validation_settings_obj._set_run_name()
         assert (
-            self.validation_settings_obj.run_name
-            == f"%Y%m%d-%H%M%S-{self.validation_settings_obj.check_name}"
+            self.validation_settings_obj._run_name
+            == f"%Y%m%d-%H%M%S-{self.validation_settings_obj.validation_name}"
         )
