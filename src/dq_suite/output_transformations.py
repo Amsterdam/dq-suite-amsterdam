@@ -24,18 +24,28 @@ from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
 def snake_case_to_camel_case(snake_str):
+    """
+    Convert a snake_case string to a camelCase string. All DQ rules must be camelCase.
+    Example: "my_column" -> "myColumn
+    """
     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
 
 
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
+    """
+    Create an empty dataframe with the given schema.
+    """
     return spark_session.sparkContext.parallelize([]).toDF(schema)
 
 
 def list_of_dicts_to_df(
     list_of_dicts: List[dict], spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
+    """
+    Create a dataframe from a list of dictionaries.
+    """
     if not isinstance(list_of_dicts, list):
         raise TypeError("'list_of_dicts' should be of type 'list'")
     if len(list_of_dicts) == 0:
@@ -51,6 +61,9 @@ def construct_regel_id(
     df: DataFrame,
     output_columns_list: list[str],
 ) -> DataFrame:
+    """
+    Construct a regelId from the given dataframe. It is a combination of the regelNaam, regelParameters and bronTabelId.
+    """
     if not isinstance(output_columns_list, list):
         raise TypeError("'output_columns_list' should be of type 'list'")
     df_with_id = df.withColumn(
@@ -63,12 +76,18 @@ def construct_regel_id(
 
 
 def get_parameters_from_results(result: dict) -> list[dict]:
+    """
+    Get the parameters from the GX results.
+    """
     parameters = result["kwargs"]
     parameters.pop("batch_id", None)
     return parameters
 
 
 def get_target_attr_for_rule(result: dict) -> str:
+    """
+    Get the target attribute from the GX results. It will only return results for DQ rules applied to specific attributes.
+    """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
     else:
@@ -78,6 +97,9 @@ def get_target_attr_for_rule(result: dict) -> str:
 def get_unique_deviating_values(
     deviating_attribute_value: list[str],
 ) -> set[str]:
+    """
+    Get the unique deviating values from the GX results.
+    """
     unique_deviating_values = set()
     for waarde in deviating_attribute_value:
         if isinstance(waarde, dict):
@@ -93,6 +115,9 @@ def filter_df_based_on_deviating_values(
     attribute: str,
     df: DataFrame,
 ) -> DataFrame:
+    """
+    Filter the dataframe based on the deviating values. The output will contain only records that did not conform to the expectations set.
+    """
     if value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
@@ -111,6 +136,9 @@ def get_grouped_ids_per_deviating_value(
     filtered_df: DataFrame,
     unique_identifier: list[str],
 ) -> list[str]:
+    """
+    Get the grouped ids per deviating value.
+    """
     ids = (
         filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
     )
@@ -122,12 +150,18 @@ def get_grouped_ids_per_deviating_value(
 
 
 def extract_dataset_data(dq_rules_dict: dict) -> list[dict]:
+    """
+    Extract the dataset data from the dq_rules_dict.
+    """
     name = dq_rules_dict["dataset"]["name"]
     layer = dq_rules_dict["dataset"]["layer"]
     return [{"bronDatasetId": name, "medaillonLaag": layer}]
 
 
 def extract_table_data(dq_rules_dict: dict) -> list[dict]:
+    """
+    Extract the table data from the dq_rules_dict.
+    """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
     for param in dq_rules_dict["tables"]:
@@ -145,6 +179,9 @@ def extract_table_data(dq_rules_dict: dict) -> list[dict]:
 
 
 def extract_attribute_data(dq_rules_dict: dict) -> list[dict]:
+    """
+    Extract the attribute data from the dq_rules_dict.
+    """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
     used_ids = set()  # To keep track of used IDs
@@ -171,6 +208,9 @@ def extract_attribute_data(dq_rules_dict: dict) -> list[dict]:
 
 
 def extract_regel_data(dq_rules_dict: dict) -> list[dict]:
+    """
+    Extract the regel data from the dq_rules_dict.
+    """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
     for table in dq_rules_dict["tables"]:
@@ -199,6 +239,9 @@ def extract_validatie_data(
     run_time: datetime,
     dq_result: CheckpointDescriptionDict,
 ) -> list[dict]:
+    """
+    Extract the validatie data from the dq_rules_dict.
+    """
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
     tabel_id = f"{dataset_name}_{table_name}"
@@ -253,6 +296,9 @@ def extract_afwijking_data(
     run_time: datetime,
     dq_result: CheckpointDescriptionDict,
 ) -> list[dict]:
+    """
+    Extract the afwijking data from the dq_rules_dict.
+    """
     # "validation_results" is typed List[Dict[str, Any]] in GX
     dq_result = dq_result["validation_results"]
     tabel_id = f"{dataset_name}_{table_name}"
