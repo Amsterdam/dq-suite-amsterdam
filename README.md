@@ -36,9 +36,9 @@ pip install dq-suite-amsterdam
 
 4. Finally, perform the validation by running
 ```python
-import dq_suite
+from dq_suite.validation import run
 
-dq_suite.validation.run(
+run(
     json_path=dq_rule_json_path,
     df=df, 
     spark_session=spark,
