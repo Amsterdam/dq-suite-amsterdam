@@ -255,7 +255,7 @@ class ValidationRunner:
         self, batch_parameters: Dict[str, DataFrame]
     ) -> CheckpointResult:  # pragma: no cover - only GX functions
         checkpoint = self._get_or_add_checkpoint()
-        return checkpoint.run_validation(batch_parameters=batch_parameters)
+        return checkpoint.run(batch_parameters=batch_parameters)
 
 
 def validate(
