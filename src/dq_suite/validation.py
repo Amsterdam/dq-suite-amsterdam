@@ -255,7 +255,7 @@ class ValidationRunner:
         self, batch_parameters: Dict[str, DataFrame]
     ) -> CheckpointResult:  # pragma: no cover - only GX functions
         checkpoint = self._get_or_add_checkpoint()
-        return checkpoint.run(batch_parameters=batch_parameters)
+        return checkpoint.run_validation(batch_parameters=batch_parameters)
 
 
 def validate(
@@ -285,16 +285,16 @@ def validate(
     validation_runner_obj.create_validation_definition()
 
     print("***Starting validation run***")
-    return validation_runner_obj.run(batch_parameters={"dataframe": df})
+    return validation_runner_obj.run_validation(batch_parameters={"dataframe": df})
 
 
-def run(
+def run_validation(
     json_path: str,
     df: DataFrame,
     spark_session: SparkSession,
     catalog_name: str,
     table_name: str,
-    check_name: str,
+    validation_name: str,
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
@@ -324,7 +324,7 @@ def run(
         spark_session=spark_session,
         catalog_name=catalog_name,
         table_name=table_name,
-        validation_name=check_name,
+        validation_name=validation_name,
         data_context_root_dir=data_context_root_dir,
         slack_webhook=slack_webhook,
         ms_teams_webhook=ms_teams_webhook,
