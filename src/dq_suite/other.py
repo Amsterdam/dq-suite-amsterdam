@@ -12,7 +12,7 @@ import requests
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, lit
 
-from src.dq_suite.common import DataQualityRulesDict, Rule
+from .common import DataQualityRulesDict, Rule
 
 
 def get_table_name_list_from_unity_catalog(
@@ -89,17 +89,21 @@ def get_all_table_name_to_column_names_mappings(
     return list_of_all_table_name_to_column_names_mappings
 
 
-def export_schema_to_json_string(dataset: str, spark: SparkSession) -> str:
+def export_schema_to_json_string(dataset: str, spark: SparkSession, *table: str) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
     input form
 
     :param dataset: name of the schema in Unity Catalog
     :param spark: SparkSession object
+    :param table: name of the table in Unity Catalog
     :return: schema_json: JSON string with the schema of the required dataset
     """
 
-    table_name_list = get_table_name_list_from_unity_catalog(
+    if table:
+        table_name_list = table
+    else:
+        table_name_list = get_table_name_list_from_unity_catalog(
         dataset=dataset, spark=spark
     )
 
