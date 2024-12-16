@@ -16,7 +16,7 @@ from .common import DataQualityRulesDict, Rule
 
 
 def get_table_name_list_from_unity_catalog(
-    dataset: str, spark: SparkSession
+    spark: SparkSession, catalog: str, dataset: str
 ) -> List[str]:
     """
     Returns a list of all table names present in a schema (e.g. 'bronze') in
@@ -25,10 +25,11 @@ def get_table_name_list_from_unity_catalog(
     table_query = """
             SELECT table_name
             FROM system.information_schema.tables
-            WHERE table_schema = {dataset}
+            WHERE table_catalog = {catalog}
+            AND table_schema = {dataset}
         """
     return (
-        spark.sql(sqlQuery=table_query, dataset=dataset)
+        spark.sql(sqlQuery=table_query, catalog=catalog, dataset=dataset)
         .select("table_name")
         .rdd.flatMap(lambda x: x)
         .collect()
@@ -43,7 +44,10 @@ def create_dataframe_containing_all_column_names_in_tables(
     Query once, and (in a next step) loop multiple times over the dataframe.
     """
 
-    table_name_sql_string = "'" + "', '".join(table_name_list) + "'"
+    if len(table_name_list) > 1:
+        table_name_sql_string = "'" + "', '".join(table_name_list) + "'"
+    else:
+        table_name_sql_string = f"'{table_name_list[0]}'"
 
     column_query = f"""
                 SELECT column_name, table_name
@@ -89,22 +93,22 @@ def get_all_table_name_to_column_names_mappings(
     return list_of_all_table_name_to_column_names_mappings
 
 
-def export_schema_to_json_string(dataset: str, spark: SparkSession, *table: str) -> str:
+def export_schema_to_json_string(spark: SparkSession, catalog: str, dataset: str, table: str = None) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
     input form
 
-    :param dataset: name of the schema in Unity Catalog
     :param spark: SparkSession object
+    :param dataset: name of the schema in Unity Catalog
     :param table: name of the table in Unity Catalog
     :return: schema_json: JSON string with the schema of the required dataset
     """
 
     if table:
-        table_name_list = table
+        table_name_list = [table]
     else:
         table_name_list = get_table_name_list_from_unity_catalog(
-        dataset=dataset, spark=spark
+        spark=spark, catalog=catalog, dataset=dataset
     )
 
     df_columns_tables = create_dataframe_containing_all_column_names_in_tables(
