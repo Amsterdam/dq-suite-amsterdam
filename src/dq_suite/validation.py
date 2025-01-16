@@ -294,7 +294,7 @@ def run_validation(
     spark_session: SparkSession,
     catalog_name: str,
     table_name: str,
-    validation_name: str,
+    validation_name: str = "my_validation_name",
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,

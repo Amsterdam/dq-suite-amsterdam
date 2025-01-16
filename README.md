@@ -44,7 +44,6 @@ run_validation(
     spark_session=spark,
     catalog_name=catalog_name,
     table_name=table_name,
-    validation_name="my_validation_name",
 )
 ```
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
