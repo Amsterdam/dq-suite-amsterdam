@@ -294,11 +294,12 @@ def run_validation(
     spark_session: SparkSession,
     catalog_name: str,
     table_name: str,
-    validation_name: str,
+    validation_name: str = "my_validation_name",
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
+    write_results_to_unity_catalog: bool = False,
 ) -> None:  # pragma: no cover - only GX functions
     """
     Main function for users of dq_suite.
@@ -319,6 +320,7 @@ def run_validation(
         an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
+    write_results_to_unity_catalog: toggle writing of results to UC
     """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -360,15 +362,16 @@ def run_validation(
     run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
 
     # 3) ... and write results to unity catalog
-    write_non_validation_tables(
-        dq_rules_dict=validation_dict,
-        validation_settings_obj=validation_settings_obj,
-    )
-    write_validation_table(
-        validation_output=validation_output,
-        validation_settings_obj=validation_settings_obj,
-        df=df,
-        dataset_name=validation_dict["dataset"]["name"],
-        unique_identifier=rules_dict["unique_identifier"],
-        run_time=run_time,
-    )
+    if write_results_to_unity_catalog:
+        write_non_validation_tables(
+            dq_rules_dict=validation_dict,
+            validation_settings_obj=validation_settings_obj,
+        )
+        write_validation_table(
+            validation_output=validation_output,
+            validation_settings_obj=validation_settings_obj,
+            df=df,
+            dataset_name=validation_dict["dataset"]["name"],
+            unique_identifier=rules_dict["unique_identifier"],
+            run_time=run_time,
+        )
