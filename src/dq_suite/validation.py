@@ -299,6 +299,7 @@ def run_validation(
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
+    write_results_to_unity_catalog: bool = True,
 ) -> None:  # pragma: no cover - only GX functions
     """
     Main function for users of dq_suite.
@@ -360,15 +361,16 @@ def run_validation(
     run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
 
     # 3) ... and write results to unity catalog
-    write_non_validation_tables(
-        dq_rules_dict=validation_dict,
-        validation_settings_obj=validation_settings_obj,
-    )
-    write_validation_table(
-        validation_output=validation_output,
-        validation_settings_obj=validation_settings_obj,
-        df=df,
-        dataset_name=validation_dict["dataset"]["name"],
-        unique_identifier=rules_dict["unique_identifier"],
-        run_time=run_time,
-    )
+    if write_results_to_unity_catalog:
+        write_non_validation_tables(
+            dq_rules_dict=validation_dict,
+            validation_settings_obj=validation_settings_obj,
+        )
+        write_validation_table(
+            validation_output=validation_output,
+            validation_settings_obj=validation_settings_obj,
+            df=df,
+            dataset_name=validation_dict["dataset"]["name"],
+            unique_identifier=rules_dict["unique_identifier"],
+            run_time=run_time,
+        )
