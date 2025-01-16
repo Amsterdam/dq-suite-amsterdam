@@ -299,7 +299,7 @@ def run_validation(
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
-    write_results_to_unity_catalog: bool = True,
+    write_results_to_unity_catalog: bool = False,
 ) -> None:  # pragma: no cover - only GX functions
     """
     Main function for users of dq_suite.
