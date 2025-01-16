@@ -1,7 +1,7 @@
 # About dq-suite-amsterdam
 This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is an in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
 
-While the results of all validations are written to a `data_quality` schema in Unity Catalog, users can also choose to get notified via Slack or Microsoft Teams.
+By default, the results of all validations are written to a `data_quality` schema in Unity Catalog, which one has to create once per catalog via [this notebook](scripts/data_quality_tables.sql). Alternatively, one could suppress the writing to UC. Additionally, users can choose to get notified via Slack or Microsoft Teams.
 
 <img src="docs/wip_computer.jpg" width="20%" height="auto">
 
@@ -47,7 +47,7 @@ run_validation(
     validation_name="my_validation_name",
 )
 ```
-See the documentation of `dq_suite.validation.run` for what other parameters can be passed.
+See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 
 # Other functionalities
