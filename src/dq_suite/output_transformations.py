@@ -31,6 +31,15 @@ def snake_case_to_camel_case(snake_str):
     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
 
 
+def convert_param_values_to_float(parameters):
+    """
+    Convert parameter values for keys that are in the float_list to float.
+    """
+    float_list = ["min_value", "max_value"]
+    for k, v in parameters.items():
+        if k in float_list: v = round(float(v), 1)
+        parameters[k] = v
+
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
@@ -219,6 +228,7 @@ def extract_regel_data(dq_rules_dict: dict) -> list[dict]:
         for rule in table["rules"]:
             rule_name = rule["rule_name"]
             parameters = rule.get("parameters")
+            convert_param_values_to_float(parameters)
             norm = rule.get("norm", None)
             column = parameters.get("column", None)
             extracted_data.append(
