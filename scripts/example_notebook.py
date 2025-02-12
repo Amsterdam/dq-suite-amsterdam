@@ -56,7 +56,7 @@ run_validation(
     json_path=dq_rule_json_path,
     df=df,
     spark_session=spark,
-    catalog_name="dpd1_dev", # -----replace with your own catalog name
+    catalog_name="dpxx_dev", # -----replace with your own catalog name
     table_name="nyc_taxi",
     validation_name="dq_workshop",
 )
