@@ -300,7 +300,7 @@ def run_validation(
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
     write_results_to_unity_catalog: bool = True,
-) -> None:  # pragma: no cover - only GX functions
+) -> CheckpointResult:  # pragma: no cover - only GX functions
     """
     Main function for users of dq_suite.
 
@@ -375,3 +375,5 @@ def run_validation(
             unique_identifier=rules_dict["unique_identifier"],
             run_time=run_time,
         )
+
+    return checkpoint_result
