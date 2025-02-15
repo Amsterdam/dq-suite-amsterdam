@@ -140,6 +140,7 @@ class ValidationRunner:
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
 
         gx_expectation_parameters: dict = validation_rule["parameters"]
+        gx_expectation_parameters["meta"] = {"name": f"testing {gx_expectation_name}"}
         return gx_expectation_class(**gx_expectation_parameters)
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
