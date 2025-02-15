@@ -131,7 +131,7 @@ class ValidationRunner:
         return suite
 
     @staticmethod
-    def _get_gx_expectation_object(validation_rule: Rule):
+    def _get_gx_expectation_object(validation_rule: Rule, table_name: str):
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
@@ -140,7 +140,11 @@ class ValidationRunner:
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
 
         gx_expectation_parameters: dict = validation_rule["parameters"]
-        gx_expectation_parameters["meta"] = {"name": f"testing {gx_expectation_name}"}
+        if "column" not in gx_expectation_parameters.keys():
+            gx_expectation_parameters["column"] = None
+        expectation_meta_data_identifier = \
+            f"{table_name}_{gx_expectation_parameters['column']}_{gx_expectation_name}"
+        gx_expectation_parameters["meta"] = {"identifier": expectation_meta_data_identifier}
         return gx_expectation_class(**gx_expectation_parameters)
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
@@ -149,7 +153,8 @@ class ValidationRunner:
 
         for validation_rule in validation_rules_list:
             gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule
+                validation_rule=validation_rule,
+                table_name=self.table_name
             )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
