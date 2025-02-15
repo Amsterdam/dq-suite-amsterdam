@@ -142,9 +142,12 @@ class ValidationRunner:
         gx_expectation_parameters: dict = validation_rule["parameters"]
         if "column" not in gx_expectation_parameters.keys():
             gx_expectation_parameters["column"] = None
-        expectation_meta_data_identifier = \
-            f"{table_name}_{gx_expectation_parameters['column']}_{gx_expectation_name}"
-        gx_expectation_parameters["meta"] = {"identifier": expectation_meta_data_identifier}
+
+        gx_expectation_parameters["meta"] = {
+            "table_name": table_name,
+            "column_name": gx_expectation_parameters['column'],
+            "expectation_name": gx_expectation_name
+        }
         return gx_expectation_class(**gx_expectation_parameters)
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
