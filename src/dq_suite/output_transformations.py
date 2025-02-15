@@ -37,8 +37,10 @@ def convert_param_values_to_float(parameters):
     """
     float_list = ["min_value", "max_value"]
     for k, v in parameters.items():
-        if k in float_list: v = round(float(v), 1)
+        if k in float_list:
+            v = round(float(v), 1)
         parameters[k] = v
+
 
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType

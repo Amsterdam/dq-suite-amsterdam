@@ -145,7 +145,7 @@ class ValidationRunner:
         gx_expectation_parameters["meta"] = {
             "table_name": table_name,
             "column_name": column_name,
-            "expectation_name": gx_expectation_name
+            "expectation_name": gx_expectation_name,
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
@@ -155,8 +155,7 @@ class ValidationRunner:
 
         for validation_rule in validation_rules_list:
             gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule,
-                table_name=self.table_name
+                validation_rule=validation_rule, table_name=self.table_name
             )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
@@ -293,7 +292,9 @@ def validate(
     validation_runner_obj.create_validation_definition()
 
     print("***Starting validation run***")
-    return validation_runner_obj.run_validation(batch_parameters={"dataframe": df})
+    return validation_runner_obj.run_validation(
+        batch_parameters={"dataframe": df}
+    )
 
 
 def run_validation(
@@ -370,7 +371,9 @@ def run_validation(
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
         validation_output = checkpoint_result.describe_dict()
-        run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
+        run_time = (
+            datetime.datetime.now()
+        )  # TODO: get from RunIdentifier object
         write_non_validation_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,

@@ -99,8 +99,7 @@ class TestValidationRunner:
             )
 
             validation_runner_obj._get_gx_expectation_object(
-                validation_rule=the_rule,
-                table_name="the_table"
+                validation_rule=the_rule, table_name="the_table"
             )
 
     def test_get_gx_expectation_object(self, validation_runner_obj):
@@ -110,8 +109,7 @@ class TestValidationRunner:
         )
         the_expectation_object = (
             validation_runner_obj._get_gx_expectation_object(
-                validation_rule=the_rule,
-                table_name="the_table"
+                validation_rule=the_rule, table_name="the_table"
             )
         )
 
