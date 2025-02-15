@@ -205,6 +205,7 @@ class ValidationRunner:
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
                 },
+                show_failed_expectations=True
             )
         )
 
@@ -220,6 +221,7 @@ class ValidationRunner:
                     "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
                     "class_name": "MicrosoftTeamsRenderer",
                 },
+                show_failed_expectations=True
             )
         )
 
