@@ -372,6 +372,9 @@ def run_validation(
         validation_settings_obj=validation_settings_obj,
     )
 
+    if debug_mode:  # Don't write to UC in debug mode
+        return checkpoint_result.success, checkpoint_result
+
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
         validation_output = checkpoint_result.describe_dict()
@@ -390,6 +393,4 @@ def run_validation(
             unique_identifier=rules_dict["unique_identifier"],
             run_time=run_time,
         )
-    if debug_mode:
-        return checkpoint_result.success, checkpoint_result
     return checkpoint_result.success
