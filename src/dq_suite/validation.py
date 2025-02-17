@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Tuple
 
 from great_expectations import (
     Checkpoint,
@@ -309,7 +309,9 @@ def run_validation(
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
     write_results_to_unity_catalog: bool = True,
-) -> CheckpointResult:  # pragma: no cover - only GX functions
+    debug_mode: bool = False,
+) -> bool | Tuple[bool, CheckpointResult]:  # pragma: no cover - only GX
+    # functions
     """
     Main function for users of dq_suite.
 
@@ -330,6 +332,8 @@ def run_validation(
     notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
     write_results_to_unity_catalog: toggle writing of results to UC
+    debug_mode: toggle returning of CheckpointResult, in addition to a
+    boolean flag
     """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -386,5 +390,6 @@ def run_validation(
             unique_identifier=rules_dict["unique_identifier"],
             run_time=run_time,
         )
-
-    return checkpoint_result
+    if debug_mode:
+        return checkpoint_result.success, checkpoint_result
+    return checkpoint_result.success
