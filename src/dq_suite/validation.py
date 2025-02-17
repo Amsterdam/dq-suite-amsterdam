@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Tuple
 
 from great_expectations import (
     Checkpoint,
@@ -131,7 +131,7 @@ class ValidationRunner:
         return suite
 
     @staticmethod
-    def _get_gx_expectation_object(validation_rule: Rule):
+    def _get_gx_expectation_object(validation_rule: Rule, table_name: str):
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
@@ -140,6 +140,13 @@ class ValidationRunner:
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
 
         gx_expectation_parameters: dict = validation_rule["parameters"]
+        column_name = gx_expectation_parameters.get("column", None)
+
+        gx_expectation_parameters["meta"] = {
+            "table_name": table_name,
+            "column_name": column_name,
+            "expectation_name": gx_expectation_name,
+        }
         return gx_expectation_class(**gx_expectation_parameters)
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
@@ -148,7 +155,7 @@ class ValidationRunner:
 
         for validation_rule in validation_rules_list:
             gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule
+                validation_rule=validation_rule, table_name=self.table_name
             )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
@@ -285,7 +292,9 @@ def validate(
     validation_runner_obj.create_validation_definition()
 
     print("***Starting validation run***")
-    return validation_runner_obj.run_validation(batch_parameters={"dataframe": df})
+    return validation_runner_obj.run_validation(
+        batch_parameters={"dataframe": df}
+    )
 
 
 def run_validation(
@@ -300,7 +309,9 @@ def run_validation(
     ms_teams_webhook: str | None = None,
     notify_on: Literal["all", "success", "failure"] = "failure",
     write_results_to_unity_catalog: bool = True,
-) -> None:  # pragma: no cover - only GX functions
+    debug_mode: bool = False,
+) -> bool | Tuple[bool, CheckpointResult]:  # pragma: no cover - only GX
+    # functions
     """
     Main function for users of dq_suite.
 
@@ -320,7 +331,9 @@ def run_validation(
         an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
-    write_results_to_unity_catalog: toggle writing of results to UC
+    write_results_to_unity_catalog: by default (True) write results to UC
+    debug_mode: default (False) returns a boolean flag, alternatively (True)
+        a tuple containing boolean flag and CheckpointResult object is returned
     """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -358,11 +371,16 @@ def run_validation(
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
-    validation_output = checkpoint_result.describe_dict()
-    run_time = datetime.datetime.now()  # TODO: get from RunIdentifier object
+
+    if debug_mode:  # Don't write to UC in debug mode
+        return checkpoint_result.success, checkpoint_result
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
+        validation_output = checkpoint_result.describe_dict()
+        run_time = (
+            datetime.datetime.now()
+        )  # TODO: get from RunIdentifier object
         write_non_validation_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
@@ -375,3 +393,4 @@ def run_validation(
             unique_identifier=rules_dict["unique_identifier"],
             run_time=run_time,
         )
+    return checkpoint_result.success

@@ -89,7 +89,9 @@ def get_all_table_name_to_column_names_mappings(
     return list_of_all_table_name_to_column_names_mappings
 
 
-def export_schema_to_json_string(dataset: str, spark: SparkSession, *table: str) -> str:
+def export_schema_to_json_string(
+    dataset: str, spark: SparkSession, *table: str
+) -> str:
     """
     Function exports a schema from Unity Catalog to be used by the Excel
     input form
@@ -104,8 +106,8 @@ def export_schema_to_json_string(dataset: str, spark: SparkSession, *table: str)
         table_name_list = table
     else:
         table_name_list = get_table_name_list_from_unity_catalog(
-        dataset=dataset, spark=spark
-    )
+            dataset=dataset, spark=spark
+        )
 
     df_columns_tables = create_dataframe_containing_all_column_names_in_tables(
         table_name_list=table_name_list, spark=spark
