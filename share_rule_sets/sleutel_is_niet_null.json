@@ -1,0 +1,21 @@
+{
+    "dataset": {
+        "name": "datasetNaam",
+        "layer": "Goud"
+    },
+    "tables": [
+        {
+            "table_name": "tabelNaam",
+            "unique_identifier": "id",
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "norm": 100,
+                    "parameters": {
+                        "column": "id"
+                    }
+                }
+            ]
+        }
+    ]
+}
