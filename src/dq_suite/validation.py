@@ -331,9 +331,9 @@ def run_validation(
         an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
-    write_results_to_unity_catalog: toggle writing of results to UC
-    debug_mode: toggle returning of CheckpointResult, in addition to a
-    boolean flag
+    write_results_to_unity_catalog: by default (True) write results to UC
+    debug_mode: default (False) returns a boolean flag, alternatively (True)
+        a tuple containing boolean flag and CheckpointResult object is returned
     """
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
