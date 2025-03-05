@@ -103,6 +103,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 result=validation_result_suite,
                 action_context=action_context,
             )
+            print(validation_text_blocks)
             checkpoint_text_blocks.extend(validation_text_blocks)
 
         payload = self.renderer.concatenate_text_blocks(
