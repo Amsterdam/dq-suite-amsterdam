@@ -126,6 +126,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                                          f"{results['unexpected_percent_total']}"
                                          )
 
+            validation_text_blocks[0]["text"]["text"] = summary_text
             print(validation_text_blocks)
 
             checkpoint_text_blocks.extend(validation_text_blocks)
