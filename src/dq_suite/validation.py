@@ -210,13 +210,13 @@ class ValidationRunner:
                 name="send_slack_notification",
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
-                renderer=CustomSlackRenderer
-                # #{
-                #     "module_name": "dq_suite.custom_renderers.slack_renderer",
-                #     "class_name": "CustomSlackRenderer",
-                #     # "module_name": "great_expectations.render.renderer.slack_renderer",
-                #     # "class_name": "SlackRenderer",
-                # },
+                renderer={
+                    # "module_name": "dq_suite.custom_renderers.slack_renderer",
+                    # "class_name": "CustomSlackRenderer",
+                    "module_name": "great_expectations.render.renderer.slack_renderer",
+                    "class_name": "SlackRenderer",
+                },
+                show_failed_expectations=True,
             )
         )
 

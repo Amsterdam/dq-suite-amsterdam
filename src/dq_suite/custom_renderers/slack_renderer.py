@@ -79,7 +79,7 @@ class CustomSlackRenderer(SlackRenderer):
 
 class CustomSlackNotificationAction(SlackNotificationAction):
     type: Literal["custom_slack"] = "custom_slack"
-    renderer: CustomSlackRenderer = Field(default_factory=CustomSlackRenderer)
+    # renderer: CustomSlackRenderer = Field(default_factory=CustomSlackRenderer)
 
     # @override
     def run(
