@@ -1,22 +1,16 @@
-from typing import Literal
-
+from great_expectations.checkpoint import SlackNotificationAction
 from great_expectations.checkpoint.actions import ActionContext, _should_notify
 from great_expectations.checkpoint.checkpoint import CheckpointResult
-from great_expectations.core import ExpectationSuiteValidationResult
-from great_expectations.render.renderer.slack_renderer import SlackRenderer
+
 # https://medium.com/@jojo-data/how-to-create-a-custom-module-in-great-expectations-efd0a6ed704a
-
-from great_expectations.compatibility.pydantic import Field
-
-
-from great_expectations.checkpoint import SlackNotificationAction
 
 
 class CustomSlackNotificationAction(SlackNotificationAction):
     # @override
     def run(
-            self, checkpoint_result: CheckpointResult,
-            action_context: ActionContext | None = None
+        self,
+        checkpoint_result: CheckpointResult,
+        action_context: ActionContext | None = None,
     ) -> dict:
         success = checkpoint_result.success or False
         checkpoint_name = checkpoint_result.checkpoint_config.name
@@ -27,8 +21,8 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 
         checkpoint_text_blocks: list[dict] = []
         for (
-                validation_result_suite_identifier,
-                validation_result_suite,
+            validation_result_suite_identifier,
+            validation_result_suite,
         ) in checkpoint_result.run_results.items():
             validation_text_blocks = self._render_validation_result(
                 result_identifier=validation_result_suite_identifier,
@@ -42,22 +36,25 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             if not validation_result_suite.success:
                 for result in validation_result_suite.results:
                     if not result.success:
-                        expectation_info = result['expectation_config']['meta']
-                        summary_text += (f"\n *Table*:"
-                                         f" {expectation_info['table_name']} / "
-                                         f"*Column*:"
-                                         f" {expectation_info['column_name']} /  "
-                                         f"*Expectation*:"
-                                         f" {expectation_info['expectation_name']}\n")
+                        expectation_info = result["expectation_config"]["meta"]
+                        summary_text += (
+                            f"\n *Table*:"
+                            f" {expectation_info['table_name']} / "
+                            f"*Column*:"
+                            f" {expectation_info['column_name']} /  "
+                            f"*Expectation*:"
+                            f" {expectation_info['expectation_name']}\n"
+                        )
 
                         results = result.result
-                        summary_text += (f"\n *Sample unexpected values*: "
-                                         f"{results['partial_unexpected_list'][:3]}"
-                                         f" / *Unexpected percentage*: "
-                                         f""
-                                         f""
-                                         f"{results['unexpected_percent_total']}\n"
-                                         )
+                        summary_text += (
+                            f"\n *Sample unexpected values*: "
+                            f"{results['partial_unexpected_list'][:3]}"
+                            f" / *Unexpected percentage*: "
+                            f""
+                            f""
+                            f"{results['unexpected_percent_total']}\n"
+                        )
 
                         summary_text += "-----------------------\n"
 

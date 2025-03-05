@@ -7,10 +7,7 @@ from great_expectations import (
     ValidationDefinition,
     get_context,
 )
-from great_expectations.checkpoint import (
-    MicrosoftTeamsNotificationAction,
-    SlackNotificationAction,
-)
+from great_expectations.checkpoint import MicrosoftTeamsNotificationAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
@@ -206,12 +203,10 @@ class ValidationRunner:
     ):
         self.action_list.append(
             CustomSlackNotificationAction(
-                name=self.validation_name, #"send_slack_notification",
+                name=self.validation_name,  # "send_slack_notification",
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
-                    # "module_name": "dq_suite.custom_renderers.slack_renderer",
-                    # "class_name": "CustomSlackRenderer",
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
                 },
