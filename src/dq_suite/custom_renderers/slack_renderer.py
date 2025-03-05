@@ -107,6 +107,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 
             # Add sample of unexpected values
             summary_text = validation_text_blocks[0]["text"]["text"]
+            summary_text += "\n-----------------------\n"
             if not validation_result_suite.success:
                 for result in validation_result_suite.results:
                     if not result.success:
@@ -127,6 +128,8 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                                          f""
                                          f"{results['unexpected_percent_total']}\n"
                                          )
+
+                        summary_text += "-----------------------\n"
 
             validation_text_blocks[0]["text"]["text"] = summary_text
             print(validation_text_blocks)
