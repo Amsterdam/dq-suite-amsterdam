@@ -216,7 +216,7 @@ class ValidationRunner:
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
                 },
-                show_failed_expectations=True,
+                # show_failed_expectations=True,  # Doesn't do anything
             )
         )
 

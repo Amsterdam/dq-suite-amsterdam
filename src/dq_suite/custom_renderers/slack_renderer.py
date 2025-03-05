@@ -110,7 +110,8 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             if not validation_result_suite.success:
                 for result in validation_result_suite.results:
                     if not result.success:
-                        expectation_info = result.expectation_config.meta
+                        print(result)
+                        expectation_info = result['expectation_config']['meta']
                         summary_text += (f"*Table*:"
                                          f" {expectation_info['table_name']} / "
                                          f"*Column*:"
