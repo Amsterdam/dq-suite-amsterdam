@@ -12,75 +12,7 @@ from great_expectations.compatibility.pydantic import Field
 from great_expectations.checkpoint import SlackNotificationAction
 
 
-class CustomSlackRenderer(SlackRenderer):
-    def _build_description_block(
-            self,
-            validation_result: ExpectationSuiteValidationResult,
-            validation_result_urls: list[str],
-    ) -> dict:
-        status = "Failed :x:"
-        if validation_result.success:
-            status = "Success :tada:"
-
-        validation_link = None
-        summary_text = ""
-        if validation_result_urls:
-            if len(validation_result_urls) == 1:
-                validation_link = validation_result_urls[0]
-            else:
-                title_hlink = "*Validation Results*"
-                batch_validation_status_hlinks = "".join(
-                    f"*<{validation_result_url} | {status}>*"
-                    for validation_result_url in validation_result_urls
-                )
-                summary_text += f"""{title_hlink}
-    {batch_validation_status_hlinks}
-                """
-
-        expectation_suite_name = validation_result.suite_name
-        data_asset_name = validation_result.asset_name or "__no_data_asset_name__"
-        summary_text += f"*Asset*: {data_asset_name}\\n"
-        # Slack does not allow links to local files due to security risks
-        # DataDocs links will be added in a block after this summary text when applicable
-        if validation_link and "file://" not in validation_link:
-            summary_text += (
-                f"*Expectation Suite*: {expectation_suite_name}  <{validation_link}|View Results>"
-            )
-        else:
-            summary_text += f"*Expectation Suite*: {expectation_suite_name}\\n"
-
-        # Add sample of unexpected values
-        if not validation_result.success:
-            for result in validation_result.results:
-                if not result.success:
-                    expectation_info = result.expectation_config.meta
-                    summary_text += (f"*Table*:"
-                                     f" {expectation_info['table_name']} / "
-                                     f"*Column*:"
-                                     f" {expectation_info['column_name']} /  "
-                                     f"*Expectation*:"
-                                     f" {expectation_info['expectation_name']}\\n")
-
-                    results = result.result
-                    summary_text += (f"*Sample unexpected values*: "
-                                     f"{results['partial_unexpected_list'][:3]}"
-                                     f" / *Unexpected percentage*: "
-                                     f"{results['unexpected_percent_total']}"
-                                     )
-
-        return {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": summary_text,
-            },
-        }
-
-
 class CustomSlackNotificationAction(SlackNotificationAction):
-    # type: Literal["custom_slack"] = "custom_slack"
-    # renderer: CustomSlackRenderer = Field(default_factory=CustomSlackRenderer)
-
     # @override
     def run(
             self, checkpoint_result: CheckpointResult,
@@ -103,7 +35,6 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 result=validation_result_suite,
                 action_context=action_context,
             )
-            print(validation_text_blocks)
 
             # Add sample of unexpected values
             summary_text = validation_text_blocks[0]["text"]["text"]
@@ -111,7 +42,6 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             if not validation_result_suite.success:
                 for result in validation_result_suite.results:
                     if not result.success:
-                        print(result)
                         expectation_info = result['expectation_config']['meta']
                         summary_text += (f"\n *Table*:"
                                          f" {expectation_info['table_name']} / "
@@ -132,7 +62,6 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                         summary_text += "-----------------------\n"
 
             validation_text_blocks[0]["text"]["text"] = summary_text
-            print(validation_text_blocks)
 
             checkpoint_text_blocks.extend(validation_text_blocks)
 

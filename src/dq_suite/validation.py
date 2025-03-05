@@ -25,8 +25,7 @@ from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
 from .common import Rule, RulesDict, ValidationSettings
-from .custom_renderers.slack_renderer import CustomSlackNotificationAction, \
-    CustomSlackRenderer
+from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
