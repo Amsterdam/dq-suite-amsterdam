@@ -1,4 +1,4 @@
-from typing import Literal, override
+from typing import Literal
 
 from great_expectations.checkpoint.actions import ActionContext, _should_notify
 from great_expectations.checkpoint.checkpoint import CheckpointResult
@@ -81,7 +81,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
     type: Literal["custom_slack"] = "custom_slack"
     renderer: CustomSlackRenderer = Field(default_factory=CustomSlackRenderer)
 
-    @override
+    # @override
     def run(
             self, checkpoint_result: CheckpointResult,
             action_context: ActionContext | None = None
