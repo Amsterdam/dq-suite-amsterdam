@@ -123,7 +123,9 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                         summary_text += (f"\n *Sample unexpected values*: "
                                          f"{results['partial_unexpected_list'][:3]}"
                                          f" / *Unexpected percentage*: "
-                                         f"{results['unexpected_percent_total']}"
+                                         f""
+                                         f""
+                                         f"{results['unexpected_percent_total']}\n"
                                          )
 
             validation_text_blocks[0]["text"]["text"] = summary_text

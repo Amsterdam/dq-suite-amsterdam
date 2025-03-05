@@ -207,7 +207,7 @@ class ValidationRunner:
     ):
         self.action_list.append(
             CustomSlackNotificationAction(
-                name="send_slack_notification",
+                name=self.validation_name, #"send_slack_notification",
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
