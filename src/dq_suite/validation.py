@@ -210,7 +210,7 @@ class ValidationRunner:
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
-                    "module_name": ".custom_renderers.slack_renderer",
+                    "module_name": "dq_suite.custom_renderers.slack_renderer",
                     "class_name": "CustomSlackRenderer",
                     # "module_name": "great_expectations.render.renderer.slack_renderer",
                     # "class_name": "SlackRenderer",
