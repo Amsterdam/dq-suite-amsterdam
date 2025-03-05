@@ -104,6 +104,29 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 action_context=action_context,
             )
             print(validation_text_blocks)
+
+            # Add sample of unexpected values
+            summary_text = validation_text_blocks[0]["text"]["text"]
+            if not validation_result_suite.success:
+                for result in validation_result_suite.results:
+                    if not result.success:
+                        expectation_info = result.expectation_config.meta
+                        summary_text += (f"*Table*:"
+                                         f" {expectation_info['table_name']} / "
+                                         f"*Column*:"
+                                         f" {expectation_info['column_name']} /  "
+                                         f"*Expectation*:"
+                                         f" {expectation_info['expectation_name']}\\n")
+
+                        results = result.result
+                        summary_text += (f"*Sample unexpected values*: "
+                                         f"{results['partial_unexpected_list'][:3]}"
+                                         f" / *Unexpected percentage*: "
+                                         f"{results['unexpected_percent_total']}"
+                                         )
+
+            print(validation_text_blocks)
+
             checkpoint_text_blocks.extend(validation_text_blocks)
 
         payload = self.renderer.concatenate_text_blocks(
