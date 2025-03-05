@@ -112,15 +112,15 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                     if not result.success:
                         print(result)
                         expectation_info = result['expectation_config']['meta']
-                        summary_text += (f"*Table*:"
+                        summary_text += (f"\n *Table*:"
                                          f" {expectation_info['table_name']} / "
                                          f"*Column*:"
                                          f" {expectation_info['column_name']} /  "
                                          f"*Expectation*:"
-                                         f" {expectation_info['expectation_name']}\\n")
+                                         f" {expectation_info['expectation_name']}\n")
 
                         results = result.result
-                        summary_text += (f"*Sample unexpected values*: "
+                        summary_text += (f"\n *Sample unexpected values*: "
                                          f"{results['partial_unexpected_list'][:3]}"
                                          f" / *Unexpected percentage*: "
                                          f"{results['unexpected_percent_total']}"
