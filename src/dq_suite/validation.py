@@ -25,6 +25,7 @@ from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
 from .common import Rule, RulesDict, ValidationSettings
+from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
@@ -204,13 +205,15 @@ class ValidationRunner:
         self,
     ):
         self.action_list.append(
-            SlackNotificationAction(
+            CustomSlackNotificationAction(
                 name="send_slack_notification",
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
-                    "module_name": "great_expectations.render.renderer.slack_renderer",
-                    "class_name": "SlackRenderer",
+                    "module_name": ".custom_renderers.slack_renderer",
+                    "class_name": "CustomSlackRenderer",
+                    # "module_name": "great_expectations.render.renderer.slack_renderer",
+                    # "class_name": "SlackRenderer",
                 },
             )
         )
