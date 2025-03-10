@@ -44,8 +44,8 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                     results = result.result
                     summary_text += (
                         f"""
-\n *Column*: `{expectation_info['column_name']}`, *Expectation*: `{expectation_info['expectation_name']}`\n
-:information_source: Additional information
+\n *Column*: `{expectation_info['column_name']}`    *Expectation*: `{expectation_info['expectation_name']}`\n\n
+:information_source: Details:
 *Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
 *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
 -----------------------\n
