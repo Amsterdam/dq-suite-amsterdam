@@ -34,6 +34,24 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 expectation_parameters_dict[k] = v
         return expectation_parameters_dict
 
+    def _create_text_block_for_suite_validation_result(self, result:
+    ExpectationValidationResult) -> str:
+        expectation_metadata = result["expectation_config"]["meta"]
+        parameters = self._get_expectation_parameters_dict(
+            result=result)
+        results = result.result
+
+        return (
+            f"""
+        \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_metadata['expectation_name']}`\n\n
+        :information_source: Details:
+        *Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
+        *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
+        *Expectation parameters*: {parameters}\n
+        -----------------------\n
+                                """
+        )
+
     def _get_validation_text_blocks(self, validation_result_identifier:
     ValidationResultIdentifier, suite_validation_result:
     ExpectationSuiteValidationResult, action_context: ActionContext) -> list[dict]:
@@ -44,29 +62,18 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             action_context=action_context,
         )
 
-        # Add sample of unexpected values + metadata
-        summary_text = validation_text_blocks[0]["text"]["text"]
-        summary_text += "\n-----------------------"
-        if not suite_validation_result.success:  # Overall success/failure
+        result_text_block = validation_text_blocks[0]["text"]["text"]
+        result_text_block += "\n-----------------------"
+
+        # Add sample of unexpected values + metadata to block
+        if not suite_validation_result.success:  # Overall failure
             for result in suite_validation_result.results:
-                if not result.success:  # Success/failure per expectation
-                    expectation_info = result["expectation_config"]["meta"]
-                    parameters = self._get_expectation_parameters_dict(
-                        result=result)
-                    results = result.result
+                if not result.success:  # Failure per expectation
+                    result_text_block += (
+                        self._create_text_block_for_suite_validation_result(
+                            result=result))
 
-                    summary_text += (
-                        f"""
-\n *Column*: `{expectation_info['column_name']}`    *Expectation*: `{expectation_info['expectation_name']}`\n\n
-:information_source: Details:
-*Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
-*Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
-*Expectation parameters*: {parameters}\n
------------------------\n
-                        """
-                    )
-
-        validation_text_blocks[0]["text"]["text"] = summary_text
+        validation_text_blocks[0]["text"]["text"] = result_text_block
 
         return validation_text_blocks
 
