@@ -36,7 +36,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 
         # Add sample of unexpected values
         summary_text = validation_text_blocks[0]["text"]["text"]
-        summary_text += "\n-----------------------\n"
+        summary_text += "\n-----------------------"
         if not suite_validation_result.success:
             for result in suite_validation_result.results:
                 if not result.success:
@@ -48,7 +48,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 *Expectation*: {expectation_info['expectation_name']}\n
 *Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
 *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
-"-----------------------\n"
+-----------------------\n
                         """
                     )
 
