@@ -34,7 +34,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             action_context=action_context,
         )
 
-        # Add sample of unexpected values
+        # Add sample of unexpected values + metadata
         summary_text = validation_text_blocks[0]["text"]["text"]
         summary_text += "\n-----------------------"
         if not suite_validation_result.success:
@@ -53,6 +53,9 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                     )
 
         validation_text_blocks[0]["text"]["text"] = summary_text
+        validation_text_blocks[0]["text"]["type"] = "mrkdwn"
+
+        # summary_text += "-----------------------\n"
 
         return validation_text_blocks
 
