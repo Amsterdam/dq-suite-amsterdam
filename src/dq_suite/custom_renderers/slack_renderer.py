@@ -1,48 +1,50 @@
+from typing import Literal
+
 from great_expectations.checkpoint import SlackNotificationAction
 from great_expectations.checkpoint.actions import ActionContext
 from great_expectations.checkpoint.checkpoint import CheckpointResult
-
-from typing import Literal
-
-from great_expectations.core import ExpectationSuiteValidationResult, \
-    ExpectationValidationResult
-from great_expectations.data_context.types.resource_identifiers import \
-    ValidationResultIdentifier
-
+from great_expectations.core import (
+    ExpectationSuiteValidationResult,
+    ExpectationValidationResult,
+)
+from great_expectations.data_context.types.resource_identifiers import (
+    ValidationResultIdentifier,
+)
 
 # https://medium.com/@jojo-data/how-to-create-a-custom-module-in-great-expectations-efd0a6ed704a
 
 
 class CustomSlackNotificationAction(SlackNotificationAction):
     @staticmethod
-    def _should_notify(success: bool,
-                       notify_on: Literal["all", "failure", "success"]) -> bool:
+    def _should_notify(
+        success: bool, notify_on: Literal["all", "failure", "success"]
+    ) -> bool:
         return (
-                notify_on == "all"
-                or notify_on == "success"
-                and success
-                or notify_on == "failure"
-                and not success
+            notify_on == "all"
+            or notify_on == "success"
+            and success
+            or notify_on == "failure"
+            and not success
         )
 
     @staticmethod
-    def _get_expectation_parameters_dict(result: ExpectationValidationResult) -> (
-            dict):
+    def _get_expectation_parameters_dict(
+        result: ExpectationValidationResult,
+    ) -> dict:
         expectation_parameters_dict = dict()
         for k, v in result["expectation_config"]["kwargs"].items():
             if k not in ["batch_id", "column"]:
                 expectation_parameters_dict[k] = v
         return expectation_parameters_dict
 
-    def _create_text_block_for_suite_validation_result(self, result:
-    ExpectationValidationResult) -> str:
+    def _create_text_block_for_suite_validation_result(
+        self, result: ExpectationValidationResult
+    ) -> str:
         expectation_metadata = result["expectation_config"]["meta"]
-        parameters = self._get_expectation_parameters_dict(
-            result=result)
+        parameters = self._get_expectation_parameters_dict(result=result)
         results = result.result
 
-        return (
-            f"""
+        return f"""
 \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_metadata['expectation_name']}`\n\n
 :information_source: Details:
 *Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
@@ -50,12 +52,13 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 *Expectation parameters*: {parameters}\n
 -----------------------\n
             """
-        )
 
-    def _get_validation_text_blocks(self, validation_result_identifier:
-    ValidationResultIdentifier, suite_validation_result:
-    ExpectationSuiteValidationResult, action_context: ActionContext) -> list[dict]:
-
+    def _get_validation_text_blocks(
+        self,
+        validation_result_identifier: ValidationResultIdentifier,
+        suite_validation_result: ExpectationSuiteValidationResult,
+        action_context: ActionContext,
+    ) -> list[dict]:
         validation_text_blocks = self._render_validation_result(
             result_identifier=validation_result_identifier,
             result=suite_validation_result,
@@ -71,7 +74,9 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 if not result.success:  # Failure per expectation
                     result_text_block += (
                         self._create_text_block_for_suite_validation_result(
-                            result=result))
+                            result=result
+                        )
+                    )
 
         validation_text_blocks[0]["text"]["text"] = result_text_block
 
@@ -96,7 +101,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             validation_text_blocks = self._get_validation_text_blocks(
                 validation_result_identifier=validation_result_identifier,
                 suite_validation_result=suite_validation_result,
-                action_context=action_context
+                action_context=action_context,
             )
             checkpoint_text_blocks.extend(validation_text_blocks)
 
