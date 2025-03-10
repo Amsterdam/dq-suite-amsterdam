@@ -1,11 +1,24 @@
 from great_expectations.checkpoint import SlackNotificationAction
-from great_expectations.checkpoint.actions import ActionContext, _should_notify
+from great_expectations.checkpoint.actions import ActionContext
 from great_expectations.checkpoint.checkpoint import CheckpointResult
+
+from typing import Literal
 
 # https://medium.com/@jojo-data/how-to-create-a-custom-module-in-great-expectations-efd0a6ed704a
 
 
 class CustomSlackNotificationAction(SlackNotificationAction):
+    @staticmethod
+    def _should_notify(success: bool,
+                       notify_on: Literal["all", "failure", "success"]) -> bool:
+        return (
+                notify_on == "all"
+                or notify_on == "success"
+                and success
+                or notify_on == "failure"
+                and not success
+        )
+
     # @override
     def run(
         self,
@@ -16,7 +29,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         checkpoint_name = checkpoint_result.checkpoint_config.name
         result = {"slack_notification_result": "none required"}
 
-        if not _should_notify(success=success, notify_on=self.notify_on):
+        if not self._should_notify(success=success, notify_on=self.notify_on):
             return result
 
         checkpoint_text_blocks: list[dict] = []
