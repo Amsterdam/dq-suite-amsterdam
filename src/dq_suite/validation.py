@@ -377,9 +377,8 @@ def run_validation(
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
         validation_output = checkpoint_result.describe_dict()
-        run_time = (
-            datetime.datetime.now()
-        )  # TODO: get from RunIdentifier object
+        run_time = checkpoint_result.run_id.run_time
+
         write_non_validation_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
