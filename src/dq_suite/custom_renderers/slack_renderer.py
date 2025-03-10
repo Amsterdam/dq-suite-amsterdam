@@ -4,7 +4,8 @@ from great_expectations.checkpoint.checkpoint import CheckpointResult
 
 from typing import Literal
 
-from great_expectations.core import ExpectationSuiteValidationResult
+from great_expectations.core import ExpectationSuiteValidationResult, \
+    ExpectationValidationResult
 from great_expectations.data_context.types.resource_identifiers import \
     ValidationResultIdentifier
 
@@ -24,6 +25,15 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 and not success
         )
 
+    @staticmethod
+    def _get_expectation_parameters_dict(result: ExpectationValidationResult) -> (
+            dict):
+        expectation_parameters_dict = dict()
+        for k, v in result["expectation_config"]["kwargs"].items():
+            if k not in ["batch_id", "column"]:
+                expectation_parameters_dict[k] = v
+        return expectation_parameters_dict
+
     def _get_validation_text_blocks(self, validation_result_identifier:
     ValidationResultIdentifier, suite_validation_result:
     ExpectationSuiteValidationResult, action_context: ActionContext) -> list[dict]:
@@ -37,24 +47,26 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         # Add sample of unexpected values + metadata
         summary_text = validation_text_blocks[0]["text"]["text"]
         summary_text += "\n-----------------------"
-        if not suite_validation_result.success:
+        if not suite_validation_result.success:  # Overall success/failure
             for result in suite_validation_result.results:
-                if not result.success:
+                if not result.success:  # Success/failure per expectation
                     expectation_info = result["expectation_config"]["meta"]
+                    parameters = self._get_expectation_parameters_dict(
+                        result=result)
                     results = result.result
+
                     summary_text += (
                         f"""
 \n *Column*: `{expectation_info['column_name']}`    *Expectation*: `{expectation_info['expectation_name']}`\n\n
 :information_source: Details:
 *Sample unexpected values*:  {results['partial_unexpected_list'][:3]}\n
 *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
+*Expectation parameters*: {parameters}\n
 -----------------------\n
                         """
                     )
 
         validation_text_blocks[0]["text"]["text"] = summary_text
-
-        # summary_text += "-----------------------\n"
 
         return validation_text_blocks
 
