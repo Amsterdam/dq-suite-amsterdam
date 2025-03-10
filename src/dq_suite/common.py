@@ -209,6 +209,9 @@ class ValidationSettings:
 
     spark_session: SparkSession object
     catalog_name: name of unity catalog
+    dataset_layer: name of layer where dataset is located: landing_zone,
+    bronze, silver, gold
+    dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
     data_context_root_dir: path to write GX data
@@ -223,6 +226,8 @@ class ValidationSettings:
 
     spark_session: SparkSession
     catalog_name: str
+    dataset_layer: str
+    dataset_name: str
     table_name: str
     validation_name: str
     data_context_root_dir: str = "/dbfs/great_expectations/"
@@ -235,6 +240,10 @@ class ValidationSettings:
             raise TypeError("'spark_session' should be of type SparkSession")
         if not isinstance(self.catalog_name, str):
             raise TypeError("'catalog_name' should be of type str")
+        if not isinstance(self.dataset_layer, str):
+            raise TypeError("'dataset_layer' should be of type str")
+        if not isinstance(self.dataset_name, str):
+            raise TypeError("'dataset_name' should be of type str")
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
