@@ -334,9 +334,31 @@ def run_validation(
     debug_mode: default (False) returns a boolean flag, alternatively (True)
         a tuple containing boolean flag and CheckpointResult object is returned
     """
+    if not hasattr(df, "table_name"):
+        # TODO/check: we can have df.table_name !=
+        #  table_name: is this wrong?
+        df.table_name = table_name
+
+    # 1) extract the data quality rules to be applied...
+    validation_dict = get_data_quality_rules_dict(file_path=json_path)
+    validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
+    rules_dict = filter_validation_dict_by_table_name(
+        validation_dict=validation_dict,
+        table_name=table_name,
+    )
+    if rules_dict is None:
+        raise ValueError(
+            f"No validations found for table_name "
+            f"'{table_name}' in JSON file at '"
+            f"{json_path}'."
+        )
+
+    # 2) ... perform the validation on the dataframe...
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
         catalog_name=catalog_name,
+        dataset_layer=dataset_layer,
+        dataset_name=dataset_name,
         table_name=table_name,
         validation_name=validation_name,
         data_context_root_dir=data_context_root_dir,
@@ -345,26 +367,6 @@ def run_validation(
         notify_on=notify_on,
     )
 
-    if not hasattr(df, "table_name"):
-        # TODO/check: we can have df.table_name !=
-        #  validation_settings_obj.table_name: is this wrong?
-        df.table_name = validation_settings_obj.table_name
-
-    # 1) extract the data quality rules to be applied...
-    validation_dict = get_data_quality_rules_dict(file_path=json_path)
-    validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
-    rules_dict = filter_validation_dict_by_table_name(
-        validation_dict=validation_dict,
-        table_name=validation_settings_obj.table_name,
-    )
-    if rules_dict is None:
-        raise ValueError(
-            f"No validations found for table_name "
-            f"'{validation_settings_obj.table_name}' in JSON file at '"
-            f"{json_path}'."
-        )
-
-    # 2) ... perform the validation on the dataframe...
     checkpoint_result = validate(
         df=df,
         rules_dict=rules_dict,
