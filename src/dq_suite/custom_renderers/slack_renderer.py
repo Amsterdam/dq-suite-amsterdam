@@ -44,7 +44,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                     summary_text += (
                         f"""
                         \n *Column*: {expectation_info['column_name']}\n 
-                        *Expectation*: {expectation_info['expectation_name']}\n
+*Expectation*: {expectation_info['expectation_name']}\n
                         """
                     )
 
