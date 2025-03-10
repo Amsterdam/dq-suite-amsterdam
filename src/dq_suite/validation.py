@@ -203,14 +203,14 @@ class ValidationRunner:
     ):
         self.action_list.append(
             CustomSlackNotificationAction(
-                name=self.validation_name,  # "send_slack_notification",
+                name="validation",  # TODO: change when using custom renderer
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
                 },
-                # show_failed_expectations=True,  # Doesn't do anything
+                # show_failed_expectations=True,  # Doesn't do anything?
             )
         )
 
