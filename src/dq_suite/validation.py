@@ -346,6 +346,9 @@ def run_validation(
         validation_dict=validation_dict,
         table_name=table_name,
     )
+    dataset_layer = validation_dict["dataset"]["layer"]
+    dataset_name = validation_dict["dataset"]["name"]
+
     if rules_dict is None:
         raise ValueError(
             f"No validations found for table_name "
