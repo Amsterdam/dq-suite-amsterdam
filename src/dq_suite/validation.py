@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple, Any
 
 from great_expectations import (
     Checkpoint,
@@ -129,7 +129,8 @@ class ValidationRunner:
         return suite
 
     @staticmethod
-    def _get_gx_expectation_object(validation_rule: Rule, table_name: str):
+    def _get_gx_expectation_object(validation_rule: Rule, table_name: str) ->\
+            Any:
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
