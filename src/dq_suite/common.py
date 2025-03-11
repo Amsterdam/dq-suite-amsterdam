@@ -286,9 +286,7 @@ class ValidationSettings:
         self._run_name = f"%Y%m%d-%H%M%S-{self.validation_name}"
 
     def _set_data_source_name(self):
-        self._data_source_name = (
-            f"{self.catalog_name}/{self.dataset_layer}"
-        )
+        self._data_source_name = f"{self.catalog_name}/{self.dataset_layer}"
 
     def _set_data_asset_name(self):
         self._data_asset_name = self.dataset_name
@@ -303,7 +301,9 @@ class ValidationSettings:
 
     def _set_expectation_suite_name(self):
         if self.batch_name is not None:
-            self._expectation_suite_name = f"batch-{self._batch_definition_name}"
+            self._expectation_suite_name = (
+                f"batch-{self._batch_definition_name}"
+            )
         else:
             self._expectation_suite_name = (
                 f"{self.validation_name}_expectation_suite"
