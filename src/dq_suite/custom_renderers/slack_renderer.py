@@ -12,6 +12,11 @@ from great_expectations.data_context.types.resource_identifiers import (
 )
 
 
+class CustomSlackRenderer:
+    # TODO: implement. Should at least allow for a custom header
+    pass
+
+
 class CustomSlackNotificationAction(SlackNotificationAction):
     @staticmethod
     def _should_notify(
@@ -61,7 +66,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             result_identifier=validation_result_identifier,
             result=suite_validation_result,
             action_context=action_context,
-        )
+        )  # TODO: implement custom SlackRenderer-class (above)
 
         result_text_block = validation_text_blocks[0]["text"]["text"]
         result_text_block += "\n-----------------------"

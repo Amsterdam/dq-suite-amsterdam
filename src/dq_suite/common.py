@@ -300,6 +300,7 @@ class ValidationSettings:
         self._batch_definition_name = f"{self.batch_name}"
 
     def _set_expectation_suite_name(self):
+        # TODO: remove conditional once CustomSlackRenderer is implemented?
         if self.batch_name is not None:
             self._expectation_suite_name = (
                 f"batch-{self._batch_definition_name}"
