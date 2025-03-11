@@ -20,6 +20,8 @@ def validation_settings_obj():
         catalog_name="the_catalog",
         table_name="the_table",
         validation_name="the_validation",
+        dataset_layer="the_layer",
+        dataset_name="the_name",
     )
     return validation_settings_obj
 

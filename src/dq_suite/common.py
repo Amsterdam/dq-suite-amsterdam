@@ -251,7 +251,8 @@ class ValidationSettings:
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
         if not isinstance(self.batch_name, str):
-            raise TypeError("'batch_name' should be of type str")
+            if self.batch_name is not None:
+                raise TypeError("'batch_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
         if not isinstance(self.slack_webhook, str):
