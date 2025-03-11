@@ -269,6 +269,46 @@ class TestValidationSettings:
                 dataset_name="the_name",
             )
 
+    def test_initialisation_with_wrong_typed_dataset_layer_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer=123,
+                dataset_name="the_name",
+            )
+
+    def test_initialisation_with_wrong_typed_dataset_name_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name=123,
+            )
+
+    def test_initialisation_with_wrong_typed_batch_name_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
+                batch_name=123,
+            )
+
     def test_initialisation_with_wrong_typed_data_context_root_dir_raises_type_error(
         self,
     ):
