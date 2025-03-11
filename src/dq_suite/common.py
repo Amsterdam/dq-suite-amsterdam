@@ -269,6 +269,7 @@ class ValidationSettings:
         self._set_checkpoint_name()
         self._set_run_name()
         self._set_data_source_name()
+        self._set_data_asset_name()
         self._set_validation_definition_name()
         self._set_batch_definition_name()
 
@@ -279,7 +280,7 @@ class ValidationSettings:
 
     def _set_checkpoint_name(self):
         self._checkpoint_name = (
-            f"{self.dataset_layer}/" f"{self.dataset_name}/{self.table_name}"
+            f"{self.dataset_layer}/{self.dataset_name}/{self.table_name}"
         )
 
     def _set_run_name(self):
@@ -289,6 +290,9 @@ class ValidationSettings:
         self._data_source_name = (
             f"{self.catalog_name}/{self.dataset_layer}" f"{self.dataset_name}"
         )
+
+    def _set_data_asset_name(self):
+        self._data_asset_name = self.dataset_name
 
     def _set_validation_definition_name(self):
         self._validation_definition_name = (

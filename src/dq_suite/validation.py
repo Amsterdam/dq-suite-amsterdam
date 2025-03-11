@@ -80,6 +80,7 @@ class ValidationRunner:
             validation_settings_obj.data_context_root_dir
         )
         self.data_source_name = validation_settings_obj._data_source_name
+        self.data_asset_name = validation_settings_obj._data_asset_name
         self.expectation_suite_name = (
             validation_settings_obj._expectation_suite_name
         )
@@ -161,7 +162,7 @@ class ValidationRunner:
             name=self.data_source_name
         )
         self.dataframe_asset = self.data_source.add_dataframe_asset(
-            name=self.validation_name
+            name=self.data_asset_name
         )
 
         self.batch_definition = (
