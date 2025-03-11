@@ -288,7 +288,7 @@ class ValidationSettings:
 
     def _set_data_source_name(self):
         self._data_source_name = (
-            f"{self.catalog_name}/{self.dataset_layer}" f"{self.dataset_name}"
+            f"{self.catalog_name}/{self.dataset_layer}"
         )
 
     def _set_data_asset_name(self):
