@@ -47,7 +47,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
 :information_source: Details:
 *Sample unexpected values*:  ```{results['partial_unexpected_list'][:3]}```\n
 *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
-*Expectation parameters*: {parameters}\n
+*Expectation parameters*: `{parameters}`\n
 -----------------------\n
             """
 
