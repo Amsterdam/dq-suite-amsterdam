@@ -11,8 +11,6 @@ from great_expectations.data_context.types.resource_identifiers import (
     ValidationResultIdentifier,
 )
 
-# https://medium.com/@jojo-data/how-to-create-a-custom-module-in-great-expectations-efd0a6ed704a
-
 
 class CustomSlackNotificationAction(SlackNotificationAction):
     @staticmethod
