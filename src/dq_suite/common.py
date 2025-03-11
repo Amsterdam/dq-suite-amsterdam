@@ -214,6 +214,7 @@ class ValidationSettings:
     dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     slack_webhook: webhook, recommended to store in key vault. If not None,
@@ -230,6 +231,7 @@ class ValidationSettings:
     dataset_name: str
     table_name: str
     validation_name: str
+    batch_name: str | None = None
     data_context_root_dir: str = "/dbfs/great_expectations/"
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
@@ -248,6 +250,8 @@ class ValidationSettings:
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
+        if not isinstance(self.batch_name, str):
+            raise TypeError("'batch_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
         if not isinstance(self.slack_webhook, str):
@@ -265,18 +269,13 @@ class ValidationSettings:
     def _initialise_or_update_name_parameters(self):
         # TODO/check: nearly all names are related to 'validation_name' - do we want
         #  to allow for custom names via parameters?
-        self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
         self._set_data_source_name()
         self._set_data_asset_name()
         self._set_validation_definition_name()
         self._set_batch_definition_name()
-
-    def _set_expectation_suite_name(self):
-        self._expectation_suite_name = (
-            f"{self.validation_name}_expectation_suite"
-        )
+        self._set_expectation_suite_name()
 
     def _set_checkpoint_name(self):
         self._checkpoint_name = (
@@ -300,4 +299,12 @@ class ValidationSettings:
         )
 
     def _set_batch_definition_name(self):
-        self._batch_definition_name = f"{self.validation_name}_batch_definition"
+        self._batch_definition_name = f"{self.batch_name}"
+
+    def _set_expectation_suite_name(self):
+        if self.batch_name is not None:
+            self._expectation_suite_name = f"batch-{self._batch_definition_name}"
+        else:
+            self._expectation_suite_name = (
+                f"{self.validation_name}_expectation_suite"
+            )

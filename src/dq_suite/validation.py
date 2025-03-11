@@ -304,6 +304,7 @@ def run_validation(
     catalog_name: str,
     table_name: str,
     validation_name: str = "my_validation_name",
+    batch_name: str | None = None,
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
@@ -323,6 +324,7 @@ def run_validation(
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     slack_webhook: webhook, recommended to store in key vault. If not None,
@@ -365,6 +367,7 @@ def run_validation(
         dataset_name=dataset_name,
         table_name=table_name,
         validation_name=validation_name,
+        batch_name=batch_name,
         data_context_root_dir=data_context_root_dir,
         slack_webhook=slack_webhook,
         ms_teams_webhook=ms_teams_webhook,
