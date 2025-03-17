@@ -1,5 +1,5 @@
 # About dq-suite-amsterdam
-This bliep aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is an in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
+This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is an in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
 
 By default, all the validation results are written to Unity Catalog. Alternatively, one could disallow writing to a `data_quality` schema in UC, which one has to create once per catalog via [this notebook](scripts/data_quality_tables.sql). Additionally, users can choose to get notified via Slack or Microsoft Teams.
 
@@ -54,7 +54,7 @@ See the documentation of `dq_suite.validation.run_validation` for what other par
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
 ```
 schema_output = dq_suite.schema_to_json_string('schema_name', spark, *table)
-print(schema_output)
+print(schema_output) 
 ```
 Copy the string to the Input Form to quickly ingest the schema in Excel. The "table" parameter is optional, it gives more granular results.
 ## Validate the schema of a table
