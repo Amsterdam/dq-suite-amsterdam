@@ -215,6 +215,8 @@ class TestValidationSettings:
         catalog_name="the_catalog",
         table_name="the_table",
         validation_name="the_validation",
+        dataset_layer="the_layer",
+        dataset_name="the_name",
     )
 
     def test_initialisation_with_wrong_typed_spark_session_raises_type_error(
@@ -226,6 +228,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
             )
 
     def test_initialisation_with_wrong_typed_catalog_name_raises_type_error(
@@ -237,6 +241,8 @@ class TestValidationSettings:
                 catalog_name=123,
                 table_name="the_table",
                 validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
             )
 
     def test_initialisation_with_wrong_typed_table_name_raises_type_error(self):
@@ -246,6 +252,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name=123,
                 validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
             )
 
     def test_initialisation_with_wrong_typed_validation_name_raises_type_error(
@@ -257,6 +265,48 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name=123,
+                dataset_layer="the_layer",
+                dataset_name="the_name",
+            )
+
+    def test_initialisation_with_wrong_typed_dataset_layer_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer=123,
+                dataset_name="the_name",
+            )
+
+    def test_initialisation_with_wrong_typed_dataset_name_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name=123,
+            )
+
+    def test_initialisation_with_wrong_typed_batch_name_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
+                batch_name=123,
             )
 
     def test_initialisation_with_wrong_typed_data_context_root_dir_raises_type_error(
@@ -268,6 +318,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
                 data_context_root_dir=123,
             )
 
@@ -280,6 +332,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
                 slack_webhook=123,
             )
 
@@ -292,6 +346,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
                 ms_teams_webhook=123,
             )
 
@@ -304,6 +360,8 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
                 notify_on="haha_this_is_wrong",
             )
 
@@ -322,7 +380,7 @@ class TestValidationSettings:
         self.validation_settings_obj._set_checkpoint_name()
         assert (
             self.validation_settings_obj._checkpoint_name
-            == f"{self.validation_settings_obj.validation_name}_checkpoint"
+            == f"{self.validation_settings_obj.dataset_layer}/{self.validation_settings_obj.dataset_name}/{self.validation_settings_obj.table_name}"
         )
 
     def test_set_run_name(self):

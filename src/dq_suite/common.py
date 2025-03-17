@@ -209,8 +209,12 @@ class ValidationSettings:
 
     spark_session: SparkSession object
     catalog_name: name of unity catalog
+    dataset_layer: name of layer where dataset is located: landing_zone,
+    bronze, silver, gold
+    dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     slack_webhook: webhook, recommended to store in key vault. If not None,
@@ -223,8 +227,11 @@ class ValidationSettings:
 
     spark_session: SparkSession
     catalog_name: str
+    dataset_layer: str
+    dataset_name: str
     table_name: str
     validation_name: str
+    batch_name: str | None = None
     data_context_root_dir: str = "/dbfs/great_expectations/"
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
@@ -235,10 +242,17 @@ class ValidationSettings:
             raise TypeError("'spark_session' should be of type SparkSession")
         if not isinstance(self.catalog_name, str):
             raise TypeError("'catalog_name' should be of type str")
+        if not isinstance(self.dataset_layer, str):
+            raise TypeError("'dataset_layer' should be of type str")
+        if not isinstance(self.dataset_name, str):
+            raise TypeError("'dataset_name' should be of type str")
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
+        if not isinstance(self.batch_name, str):
+            if self.batch_name is not None:
+                raise TypeError("'batch_name' should be of type str")
         if not isinstance(self.data_context_root_dir, str):
             raise TypeError("'data_context_root_dir' should be of type str")
         if not isinstance(self.slack_webhook, str):
@@ -256,26 +270,27 @@ class ValidationSettings:
     def _initialise_or_update_name_parameters(self):
         # TODO/check: nearly all names are related to 'validation_name' - do we want
         #  to allow for custom names via parameters?
-        self._set_expectation_suite_name()
         self._set_checkpoint_name()
         self._set_run_name()
         self._set_data_source_name()
+        self._set_data_asset_name()
         self._set_validation_definition_name()
         self._set_batch_definition_name()
-
-    def _set_expectation_suite_name(self):
-        self._expectation_suite_name = (
-            f"{self.validation_name}_expectation_suite"
-        )
+        self._set_expectation_suite_name()
 
     def _set_checkpoint_name(self):
-        self._checkpoint_name = f"{self.validation_name}_checkpoint"
+        self._checkpoint_name = (
+            f"{self.dataset_layer}/{self.dataset_name}/{self.table_name}"
+        )
 
     def _set_run_name(self):
         self._run_name = f"%Y%m%d-%H%M%S-{self.validation_name}"
 
     def _set_data_source_name(self):
-        self._data_source_name = f"spark_data_source_{self.validation_name}"
+        self._data_source_name = f"{self.catalog_name}/{self.dataset_layer}"
+
+    def _set_data_asset_name(self):
+        self._data_asset_name = self.dataset_name
 
     def _set_validation_definition_name(self):
         self._validation_definition_name = (
@@ -283,4 +298,15 @@ class ValidationSettings:
         )
 
     def _set_batch_definition_name(self):
-        self._batch_definition_name = f"{self.validation_name}_batch_definition"
+        self._batch_definition_name = f"{self.batch_name}"
+
+    def _set_expectation_suite_name(self):
+        # TODO: remove conditional once CustomSlackRenderer is implemented?
+        if self.batch_name is not None:
+            self._expectation_suite_name = (
+                f"batch-{self._batch_definition_name}"
+            )
+        else:
+            self._expectation_suite_name = (
+                f"{self.validation_name}_expectation_suite"
+            )

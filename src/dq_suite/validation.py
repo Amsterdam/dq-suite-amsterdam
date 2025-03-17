@@ -1,5 +1,4 @@
-import datetime
-from typing import Dict, List, Literal, Tuple
+from typing import Any, Dict, List, Literal, Tuple
 
 from great_expectations import (
     Checkpoint,
@@ -7,10 +6,7 @@ from great_expectations import (
     ValidationDefinition,
     get_context,
 )
-from great_expectations.checkpoint import (
-    MicrosoftTeamsNotificationAction,
-    SlackNotificationAction,
-)
+from great_expectations.checkpoint import MicrosoftTeamsNotificationAction
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
@@ -25,6 +21,7 @@ from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
 from .common import Rule, RulesDict, ValidationSettings
+from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_non_validation_tables,
     write_validation_table,
@@ -83,6 +80,7 @@ class ValidationRunner:
             validation_settings_obj.data_context_root_dir
         )
         self.data_source_name = validation_settings_obj._data_source_name
+        self.data_asset_name = validation_settings_obj._data_asset_name
         self.expectation_suite_name = (
             validation_settings_obj._expectation_suite_name
         )
@@ -131,7 +129,9 @@ class ValidationRunner:
         return suite
 
     @staticmethod
-    def _get_gx_expectation_object(validation_rule: Rule, table_name: str):
+    def _get_gx_expectation_object(
+        validation_rule: Rule, table_name: str
+    ) -> Any:
         """
         From great_expectations.expectations.core, get the relevant class and
         instantiate an expectation object with the user-defined parameters
@@ -164,7 +164,7 @@ class ValidationRunner:
             name=self.data_source_name
         )
         self.dataframe_asset = self.data_source.add_dataframe_asset(
-            name=self.validation_name
+            name=self.data_asset_name
         )
 
         self.batch_definition = (
@@ -204,14 +204,15 @@ class ValidationRunner:
         self,
     ):
         self.action_list.append(
-            SlackNotificationAction(
-                name="send_slack_notification",
+            CustomSlackNotificationAction(
+                name="validation",  # TODO: change when using custom renderer
                 slack_webhook=self.slack_webhook,
                 notify_on=self.notify_on,
                 renderer={
                     "module_name": "great_expectations.render.renderer.slack_renderer",
                     "class_name": "SlackRenderer",
                 },
+                # show_failed_expectations=True,  # Doesn't do anything?
             )
         )
 
@@ -304,6 +305,7 @@ def run_validation(
     catalog_name: str,
     table_name: str,
     validation_name: str = "my_validation_name",
+    batch_name: str | None = None,
     data_context_root_dir: str = "/dbfs/great_expectations/",
     slack_webhook: str | None = None,
     ms_teams_webhook: str | None = None,
@@ -323,6 +325,7 @@ def run_validation(
     catalog_name: name of unity catalog
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
     slack_webhook: webhook, recommended to store in key vault. If not None,
@@ -335,37 +338,43 @@ def run_validation(
     debug_mode: default (False) returns a boolean flag, alternatively (True)
         a tuple containing boolean flag and CheckpointResult object is returned
     """
-    validation_settings_obj = ValidationSettings(
-        spark_session=spark_session,
-        catalog_name=catalog_name,
-        table_name=table_name,
-        validation_name=validation_name,
-        data_context_root_dir=data_context_root_dir,
-        slack_webhook=slack_webhook,
-        ms_teams_webhook=ms_teams_webhook,
-        notify_on=notify_on,
-    )
-
     if not hasattr(df, "table_name"):
         # TODO/check: we can have df.table_name !=
-        #  validation_settings_obj.table_name: is this wrong?
-        df.table_name = validation_settings_obj.table_name
+        #  table_name: is this wrong?
+        df.table_name = table_name
 
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
     validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
-        table_name=validation_settings_obj.table_name,
+        table_name=table_name,
     )
+    dataset_layer = validation_dict["dataset"]["layer"]
+    dataset_name = validation_dict["dataset"]["name"]
+
     if rules_dict is None:
         raise ValueError(
             f"No validations found for table_name "
-            f"'{validation_settings_obj.table_name}' in JSON file at '"
+            f"'{table_name}' in JSON file at '"
             f"{json_path}'."
         )
 
     # 2) ... perform the validation on the dataframe...
+    validation_settings_obj = ValidationSettings(
+        spark_session=spark_session,
+        catalog_name=catalog_name,
+        dataset_layer=dataset_layer,
+        dataset_name=dataset_name,
+        table_name=table_name,
+        validation_name=validation_name,
+        batch_name=batch_name,
+        data_context_root_dir=data_context_root_dir,
+        slack_webhook=slack_webhook,
+        ms_teams_webhook=ms_teams_webhook,
+        notify_on=notify_on,
+    )
+
     checkpoint_result = validate(
         df=df,
         rules_dict=rules_dict,
@@ -378,9 +387,8 @@ def run_validation(
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
         validation_output = checkpoint_result.describe_dict()
-        run_time = (
-            datetime.datetime.now()
-        )  # TODO: get from RunIdentifier object
+        run_time = checkpoint_result.run_id.run_time
+
         write_non_validation_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
