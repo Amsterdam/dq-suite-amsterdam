@@ -54,7 +54,7 @@ See the documentation of `dq_suite.validation.run_validation` for what other par
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
 ```
 schema_output = dq_suite.schema_to_json_string('schema_name', spark, *table)
-print(schema_output) 
+print(schema_output)
 ```
 Copy the string to the Input Form to quickly ingest the schema in Excel. The "table" parameter is optional, it gives more granular results.
 ## Validate the schema of a table
