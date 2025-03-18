@@ -34,7 +34,7 @@ pip install dq-suite-amsterdam
 
 
 
-4. Finally, perform the validation by running
+4. Finally, perform the validation by running (*note*: the library is imported as `dq_suite`, not as `dq_suite_amsterdam`!)
 ```python
 from dq_suite.validation import run_validation
 
