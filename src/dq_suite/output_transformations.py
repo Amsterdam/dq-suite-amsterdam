@@ -21,6 +21,8 @@ from .schemas.pre_afwijking import SCHEMA as PRE_AFWIJKING_SCHEMA
 from .schemas.pre_validatie import SCHEMA as PRE_VALIDATIE_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+from .schemas.profilingattribuut import SCHEMA as PROFILINGATTRIBUUT_SCHEMA
+from .schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
 
 
 def snake_case_to_camel_case(snake_str):
@@ -674,3 +676,41 @@ def write_validation_table(
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
     )
+
+
+# def create_profiling_tabel(df: DataFrame, df_name: str, report_json: dict, spark_session: SparkSession) -> DataFrame:
+#     """
+#     Create a profiling table DataFrame from the given DataFrame.
+#     """
+#     profiling_tabel = {
+#         "id": f"profiling_{df_name}",
+#         "bronTabelId":  df_name,
+#         "aantalRecords": report_json["table"].get("n", 0),
+#         "aantalNietUniekeRecords": report_json["table"].get("n_duplicate", 0),
+#         "aantalAttributen": report_json["table"].get("n_var", 0),
+#         "dqDatum": report_json["analysis"].get("date_end", None)
+#     }
+
+#     return spark_session.createDataFrame([profiling_tabel], schema=PROFILINGTABEL_SCHEMA)
+
+# def create_profiling_attribuut(df_name: str, attribute: str, report_json: dict, spark_session: SparkSession) -> DataFrame:
+#     """
+#     Create a profiling attribute DataFrame from the given DataFrame attributes, using only the report_json.
+#     """
+#     # Extract stats from the report_json for the given attribute
+#     stats = report_json.get("variables", {}).get(attribute, {})
+
+#     top_waarde = max(stats.get("value_counts_without_nan", {}), key=stats.get("value_counts_without_nan", {}).get)
+
+#     profiling_attribuut = {
+#         "id": f"profiling_{df_name}_{attribute}",
+#         "bronAttribuutId": f"{df_name}_{attribute}",
+#         "vulgraad": stats.get("n_missing", 0),
+#         "aantalUniekeWaardes": stats.get("n_distinct", 0),
+#         "minWaarde": stats.get("min", None),
+#         "maxWaarde": stats.get("max", None),
+#         "topVoorkomenWaarde": top_waarde,
+#         "dqDatum": report_json["analysis"].get("date_end", None)
+#     }
+
+#     return spark_session.createDataFrame([profiling_attribuut], schema=PROFILINGATTRIBUUT_SCHEMA)
