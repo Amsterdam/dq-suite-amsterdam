@@ -21,8 +21,8 @@ from .schemas.pre_afwijking import SCHEMA as PRE_AFWIJKING_SCHEMA
 from .schemas.pre_validatie import SCHEMA as PRE_VALIDATIE_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
-from .schemas.profilingattribuut import SCHEMA as PROFILINGATTRIBUUT_SCHEMA
-from .schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
+# from .schemas.profilingattribuut import SCHEMA as PROFILINGATTRIBUUT_SCHEMA
+# from .schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
 
 
 def snake_case_to_camel_case(snake_str):
