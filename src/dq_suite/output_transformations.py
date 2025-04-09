@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Dict, Any
 
 from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
@@ -73,10 +73,21 @@ def construct_regel_id(
     output_columns_list: list[str],
 ) -> DataFrame:
     """
-    Construct a regelId from the given dataframe. It is a combination of the regelNaam, regelParameters and bronTabelId.
+    Construct a regelId from the given dataframe by hashing the values of the
+    regelNaam, regelParameters and bronTabelId columns.
     """
     if not isinstance(output_columns_list, list):
         raise TypeError("'output_columns_list' should be of type 'list'")
+    if "regelNaam" not in output_columns_list:
+        raise ValueError(f"'regelNaam' not found in 'output_columns_list': "
+                         f"{output_columns_list}")
+    if "regelParameters" not in output_columns_list:
+        raise ValueError(f"'regelParameters' not found in 'output_columns_list': "
+                         f"{output_columns_list}")
+    if "bronTabelId" not in output_columns_list:
+        raise ValueError(f"'bronTabelId' not found in 'output_columns_list': "
+                         f"{output_columns_list}")
+
     df_with_id = df.withColumn(
         "regelId",
         xxhash64(
@@ -249,19 +260,18 @@ def extract_validatie_data(
     table_name: str,
     dataset_name: str,
     run_time: datetime,
-    dq_result: CheckpointDescriptionDict,
+    validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
     """
     Extract the validatie data from the dq_rules_dict.
     """
-    # "validation_results" is typed List[Dict[str, Any]] in GX
-    dq_result = dq_result["validation_results"]
+    validation_results: List[Dict[str, Any]] = validation_output["validation_results"]
     tabel_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
-    for validation_result in dq_result:
-        for expectation_result in validation_result["expectations"]:
-            element_count = int(
+    for result in validation_results:
+        for expectation_result in result["expectations"]:
+            total_count = int(
                 expectation_result["result"].get("element_count", 0)
             )
             unexpected_count = int(
@@ -274,26 +284,16 @@ def extract_validatie_data(
                 )
                 / 100
             )
-            number_of_valid_records = element_count - unexpected_count
-            expectation_type = expectation_result["expectation_type"]
-            if "_" in expectation_type:
-                expectation_type = snake_case_to_camel_case(expectation_type)
-            parameter_list = get_parameters_from_results(
-                result=expectation_result
-            )
-            expectation_result["kwargs"].get("column")
 
-            output = expectation_result["success"]
-            output_text = "success" if output else "failure"
             extracted_data.append(
                 {
-                    "aantalValideRecords": number_of_valid_records,
-                    "aantalReferentieRecords": element_count,
+                    "aantalValideRecords": total_count - unexpected_count,
+                    "aantalReferentieRecords": total_count,
                     "percentageValideRecords": percentage_of_valid_records,
-                    "dqDatum": run_time,
-                    "dqResultaat": output_text,
-                    "regelNaam": expectation_type,
-                    "regelParameters": parameter_list,
+                    "dqDatum": run_time,  # TODO/check: why is a 'datum' assigned a timestamp?
+                    "dqResultaat": "success" if expectation_result["success"] else "failure",
+                    "regelNaam": expectation_result["expectation_type"],
+                    "regelParameters": get_parameters_from_results(result=expectation_result),
                     "bronTabelId": tabel_id,
                 }
             )
@@ -306,21 +306,20 @@ def extract_afwijking_data(
     table_name: str,
     dataset_name: str,
     run_time: datetime,
-    dq_result: CheckpointDescriptionDict,
+    validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
     """
     Extract the afwijking data from the dq_rules_dict.
     """
-    # "validation_results" is typed List[Dict[str, Any]] in GX
-    dq_result = dq_result["validation_results"]
+    validation_results: List[Dict[str, Any]] = validation_output["validation_results"]
     tabel_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
     if not isinstance(unique_identifier, list):
         unique_identifier = [unique_identifier]
 
-    for validation_result in dq_result:
-        for expectation_result in validation_result["expectations"]:
+    for result in validation_results:
+        for expectation_result in result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
             if "_" in expectation_type:
                 expectation_type = snake_case_to_camel_case(expectation_type)
@@ -360,7 +359,7 @@ def create_dq_validatie(
     table_name: str,
     dataset_name: str,
     run_time: datetime,
-    dq_result: CheckpointDescriptionDict,
+    validation_output: CheckpointDescriptionDict,
     catalog_name: str,
     spark_session: SparkSession,
 ) -> None:
@@ -370,7 +369,7 @@ def create_dq_validatie(
     :param table_name: Name of the tables
     :param dataset_name:
     :param run_time:
-    :param dq_result:  # TODO: add dataclass?
+    :param validation_output:  # TODO: add dataclass?
     :param catalog_name:
     :param spark_session:
     """
@@ -378,7 +377,7 @@ def create_dq_validatie(
         table_name=table_name,
         dataset_name=dataset_name,
         run_time=run_time,
-        dq_result=dq_result,
+        validation_output=validation_output,
     )
     df_validatie = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -411,7 +410,7 @@ def create_dq_validatie(
 def create_dq_afwijking(
     table_name: str,
     dataset_name: str,
-    dq_result: CheckpointDescriptionDict,
+    validation_output: CheckpointDescriptionDict,
     df: DataFrame,
     unique_identifier: str,
     run_time: datetime,
@@ -423,7 +422,7 @@ def create_dq_afwijking(
 
     :param table_name: Name of the table
     :param dataset_name:
-    :param dq_result:
+    :param validation_output:
     :param df: A DataFrame containing the invalid (deviated) result
     :param unique_identifier:
     :param run_time:
@@ -436,7 +435,7 @@ def create_dq_afwijking(
         table_name=table_name,
         dataset_name=dataset_name,
         run_time=run_time,
-        dq_result=dq_result,
+        validation_output=validation_output,
     )
     df_afwijking = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -660,14 +659,14 @@ def write_validation_table(
         table_name=validation_settings_obj.table_name,
         dataset_name=dataset_name,
         run_time=run_time,
-        dq_result=validation_output,
+        validation_output=validation_output,
         catalog_name=validation_settings_obj.catalog_name,
         spark_session=validation_settings_obj.spark_session,
     )
     create_dq_afwijking(
         table_name=validation_settings_obj.table_name,
         dataset_name=dataset_name,
-        dq_result=validation_output,
+        validation_output=validation_output,
         df=df,
         unique_identifier=unique_identifier,
         run_time=run_time,

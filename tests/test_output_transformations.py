@@ -396,7 +396,7 @@ class TestExtractValidatieData:
                 table_name="table_name",
                 dataset_name="dataset_name",
                 run_time=datetime.now(),
-                dq_result="123",
+                validation_output="123",
             )
 
     def test_extract_validatie_data_returns_correct_list(
@@ -406,7 +406,7 @@ class TestExtractValidatieData:
             table_name="table_name",
             dataset_name="dataset_name",
             run_time=datetime.now(),
-            dq_result=read_test_result_as_dict,
+            validation_output=read_test_result_as_dict,
         )
         test_sample = test_output[0]
         del test_sample["dqDatum"]  # timestamp will be impossible to get right
@@ -440,7 +440,7 @@ class TestExtractAfwijkingData:
                 table_name="table_name",
                 dataset_name="dataset_name",
                 run_time=datetime.now(),
-                dq_result="123",
+                validation_output="123",
             )
 
     def test_extract_afwijking_data_returns_correct_list(
@@ -454,7 +454,7 @@ class TestExtractAfwijkingData:
             table_name="table_name",
             dataset_name="dataset_name",
             run_time=datetime.now(),
-            dq_result=read_test_result_as_dict,
+            validation_output=read_test_result_as_dict,
         )
         test_sample = test_output[0]
         del test_sample["dqDatum"]  # timestamp will be impossible to get right
