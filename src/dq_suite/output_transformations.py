@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
-from pyspark.sql.functions import col, xxhash64
+from pyspark.sql.functions import col, xxhash64, lit
 from pyspark.sql.types import StructType
 
 from .common import (
@@ -23,18 +23,20 @@ from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
-def snake_case_to_camel_case(snake_str):
-    """
-    Convert a snake_case string to a camelCase string. All DQ rules must be camelCase.
-    Example: "my_column" -> "myColumn
-    """
-    return "".join(x.capitalize() for x in snake_str.lower().split("_"))
+# def snake_case_to_camel_case(snake_str):
+#     """
+#     Convert a snake_case string to a camelCase string. All DQ rules must be camelCase.
+#     Example: "my_column" -> "myColumn
+#     """
+#     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
 
 
 def convert_param_values_to_float(parameters):
     """
     Convert parameter values for keys that are in the float_list to float.
     """
+    # TODO/check: why does this function do something without returning
+    #  something?
     float_list = ["min_value", "max_value"]
     for k, v in parameters.items():
         if k in float_list:
@@ -138,20 +140,22 @@ def filter_df_based_on_deviating_values(
     df: DataFrame,
 ) -> DataFrame:
     """
-    Filter the dataframe based on the deviating values. The output will contain only records that did not conform to the expectations set.
+    Filter the dataframe based on the deviating values.
+    The output will contain only records that did not conform to the
+    expectations set.
     """
     if value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
         # In case of compound keys, "attribute" is a list and "value" is a dict
-        # like tuple. The indeces will match, and we take [1] for value,
+        # like tuple. The indices will match, and we take [1] for value,
         # because the "key" is stored in [0].
         number_of_attrs = len(attribute)
         for i in range(number_of_attrs):
             df = df.filter(col(attribute[i]) == value[i][1])
         return df
     else:
-        return df.filter(col(attribute) == value)
+        return df.filter(col(attribute) == lit(value))
 
 
 def get_grouped_ids_per_deviating_value(
@@ -171,7 +175,7 @@ def get_grouped_ids_per_deviating_value(
     ]
 
 
-def extract_dataset_data(dq_rules_dict: dict) -> list[dict]:
+def extract_dataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the dataset data from the dq_rules_dict.
     """
@@ -180,7 +184,7 @@ def extract_dataset_data(dq_rules_dict: dict) -> list[dict]:
     return [{"bronDatasetId": name, "medaillonLaag": layer}]
 
 
-def extract_table_data(dq_rules_dict: dict) -> list[dict]:
+def extract_table_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the table data from the dq_rules_dict.
     """
@@ -200,7 +204,7 @@ def extract_table_data(dq_rules_dict: dict) -> list[dict]:
     return extracted_data
 
 
-def extract_attribute_data(dq_rules_dict: dict) -> list[dict]:
+def extract_attribute_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the attribute data from the dq_rules_dict.
     """
@@ -229,28 +233,24 @@ def extract_attribute_data(dq_rules_dict: dict) -> list[dict]:
     return extracted_data
 
 
-def extract_regel_data(dq_rules_dict: dict) -> list[dict]:
+def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the regel data from the dq_rules_dict.
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
     for table in dq_rules_dict["tables"]:
-        table_name = table["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
+        tabel_id = f"{dataset_name}_{table['table_name']}"
         for rule in table["rules"]:
-            rule_name = rule["rule_name"]
             parameters = rule.get("parameters")
             convert_param_values_to_float(parameters)
-            norm = rule.get("norm", None)
-            column = parameters.get("column", None)
             extracted_data.append(
                 {
-                    "regelNaam": rule_name,
+                    "regelNaam": rule["rule_name"],
                     "regelParameters": parameters,
-                    "norm": norm,
+                    "norm": rule.get("norm", None),
                     "bronTabelId": tabel_id,
-                    "attribuut": column,
+                    "attribuut": parameters.get("column", None),
                 }
             )
     return extracted_data
@@ -321,8 +321,9 @@ def extract_afwijking_data(
     for result in validation_results:
         for expectation_result in result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
-            if "_" in expectation_type:
-                expectation_type = snake_case_to_camel_case(expectation_type)
+            # TODO/check - no longer needed, this should be caught by input_validation
+            # if "_" in expectation_type:
+            #     expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
