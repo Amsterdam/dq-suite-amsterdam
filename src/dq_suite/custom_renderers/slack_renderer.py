@@ -44,14 +44,15 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         self, result: ExpectationValidationResult
     ) -> str:
         expectation_metadata = result["expectation_config"]["meta"]
+        expectation_name = expectation_metadata["expectation_name"]
         results = result.result
 
         # Output for Set-type expectations is differently structured
         # TODO: refactor this output more neatly into a function
-        if expectation_metadata['expectation_name'] == "ExpectTableColumnsToMatchSet":
+        if expectation_name == "ExpectTableColumnsToMatchSet":
             column_set = result["expectation_config"]["kwargs"]["column_set"]
             return f"""
-    \n *Expectation*: `{expectation_metadata['expectation_name']}`\n\n
+    \n *Expectation*: `{expectation_name}`\n\n
     :information_source: Details:
     *Unexpected columns*:  ```{results["details"]["mismatched"]["unexpected"]}```\n
     *Missing columns*:  ```{results["details"]["mismatched"]["missing"]}```\n
@@ -61,7 +62,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         else:
             parameters = self._get_expectation_parameters_dict(result=result)
             return f"""
-    \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_metadata['expectation_name']}`\n\n
+    \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_name}`\n\n
     :information_source: Details:
     *Sample unexpected values*:  ```{results['partial_unexpected_list'][:3]}```\n
     *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
