@@ -31,19 +31,6 @@ from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 #     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
 
 
-def convert_param_values_to_float(parameters):
-    """
-    Convert parameter values for keys that are in the float_list to float.
-    """
-    # TODO/check: why does this function do something without returning
-    #  something? This could easily have funky side-effects...
-    float_list = ["min_value", "max_value"]
-    for k, v in parameters.items():
-        if k in float_list:
-            v = round(float(v), 1)
-        parameters[k] = v
-
-
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
 ) -> DataFrame:
