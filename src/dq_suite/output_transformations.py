@@ -234,7 +234,7 @@ def get_single_rule_dict(rule: str | Rule, table_id: str) -> dict:
 
     return {
             "regelNaam": rule["rule_name"],
-            "regelParameters": parameters,
+            "regelParameters": parameters,  # TODO/check: this includes 'column'?
             "norm":  rule["norm"],
             "bronTabelId": table_id,
             "attribuut": parameters.get("column", None),
