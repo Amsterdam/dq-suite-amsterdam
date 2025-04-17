@@ -174,7 +174,7 @@ def get_grouped_ids_per_deviating_value(
     ]
 
 
-def extract_dataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def extract_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the dataset data from the dq_rules_dict.
     """
@@ -183,7 +183,7 @@ def extract_dataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return [{"bronDatasetId": name, "medaillonLaag": layer}]
 
 
-def extract_table_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def extract_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the table data from the dq_rules_dict.
     """
@@ -203,7 +203,7 @@ def extract_table_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return extracted_data
 
 
-def extract_attribute_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def extract_bronattribuut_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the attribute data from the dq_rules_dict.
     """
@@ -454,13 +454,13 @@ def create_dq_afwijking(
 def create_metadata_dataframe(table_name: str, dq_rules_dict:
 DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
     if table_name == "brondataset":
-        extracted_data = extract_dataset_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = extract_brondataset_data(dq_rules_dict=dq_rules_dict)
         schema = BRONDATASET_SCHEMA
     elif table_name == "brontabel":
-        extracted_data = extract_table_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = extract_brontabel_data(dq_rules_dict=dq_rules_dict)
         schema = BRONTABEL_SCHEMA
     elif table_name == "bronattribuut":
-        extracted_data = extract_attribute_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = extract_bronattribuut_data(dq_rules_dict=dq_rules_dict)
         schema = BRONATTRIBUUT_SCHEMA
     elif table_name == "regel":
         extracted_data = extract_regel_data(dq_rules_dict=dq_rules_dict)

@@ -9,10 +9,10 @@ from src.dq_suite.output_transformations import (
     add_regel_id_column,
     create_empty_dataframe,
     extract_afwijking_data,
-    extract_attribute_data,
-    extract_dataset_data,
+    extract_bronattribuut_data,
+    extract_brondataset_data,
     extract_regel_data,
-    extract_table_data,
+    extract_brontabel_data,
     extract_validatie_data,
     filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
@@ -274,12 +274,12 @@ class TestGetGroupedIdsPerDeviatingValue:
 class TestExtractDatasetData:
     def test_extract_dataset_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_dataset_data(dq_rules_dict="123")
+            extract_brondataset_data(dq_rules_dict="123")
 
     def test_extract_dataset_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_dataset_data(
+        test_output = extract_brondataset_data(
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
@@ -292,12 +292,12 @@ class TestExtractDatasetData:
 class TestExtractTableData:
     def test_extract_table_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_dataset_data(dq_rules_dict="123")
+            extract_brondataset_data(dq_rules_dict="123")
 
     def test_extract_table_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_table_data(dq_rules_dict=read_test_rules_as_dict)
+        test_output = extract_brontabel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
                 "bronTabelId": "the_dataset_the_table",
@@ -322,12 +322,12 @@ class TestExtractTableData:
 class TestExtractAttributeData:
     def test_extract_attribute_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_attribute_data(dq_rules_dict="123")
+            extract_bronattribuut_data(dq_rules_dict="123")
 
     def test_extract_attribute_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_attribute_data(
+        test_output = extract_bronattribuut_data(
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
