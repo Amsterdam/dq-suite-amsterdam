@@ -36,7 +36,7 @@ def convert_param_values_to_float(parameters):
     Convert parameter values for keys that are in the float_list to float.
     """
     # TODO/check: why does this function do something without returning
-    #  something?
+    #  something? This could easily have funky side-effects...
     float_list = ["min_value", "max_value"]
     for k, v in parameters.items():
         if k in float_list:
@@ -105,12 +105,14 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     """
     parameters = result["kwargs"]
     parameters.pop("batch_id", None)
+    # TODO/check: why is batch_id removed? Shouldn't this be documented?
     return parameters
 
 
 def get_target_attr_for_rule(result: dict) -> str:
     """
-    Get the target attribute from the GX results. It will only return results for DQ rules applied to specific attributes.
+    Get the target attribute from the GX results. It will only return results
+    for DQ rules applied to specific attributes.
     """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
