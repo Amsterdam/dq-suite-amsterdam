@@ -468,11 +468,17 @@ DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
     else:
         raise ValueError(f"Unknown metadata table name '{table_name}'")
 
-    return list_of_dicts_to_df(
+    df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
         schema=schema,
     )
+
+    if table_name == "regel":
+        return add_regel_id_column(
+                df=df,
+            ).select("regelId", *REGEL_SCHEMA.fieldNames())
+    return df
 
 
 def write_validation_metadata_tables(
@@ -486,11 +492,6 @@ def write_validation_metadata_tables(
         df = create_metadata_dataframe(table_name=table_name,
                                        dq_rules_dict=dq_rules_dict,
                                        spark_session=validation_settings_obj.spark_session)
-        if table_name == "regel":
-            df = add_regel_id_column(
-                df=df,
-            ).select("regelId", "regelNaam", "regelParameters", "norm",
-                     "bronTabelId", "attribuut")
 
         merge_df_with_unity_table(
             df=df,
