@@ -6,7 +6,7 @@ from chispa import assert_df_equality
 from pyspark.sql import SparkSession
 
 from src.dq_suite.output_transformations import (
-    construct_regel_id,
+    add_regel_id_column,
     create_empty_dataframe,
     extract_afwijking_data,
     extract_attribute_data,
@@ -89,7 +89,7 @@ class TestConstructRegelId:
     def test_output_columns_list_raises_type_error(self, spark):
         df = spark.createDataFrame([("123", "456")], ["123", "456"])
         with pytest.raises(TypeError):
-            construct_regel_id(df=df, output_columns_list="123")
+            add_regel_id_column(df=df, output_columns_list="123")
 
     def test_construct_regel_id_returns_correct_hash(self, spark):
         input_data = [
@@ -99,7 +99,7 @@ class TestConstructRegelId:
             input_data, ["regelNaam", "regelParameters", "bronTabelId"]
         )
 
-        actual_df = construct_regel_id(
+        actual_df = add_regel_id_column(
             df=input_df,
             output_columns_list=[
                 "regelId",

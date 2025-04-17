@@ -24,7 +24,7 @@ from pyspark.sql import DataFrame, SparkSession
 from .common import Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
-    write_non_validation_tables,
+    write_validation_metadata_tables,
     write_validation_tables,
 )
 from .validation_input import (
@@ -390,7 +390,7 @@ def run_validation(
         validation_output = checkpoint_result.describe_dict()
         run_time = checkpoint_result.run_id.run_time
 
-        write_non_validation_tables(
+        write_validation_metadata_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
         )

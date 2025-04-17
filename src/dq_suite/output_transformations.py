@@ -70,33 +70,30 @@ def list_of_dicts_to_df(
     )
 
 
-def construct_regel_id(
+def add_regel_id_column(
     df: DataFrame,
-    output_columns_list: list[str],
 ) -> DataFrame:
     """
     Construct a regelId from the given dataframe by hashing the values of the
     regelNaam, regelParameters and bronTabelId columns.
     """
-    if not isinstance(output_columns_list, list):
-        raise TypeError("'output_columns_list' should be of type 'list'")
-    if "regelNaam" not in output_columns_list:
-        raise ValueError(f"'regelNaam' not found in 'output_columns_list': "
-                         f"{output_columns_list}")
-    if "regelParameters" not in output_columns_list:
-        raise ValueError(f"'regelParameters' not found in 'output_columns_list': "
-                         f"{output_columns_list}")
-    if "bronTabelId" not in output_columns_list:
-        raise ValueError(f"'bronTabelId' not found in 'output_columns_list': "
-                         f"{output_columns_list}")
+    if "regelNaam" not in df.columns:
+        raise ValueError(f"Cannot compute hash: 'regelNaam' not found in "
+                         f"columns: {df.columns}")
+    if "regelParameters" not in df.columns:
+        raise ValueError(f"Cannot compute hash: 'regelParameters' not found "
+                         f"in columns: {df.columns}")
+    if "bronTabelId" not in df.columns:
+        raise ValueError(f"Cannot compute hash: 'bronTabelId' not found in "
+                         f"columns: {df.columns}")
 
     df_with_id = df.withColumn(
         "regelId",
         xxhash64(
             col("regelNaam"), col("regelParameters"), col("bronTabelId")
-        ).substr(2, 20),
+        ).substr(2, 20),  # TODO/check: why characters 2-20?
     )
-    return df_with_id.select(*output_columns_list)
+    return df_with_id
 
 
 def get_parameters_from_results(result: dict) -> list[dict]:
@@ -387,17 +384,10 @@ def create_dq_validatie(
         spark_session=spark_session,
         schema=PRE_VALIDATIE_SCHEMA,
     )
-    df_validatie_with_id_ordered = construct_regel_id(
+    df_validatie_with_id_ordered = add_regel_id_column(
         df=df_validatie,
-        output_columns_list=[
-            "regelId",
-            "aantalValideRecords",
-            "aantalReferentieRecords",
-            "percentageValideRecords",
-            "dqDatum",
-            "dqResultaat",
-        ],
-    )
+    ).select("regelId", "aantalValideRecords", "aantalReferentieRecords",
+             "percentageValideRecords", "dqDatum", "dqResultaat")
     if not is_empty_dataframe(df=df_validatie_with_id_ordered):
         write_to_unity_catalog(
             df=df_validatie_with_id_ordered,
@@ -445,15 +435,10 @@ def create_dq_afwijking(
         spark_session=spark_session,
         schema=PRE_AFWIJKING_SCHEMA,
     )
-    df_afwijking_with_id_ordered = construct_regel_id(
+    df_afwijking_with_id_ordered = add_regel_id_column(
         df=df_afwijking,
-        output_columns_list=[
-            "regelId",
-            "identifierVeldWaarde",
-            "afwijkendeAttribuutWaarde",
-            "dqDatum",
-        ],
-    )
+    ).select("regelId", "identifierVeldWaarde", "afwijkendeAttribuutWaarde",
+             "dqDatum")
     if not is_empty_dataframe(df=df_afwijking):
         write_to_unity_catalog(
             df=df_afwijking_with_id_ordered,
@@ -594,17 +579,10 @@ def create_dq_regel(
         spark_session=spark_session,
         schema=REGEL_SCHEMA,
     )
-    df_regel_with_id_ordered = construct_regel_id(
+    df_regel_with_id_ordered = add_regel_id_column(
         df=df_regel,
-        output_columns_list=[
-            "regelId",
-            "regelNaam",
-            "regelParameters",
-            "norm",
-            "bronTabelId",
-            "attribuut",
-        ],
-    )
+    ).select("regelId", "regelNaam", "regelParameters", "norm",
+             "bronTabelId", "attribuut")
     merge_dict = {
         "regelId": "regel_df.regelId",
         "regelNaam": "regel_df.regelNaam",
@@ -624,7 +602,7 @@ def create_dq_regel(
     )
 
 
-def write_non_validation_tables(
+def write_validation_metadata_tables(
     dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
