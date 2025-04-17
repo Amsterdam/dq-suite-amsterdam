@@ -471,17 +471,11 @@ def create_brondataset(
         spark_session=spark_session,
         schema=BRONDATASET_SCHEMA,
     )
-    merge_dict = {
-        "bronDatasetId": "brondataset_df.bronDatasetId",
-        "medaillonLaag": "brondataset_df.medaillonLaag",
-    }
     merge_df_with_unity_table(
         df=df_brondataset,
         catalog_name=catalog_name,
         table_name="brondataset",
-        table_merge_id="bronDatasetId",
-        df_merge_id="bronDatasetId",
-        merge_dict=merge_dict,
+        merge_on="bronDatasetId",
         spark_session=spark_session,
     )
 
@@ -506,18 +500,11 @@ def create_brontabel(
         spark_session=spark_session,
         schema=BRONTABEL_SCHEMA,
     )
-    merge_dict = {
-        "bronTabelId": "brontabel_df.bronTabelId",
-        "tabelNaam": "brontabel_df.tabelNaam",
-        "uniekeSleutel": "brontabel_df.uniekeSleutel",
-    }
     merge_df_with_unity_table(
         df=df_brontabel,
         catalog_name=catalog_name,
         table_name="brontabel",
-        table_merge_id="bronTabelId",
-        df_merge_id="bronTabelId",
-        merge_dict=merge_dict,
+        merge_on="bronTabelId",
         spark_session=spark_session,
     )
 
@@ -542,18 +529,11 @@ def create_bronattribute(
         spark_session=spark_session,
         schema=BRONATTRIBUUT_SCHEMA,
     )
-    merge_dict = {
-        "bronAttribuutId": "bronattribuut_df.bronAttribuutId",
-        "attribuutNaam": "bronattribuut_df.attribuutNaam",
-        "bronTabelId": "bronattribuut_df.bronTabelId",
-    }
     merge_df_with_unity_table(
         df=df_bronattribuut,
         catalog_name=catalog_name,
         table_name="bronattribuut",
-        table_merge_id="bronAttribuutId",
-        df_merge_id="bronAttribuutId",
-        merge_dict=merge_dict,
+        merge_on="bronAttribuutId",
         spark_session=spark_session,
     )
 
@@ -583,21 +563,11 @@ def create_dq_regel(
         df=df_regel,
     ).select("regelId", "regelNaam", "regelParameters", "norm",
              "bronTabelId", "attribuut")
-    merge_dict = {
-        "regelId": "regel_df.regelId",
-        "regelNaam": "regel_df.regelNaam",
-        "regelParameters": "regel_df.regelParameters",
-        "norm": "regel_df.norm",
-        "bronTabelId": "regel_df.bronTabelId",
-        "attribuut": "regel_df.attribuut",
-    }
     merge_df_with_unity_table(
         df=df_regel_with_id_ordered,
         catalog_name=catalog_name,
         table_name="regel",
-        table_merge_id="regelId",
-        df_merge_id="regelId",
-        merge_dict=merge_dict,
+        merge_on="regelId",
         spark_session=spark_session,
     )
 

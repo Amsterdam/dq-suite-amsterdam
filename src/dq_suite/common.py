@@ -178,9 +178,7 @@ def merge_df_with_unity_table(
     df: DataFrame,
     catalog_name: str,
     table_name: str,
-    table_merge_id: str,
-    df_merge_id: str,
-    merge_dict: dict,
+    merge_on: str,
     spark_session: SparkSession,
 ) -> None:
     """
@@ -188,6 +186,35 @@ def merge_df_with_unity_table(
     into an existing delta table. The upsert operation is based on
     the regel_id column.
     """
+    if table_name == "brondataset":
+        merge_dict = {
+            "bronDatasetId": "brondataset_df.bronDatasetId",
+            "medaillonLaag": "brondataset_df.medaillonLaag",
+        }
+    elif table_name == "brontabel":
+        merge_dict = {
+            "bronTabelId": "brontabel_df.bronTabelId",
+            "tabelNaam": "brontabel_df.tabelNaam",
+            "uniekeSleutel": "brontabel_df.uniekeSleutel",
+        }
+    elif table_name == "bronattribuut":
+        merge_dict = {
+            "bronAttribuutId": "bronattribuut_df.bronAttribuutId",
+            "attribuutNaam": "bronattribuut_df.attribuutNaam",
+            "bronTabelId": "bronattribuut_df.bronTabelId",
+        }
+    elif table_name == "regel":
+        merge_dict = {
+            "regelId": "regel_df.regelId",
+            "regelNaam": "regel_df.regelNaam",
+            "regelParameters": "regel_df.regelParameters",
+            "norm": "regel_df.norm",
+            "bronTabelId": "regel_df.bronTabelId",
+            "attribuut": "regel_df.attribuut",
+        }
+    else:
+        raise ValueError(f"Unknown metadata table name '{table_name}'")
+
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
@@ -195,7 +222,7 @@ def merge_df_with_unity_table(
     regel_tabel = DeltaTable.forName(spark_session, full_table_name)
     regel_tabel.alias(table_name).merge(
         df.alias(df_alias),
-        f"{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}",
+        f"{table_name}.{merge_on} = {df_alias}.{merge_on}",
     ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
         values=merge_dict
     ).execute()
