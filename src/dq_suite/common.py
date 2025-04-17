@@ -17,6 +17,7 @@ class Rule:
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
+    norm: int = None
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -25,11 +26,16 @@ class Rule:
         if not isinstance(self.parameters, dict):
             raise TypeError("'parameters' should be of type Dict[str, Any]")
 
-    def __getitem__(self, key) -> str | Dict[str, Any] | None:
+        if not isinstance(self.norm, int):
+            raise TypeError("'norm' should be of type int")
+
+    def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name
         elif key == "parameters":
             return self.parameters
+        elif key == "norm":
+            return self.norm
         raise KeyError(key)
 
 
