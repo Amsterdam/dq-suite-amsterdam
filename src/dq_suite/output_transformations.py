@@ -451,124 +451,27 @@ def create_dq_afwijking(
         pass
 
 
-def create_brondataset(
-    dq_rules_dict: DataQualityRulesDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    Function takes the dataset name and layer from the provided
-    Data Quality rules to create a DataFrame containing this metadata.
+def create_metadata_dataframe(table_name: str, dq_rules_dict:
+DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
+    if table_name == "brondataset":
+        extracted_data = extract_dataset_data(dq_rules_dict=dq_rules_dict)
+        schema = BRONDATASET_SCHEMA
+    elif table_name == "brontabel":
+        extracted_data = extract_table_data(dq_rules_dict=dq_rules_dict)
+        schema = BRONTABEL_SCHEMA
+    elif table_name == "bronattribuut":
+        extracted_data = extract_attribute_data(dq_rules_dict=dq_rules_dict)
+        schema = BRONATTRIBUUT_SCHEMA
+    elif table_name == "regel":
+        extracted_data = extract_regel_data(dq_rules_dict=dq_rules_dict)
+        schema = REGEL_SCHEMA
+    else:
+        raise ValueError(f"Unknown metadata table name '{table_name}'")
 
-    :param dq_rules_dict:
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_dataset_data(dq_rules_dict=dq_rules_dict)
-
-    df_brondataset = list_of_dicts_to_df(
+    return list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
-        schema=BRONDATASET_SCHEMA,
-    )
-    merge_df_with_unity_table(
-        df=df_brondataset,
-        catalog_name=catalog_name,
-        table_name="brondataset",
-        merge_on="bronDatasetId",
-        spark_session=spark_session,
-    )
-
-
-def create_brontabel(
-    dq_rules_dict: DataQualityRulesDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    Function takes the table name and their unique identifier from the provided
-    Data Quality rules to create a DataFrame containing this metadata.
-
-    :param dq_rules_dict:
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_table_data(dq_rules_dict=dq_rules_dict)
-
-    df_brontabel = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=BRONTABEL_SCHEMA,
-    )
-    merge_df_with_unity_table(
-        df=df_brontabel,
-        catalog_name=catalog_name,
-        table_name="brontabel",
-        merge_on="bronTabelId",
-        spark_session=spark_session,
-    )
-
-
-def create_bronattribute(
-    dq_rules_dict: DataQualityRulesDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    This function takes attributes/columns for each table specified in the Data
-    Quality rules and creates a DataFrame containing these attribute details.
-
-    :param dq_rules_dict:
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_attribute_data(dq_rules_dict=dq_rules_dict)
-
-    df_bronattribuut = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=BRONATTRIBUUT_SCHEMA,
-    )
-    merge_df_with_unity_table(
-        df=df_bronattribuut,
-        catalog_name=catalog_name,
-        table_name="bronattribuut",
-        merge_on="bronAttribuutId",
-        spark_session=spark_session,
-    )
-
-
-def create_dq_regel(
-    dq_rules_dict: DataQualityRulesDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    Function extracts information about Data Quality rules applied to each
-    attribute/column for tables specified in the Data Quality rules and creates
-    a DataFrame containing these rule details.
-
-    :param dq_rules_dict:
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_regel_data(dq_rules_dict=dq_rules_dict)
-
-    df_regel = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=REGEL_SCHEMA,
-    )
-    df_regel_with_id_ordered = add_regel_id_column(
-        df=df_regel,
-    ).select("regelId", "regelNaam", "regelParameters", "norm",
-             "bronTabelId", "attribuut")
-    merge_df_with_unity_table(
-        df=df_regel_with_id_ordered,
-        catalog_name=catalog_name,
-        table_name="regel",
-        merge_on="regelId",
-        spark_session=spark_session,
+        schema=schema,
     )
 
 
@@ -576,26 +479,25 @@ def write_validation_metadata_tables(
     dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
-    create_brondataset(
-        dq_rules_dict=dq_rules_dict,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
-    create_brontabel(
-        dq_rules_dict=dq_rules_dict,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
-    create_bronattribute(
-        dq_rules_dict=dq_rules_dict,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
-    create_dq_regel(
-        dq_rules_dict=dq_rules_dict,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
+    metadata_table_names = ["brondataset", "brontabel", "bronattribuut",
+                            "regel"]
+
+    for table_name in metadata_table_names:
+        df = create_metadata_dataframe(table_name=table_name,
+                                       dq_rules_dict=dq_rules_dict,
+                                       spark_session=validation_settings_obj.spark_session)
+        if table_name == "regel":
+            df = add_regel_id_column(
+                df=df,
+            ).select("regelId", "regelNaam", "regelParameters", "norm",
+                     "bronTabelId", "attribuut")
+
+        merge_df_with_unity_table(
+            df=df,
+            catalog_name=validation_settings_obj.catalog_name,
+            table_name=table_name,
+            spark_session=validation_settings_obj.spark_session,
+        )
 
 
 def write_validation_tables(

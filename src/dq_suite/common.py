@@ -178,7 +178,6 @@ def merge_df_with_unity_table(
     df: DataFrame,
     catalog_name: str,
     table_name: str,
-    merge_on: str,
     spark_session: SparkSession,
 ) -> None:
     """
@@ -191,18 +190,21 @@ def merge_df_with_unity_table(
             "bronDatasetId": "brondataset_df.bronDatasetId",
             "medaillonLaag": "brondataset_df.medaillonLaag",
         }
+        merge_on = "bronDatasetId"
     elif table_name == "brontabel":
         merge_dict = {
             "bronTabelId": "brontabel_df.bronTabelId",
             "tabelNaam": "brontabel_df.tabelNaam",
             "uniekeSleutel": "brontabel_df.uniekeSleutel",
         }
+        merge_on = "bronTabelId"
     elif table_name == "bronattribuut":
         merge_dict = {
             "bronAttribuutId": "bronattribuut_df.bronAttribuutId",
             "attribuutNaam": "bronattribuut_df.attribuutNaam",
             "bronTabelId": "bronattribuut_df.bronTabelId",
         }
+        merge_on = "bronAttribuutId"
     elif table_name == "regel":
         merge_dict = {
             "regelId": "regel_df.regelId",
@@ -212,6 +214,7 @@ def merge_df_with_unity_table(
             "bronTabelId": "regel_df.bronTabelId",
             "attribuut": "regel_df.attribuut",
         }
+        merge_on = "regelId"
     else:
         raise ValueError(f"Unknown metadata table name '{table_name}'")
 
