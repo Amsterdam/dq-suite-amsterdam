@@ -101,7 +101,7 @@ def get_target_attr_for_rule(result: dict) -> str:
     """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
-    else:
+    else:  # TODO/check: what if 'column_list' doesnt exist?
         return result["kwargs"].get("column_list")
 
 
@@ -223,11 +223,15 @@ def extract_bronattribuut_data(dq_rules_dict: DataQualityRulesDict) -> list[dict
 def get_single_rule_dict(rule: str | Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
-    # Round min/max values to a single decimal
-    for k, v in parameters.items():
-        if k in ["min_value", "max_value"]:
-            v = round(float(v), 1)
-        parameters[k] = v
+    # Round min/max values (if present) to a single decimal
+    # TODO/check: why cast to float of min/max values?
+    if "min_value" in parameters.keys():
+        min_value = float(parameters["min_value"])
+        parameters["min_value"] = round(min_value, 1)
+    if "max_value" in parameters.keys():
+        max_value = float(parameters["max_value"])
+        parameters["max_value"] = round(max_value, 1)
+
     return {
             "regelNaam": rule["rule_name"],
             "regelParameters": parameters,
