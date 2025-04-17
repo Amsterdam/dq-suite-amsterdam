@@ -650,7 +650,7 @@ def write_non_validation_tables(
     )
 
 
-def write_validation_table(
+def write_validation_tables(
     validation_output: CheckpointDescriptionDict,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
