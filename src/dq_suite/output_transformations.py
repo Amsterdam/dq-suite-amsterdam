@@ -1,3 +1,4 @@
+import copy
 import datetime
 from typing import List, Dict, Any
 
@@ -243,7 +244,7 @@ def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
     for table in dq_rules_dict["tables"]:
-        tabel_id = f"{dataset_name}_{table['table_name']}"
+        table_id = f"{dataset_name}_{table['table_name']}"
         for rule in table["rules"]:
             extracted_data.append(
                 get_single_rule_dict(rule=rule, table_id=table_id)
