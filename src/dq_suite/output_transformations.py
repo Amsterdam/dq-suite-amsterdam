@@ -11,7 +11,7 @@ from .common import (
     ValidationSettings,
     is_empty_dataframe,
     merge_df_with_unity_table,
-    write_to_unity_catalog,
+    write_to_unity_catalog, Rule,
 )
 from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
@@ -219,6 +219,23 @@ def extract_bronattribuut_data(dq_rules_dict: DataQualityRulesDict) -> list[dict
     return extracted_data
 
 
+def get_single_rule_dict(rule: str | Rule, table_id: str) -> dict:
+    parameters = copy.deepcopy(rule["parameters"])
+
+    # Round min/max values to a single decimal
+    for k, v in parameters.items():
+        if k in ["min_value", "max_value"]:
+            v = round(float(v), 1)
+        parameters[k] = v
+    return {
+            "regelNaam": rule["rule_name"],
+            "regelParameters": parameters,
+            "norm":  rule["norm"],
+            "bronTabelId": table_id,
+            "attribuut": parameters.get("column", None),
+        }
+
+
 def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Extract the regel data from the dq_rules_dict.
@@ -228,16 +245,8 @@ def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     for table in dq_rules_dict["tables"]:
         tabel_id = f"{dataset_name}_{table['table_name']}"
         for rule in table["rules"]:
-            parameters = rule.get("parameters")
-            convert_param_values_to_float(parameters)
             extracted_data.append(
-                {
-                    "regelNaam": rule["rule_name"],
-                    "regelParameters": parameters,
-                    "norm": rule.get("norm", None),
-                    "bronTabelId": tabel_id,
-                    "attribuut": parameters.get("column", None),
-                }
+                get_single_rule_dict(rule=rule, table_id=table_id)
             )
     return extracted_data
 
