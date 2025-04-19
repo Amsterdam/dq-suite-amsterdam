@@ -8,12 +8,12 @@ from pyspark.sql import SparkSession
 from src.dq_suite.output_transformations import (
     add_regel_id_column,
     create_empty_dataframe,
-    extract_afwijking_data,
-    extract_bronattribuut_data,
-    extract_brondataset_data,
-    extract_brontabel_data,
-    extract_regel_data,
-    extract_validatie_data,
+    get_afwijking_data,
+    get_bronattribuut_data,
+    get_brondataset_data,
+    get_brontabel_data,
+    get_regel_data,
+    get_validatie_data,
     filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
     get_parameters_from_results,
@@ -271,15 +271,15 @@ class TestGetGroupedIdsPerDeviatingValue:
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
-class TestExtractDatasetData:
-    def test_extract_dataset_data_raises_type_error(self):
+class TestGetDatasetData:
+    def test_get_dataset_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_brondataset_data(dq_rules_dict="123")
+            get_brondataset_data(dq_rules_dict="123")
 
-    def test_extract_dataset_data_returns_correct_list(
+    def test_get_dataset_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_brondataset_data(
+        test_output = get_brondataset_data(
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
@@ -289,15 +289,15 @@ class TestExtractDatasetData:
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
-class TestExtractTableData:
-    def test_extract_table_data_raises_type_error(self):
+class TestGetTableData:
+    def test_get_table_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_brondataset_data(dq_rules_dict="123")
+            get_brondataset_data(dq_rules_dict="123")
 
-    def test_extract_table_data_returns_correct_list(
+    def test_get_table_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_brontabel_data(
+        test_output = get_brontabel_data(
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
@@ -321,15 +321,15 @@ class TestExtractTableData:
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
-class TestExtractAttributeData:
-    def test_extract_attribute_data_raises_type_error(self):
+class TestGetAttributeData:
+    def test_get_attribute_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_bronattribuut_data(dq_rules_dict="123")
+            get_bronattribuut_data(dq_rules_dict="123")
 
-    def test_extract_attribute_data_returns_correct_list(
+    def test_get_attribute_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_bronattribuut_data(
+        test_output = get_bronattribuut_data(
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
@@ -348,15 +348,15 @@ class TestExtractAttributeData:
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
-class TestExtractRegelData:
-    def test_extract_regel_data_raises_type_error(self):
+class TestGetRegelData:
+    def test_get_regel_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_regel_data(dq_rules_dict="123")
+            get_regel_data(dq_rules_dict="123")
 
-    def test_extract_regel_data_returns_correct_list(
+    def test_get_regel_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_regel_data(dq_rules_dict=read_test_rules_as_dict)
+        test_output = get_regel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
                 "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
@@ -391,20 +391,20 @@ class TestExtractRegelData:
 
 
 @pytest.mark.usefixtures("read_test_result_as_dict")
-class TestExtractValidatieData:
-    def test_extract_validatie_data_raises_type_error(self):
+class TestGetValidatieData:
+    def test_get_validatie_data_raises_type_error(self):
         with pytest.raises(TypeError):
-            extract_validatie_data(
+            get_validatie_data(
                 table_name="table_name",
                 dataset_name="dataset_name",
                 run_time=datetime.now(),
                 validation_output="123",
             )
 
-    def test_extract_validatie_data_returns_correct_list(
+    def test_get_validatie_data_returns_correct_list(
         self, read_test_result_as_dict
     ):
-        test_output = extract_validatie_data(
+        test_output = get_validatie_data(
             table_name="table_name",
             dataset_name="dataset_name",
             run_time=datetime.now(),
@@ -429,14 +429,14 @@ class TestExtractValidatieData:
 
 @pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict")
-class TestExtractAfwijkingData:
-    def test_extract_afwijking_data_raises_type_error(self, spark):
+class TestGetAfwijkingData:
+    def test_get_afwijking_data_raises_type_error(self, spark):
         with pytest.raises(TypeError):
             mock_data = [("str1", "str2")]
             mock_df = spark.createDataFrame(
                 mock_data, ["the_string", "the_other_string"]
             )
-            extract_afwijking_data(
+            get_afwijking_data(
                 df=mock_df,
                 unique_identifier="id",
                 table_name="table_name",
@@ -445,12 +445,12 @@ class TestExtractAfwijkingData:
                 validation_output="123",
             )
 
-    def test_extract_afwijking_data_returns_correct_list(
+    def test_get_afwijking_data_returns_correct_list(
         self, spark, read_test_result_as_dict
     ):
         input_data = [("id1", None), ("id2", "the_value")]
         input_df = spark.createDataFrame(input_data, ["the_key", "the_column"])
-        test_output = extract_afwijking_data(
+        test_output = get_afwijking_data(
             df=input_df,
             unique_identifier="the_key",
             table_name="table_name",

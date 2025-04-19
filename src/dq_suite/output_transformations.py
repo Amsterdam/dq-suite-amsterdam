@@ -171,18 +171,18 @@ def get_grouped_ids_per_deviating_value(
     ]
 
 
-def extract_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
-    Extract the dataset data from the dq_rules_dict.
+    Get the dataset data from the dq_rules_dict.
     """
     name = dq_rules_dict["dataset"]["name"]
     layer = dq_rules_dict["dataset"]["layer"]
     return [{"bronDatasetId": name, "medaillonLaag": layer}]
 
 
-def extract_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
-    Extract the table data from the dq_rules_dict.
+    Get the table data from the dq_rules_dict.
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
@@ -200,11 +200,11 @@ def extract_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return extracted_data
 
 
-def extract_bronattribuut_data(
+def get_bronattribuut_data(
     dq_rules_dict: DataQualityRulesDict,
 ) -> list[dict]:
     """
-    Extract the attribute data from the dq_rules_dict.
+    Get the attribute data from the dq_rules_dict.
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
@@ -252,9 +252,9 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     }
 
 
-def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
-    Extract the regel data from the dq_rules_dict.
+    Get the regel data from the dq_rules_dict.
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
@@ -301,14 +301,14 @@ def get_single_validation_result_dict(
     }
 
 
-def extract_validatie_data(
+def get_validatie_data(
     table_name: str,
     dataset_name: str,
     run_time: datetime,
     validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
     """
-    Extract the validatie data from the dq_rules_dict.
+    Get the validatie data from the dq_rules_dict.
     """
     validation_results: List[Dict[str, Any]] = validation_output[
         "validation_results"
@@ -328,7 +328,7 @@ def extract_validatie_data(
     return extracted_data
 
 
-def extract_afwijking_data(
+def get_afwijking_data(
     df: DataFrame,
     unique_identifier: str,
     table_name: str,
@@ -337,7 +337,7 @@ def extract_afwijking_data(
     validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
     """
-    Extract the afwijking data from the dq_rules_dict.
+    Get the afwijking data from the dq_rules_dict.
     """
     validation_results: List[Dict[str, Any]] = validation_output[
         "validation_results"
@@ -392,16 +392,16 @@ def create_metadata_dataframe(
     spark_session: SparkSession,
 ) -> DataFrame:
     if table_name == "brondataset":
-        extracted_data = extract_brondataset_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = get_brondataset_data(dq_rules_dict=dq_rules_dict)
         schema = BRONDATASET_SCHEMA
     elif table_name == "brontabel":
-        extracted_data = extract_brontabel_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = get_brontabel_data(dq_rules_dict=dq_rules_dict)
         schema = BRONTABEL_SCHEMA
     elif table_name == "bronattribuut":
-        extracted_data = extract_bronattribuut_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = get_bronattribuut_data(dq_rules_dict=dq_rules_dict)
         schema = BRONATTRIBUUT_SCHEMA
     elif table_name == "regel":
-        extracted_data = extract_regel_data(dq_rules_dict=dq_rules_dict)
+        extracted_data = get_regel_data(dq_rules_dict=dq_rules_dict)
         schema = REGEL_SCHEMA
     else:
         raise ValueError(f"Unknown metadata table name '{table_name}'")
@@ -455,7 +455,7 @@ def create_validation_result_dataframe(
     unique_identifier: str,
 ) -> DataFrame:
     if table_name == "validatie":
-        extracted_data = extract_validatie_data(
+        extracted_data = get_validatie_data(
             table_name=table_name,
             dataset_name=dataset_name,
             run_time=run_time,
@@ -463,7 +463,7 @@ def create_validation_result_dataframe(
         )
         schema = VALIDATIE_SCHEMA
     elif table_name == "afwijking":
-        extracted_data = extract_afwijking_data(
+        extracted_data = get_afwijking_data(
             df=df,
             unique_identifier=unique_identifier,
             table_name=table_name,
