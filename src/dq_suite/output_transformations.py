@@ -258,6 +258,44 @@ def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return extracted_data
 
 
+def get_single_validation_result_dict(expectation_result: dict,
+                                      run_time: datetime,
+                                      table_id: str) -> dict:
+    total_count = int(
+        expectation_result["result"].get("element_count", 0)
+    )
+    unexpected_count = int(
+        expectation_result["result"].get("unexpected_count", 0)
+    )
+    percentage_of_valid_records = float(
+        int(
+            100
+            - expectation_result["result"].get("unexpected_percent", 0)
+        )
+        / 100
+    )
+
+    if expectation_result["success"]:
+        validation_result = "success"
+    else:
+        validation_result = "failure"
+
+    validation_parameters = get_parameters_from_results(
+        result=expectation_result)
+
+    return {
+            "aantalValideRecords": total_count - unexpected_count,
+            "aantalReferentieRecords": total_count,
+            "percentageValideRecords": percentage_of_valid_records,
+            "dqDatum": run_time,
+            # TODO/check: why is a 'datum' assigned a timestamp?
+            "dqResultaat": validation_result,
+            "regelNaam": expectation_result["expectation_type"],
+            "regelParameters": validation_parameters,
+            "bronTabelId": table_id,
+        }
+
+
 def extract_validatie_data(
     table_name: str,
     dataset_name: str,
@@ -273,31 +311,10 @@ def extract_validatie_data(
     extracted_data = []
     for result in validation_results:
         for expectation_result in result["expectations"]:
-            total_count = int(
-                expectation_result["result"].get("element_count", 0)
-            )
-            unexpected_count = int(
-                expectation_result["result"].get("unexpected_count", 0)
-            )
-            percentage_of_valid_records = float(
-                int(
-                    100
-                    - expectation_result["result"].get("unexpected_percent", 0)
-                )
-                / 100
-            )
-
             extracted_data.append(
-                {
-                    "aantalValideRecords": total_count - unexpected_count,
-                    "aantalReferentieRecords": total_count,
-                    "percentageValideRecords": percentage_of_valid_records,
-                    "dqDatum": run_time,  # TODO/check: why is a 'datum' assigned a timestamp?
-                    "dqResultaat": "success" if expectation_result["success"] else "failure",
-                    "regelNaam": expectation_result["expectation_type"],
-                    "regelParameters": get_parameters_from_results(result=expectation_result),
-                    "bronTabelId": tabel_id,
-                }
+                get_single_validation_result_dict(
+                    expectation_result=expectation_result, run_time=run_time,
+                    table_id=table_id)
             )
     return extracted_data
 
