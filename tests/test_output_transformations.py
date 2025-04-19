@@ -11,8 +11,8 @@ from src.dq_suite.output_transformations import (
     extract_afwijking_data,
     extract_bronattribuut_data,
     extract_brondataset_data,
-    extract_regel_data,
     extract_brontabel_data,
+    extract_regel_data,
     extract_validatie_data,
     filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
@@ -297,7 +297,9 @@ class TestExtractTableData:
     def test_extract_table_data_returns_correct_list(
         self, read_test_rules_as_dict
     ):
-        test_output = extract_brontabel_data(dq_rules_dict=read_test_rules_as_dict)
+        test_output = extract_brontabel_data(
+            dq_rules_dict=read_test_rules_as_dict
+        )
         expected_result = [
             {
                 "bronTabelId": "the_dataset_the_table",

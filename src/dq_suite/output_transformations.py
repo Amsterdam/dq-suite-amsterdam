@@ -1,28 +1,27 @@
 import copy
 import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
 from pyspark.sql import DataFrame, Row, SparkSession
-from pyspark.sql.functions import col, xxhash64, lit
+from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
 
 from .common import (
     DataQualityRulesDict,
+    Rule,
     ValidationSettings,
+    enforce_column_order,
     is_empty_dataframe,
     merge_df_with_unity_table,
-    write_to_unity_catalog, Rule, enforce_column_order,
+    write_to_unity_catalog,
 )
 from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
 from .schemas.brondataset import SCHEMA as BRONDATASET_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
-from .schemas.pre_afwijking import SCHEMA as PRE_AFWIJKING_SCHEMA
-from .schemas.pre_validatie import SCHEMA as PRE_VALIDATIE_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
-
 
 # def snake_case_to_camel_case(snake_str):
 #     """
@@ -66,20 +65,28 @@ def add_regel_id_column(
     regelNaam, regelParameters and bronTabelId columns.
     """
     if "regelNaam" not in df.columns:
-        raise ValueError(f"Cannot compute hash: 'regelNaam' not found in "
-                         f"columns: {df.columns}")
+        raise ValueError(
+            f"Cannot compute hash: 'regelNaam' not found in "
+            f"columns: {df.columns}"
+        )
     if "regelParameters" not in df.columns:
-        raise ValueError(f"Cannot compute hash: 'regelParameters' not found "
-                         f"in columns: {df.columns}")
+        raise ValueError(
+            f"Cannot compute hash: 'regelParameters' not found "
+            f"in columns: {df.columns}"
+        )
     if "bronTabelId" not in df.columns:
-        raise ValueError(f"Cannot compute hash: 'bronTabelId' not found in "
-                         f"columns: {df.columns}")
+        raise ValueError(
+            f"Cannot compute hash: 'bronTabelId' not found in "
+            f"columns: {df.columns}"
+        )
 
     df_with_id = df.withColumn(
         "regelId",
         xxhash64(
             col("regelNaam"), col("regelParameters"), col("bronTabelId")
-        ).substr(2, 20),  # TODO/check: why characters 2-20?
+        ).substr(
+            2, 20
+        ),  # TODO/check: why characters 2-20?
     )
     return df_with_id
 
@@ -193,7 +200,9 @@ def extract_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return extracted_data
 
 
-def extract_bronattribuut_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+def extract_bronattribuut_data(
+    dq_rules_dict: DataQualityRulesDict,
+) -> list[dict]:
     """
     Extract the attribute data from the dq_rules_dict.
     """
@@ -235,12 +244,12 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         parameters["max_value"] = round(max_value, 1)
 
     return {
-            "regelNaam": rule["rule_name"],
-            "regelParameters": parameters,  # TODO/check: this includes 'column'?
-            "norm":  rule["norm"],
-            "bronTabelId": table_id,
-            "attribuut": parameters.get("column", None),
-        }
+        "regelNaam": rule["rule_name"],
+        "regelParameters": parameters,  # TODO/check: this includes 'column'?
+        "norm": rule["norm"],
+        "bronTabelId": table_id,
+        "attribuut": parameters.get("column", None),
+    }
 
 
 def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
@@ -258,20 +267,15 @@ def extract_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     return extracted_data
 
 
-def get_single_validation_result_dict(expectation_result: dict,
-                                      run_time: datetime,
-                                      table_id: str) -> dict:
-    total_count = int(
-        expectation_result["result"].get("element_count", 0)
-    )
+def get_single_validation_result_dict(
+    expectation_result: dict, run_time: datetime, table_id: str
+) -> dict:
+    total_count = int(expectation_result["result"].get("element_count", 0))
     unexpected_count = int(
         expectation_result["result"].get("unexpected_count", 0)
     )
     percentage_of_valid_records = float(
-        int(
-            100
-            - expectation_result["result"].get("unexpected_percent", 0)
-        )
+        int(100 - expectation_result["result"].get("unexpected_percent", 0))
         / 100
     )
 
@@ -281,19 +285,20 @@ def get_single_validation_result_dict(expectation_result: dict,
         validation_result = "failure"
 
     validation_parameters = get_parameters_from_results(
-        result=expectation_result)
+        result=expectation_result
+    )
 
     return {
-            "aantalValideRecords": total_count - unexpected_count,
-            "aantalReferentieRecords": total_count,
-            "percentageValideRecords": percentage_of_valid_records,
-            "dqDatum": run_time,
-            # TODO/check: why is a 'datum' assigned a timestamp?
-            "dqResultaat": validation_result,
-            "regelNaam": expectation_result["expectation_type"],
-            "regelParameters": validation_parameters,
-            "bronTabelId": table_id,
-        }
+        "aantalValideRecords": total_count - unexpected_count,
+        "aantalReferentieRecords": total_count,
+        "percentageValideRecords": percentage_of_valid_records,
+        "dqDatum": run_time,
+        # TODO/check: why is a 'datum' assigned a timestamp?
+        "dqResultaat": validation_result,
+        "regelNaam": expectation_result["expectation_type"],
+        "regelParameters": validation_parameters,
+        "bronTabelId": table_id,
+    }
 
 
 def extract_validatie_data(
@@ -305,7 +310,9 @@ def extract_validatie_data(
     """
     Extract the validatie data from the dq_rules_dict.
     """
-    validation_results: List[Dict[str, Any]] = validation_output["validation_results"]
+    validation_results: List[Dict[str, Any]] = validation_output[
+        "validation_results"
+    ]
     table_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
@@ -313,8 +320,10 @@ def extract_validatie_data(
         for expectation_result in result["expectations"]:
             extracted_data.append(
                 get_single_validation_result_dict(
-                    expectation_result=expectation_result, run_time=run_time,
-                    table_id=table_id)
+                    expectation_result=expectation_result,
+                    run_time=run_time,
+                    table_id=table_id,
+                )
             )
     return extracted_data
 
@@ -330,7 +339,9 @@ def extract_afwijking_data(
     """
     Extract the afwijking data from the dq_rules_dict.
     """
-    validation_results: List[Dict[str, Any]] = validation_output["validation_results"]
+    validation_results: List[Dict[str, Any]] = validation_output[
+        "validation_results"
+    ]
     tabel_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
@@ -375,8 +386,11 @@ def extract_afwijking_data(
     return extracted_data
 
 
-def create_metadata_dataframe(table_name: str, dq_rules_dict:
-DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
+def create_metadata_dataframe(
+    table_name: str,
+    dq_rules_dict: DataQualityRulesDict,
+    spark_session: SparkSession,
+) -> DataFrame:
     if table_name == "brondataset":
         extracted_data = extract_brondataset_data(dq_rules_dict=dq_rules_dict)
         schema = BRONDATASET_SCHEMA
@@ -400,8 +414,8 @@ DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
 
     if table_name == "regel":
         return add_regel_id_column(
-                df=df,
-            ).select("regelId", *REGEL_SCHEMA.fieldNames())
+            df=df,
+        ).select("regelId", *REGEL_SCHEMA.fieldNames())
     return df
 
 
@@ -409,13 +423,19 @@ def write_validation_metadata_tables(
     dq_rules_dict: DataQualityRulesDict,
     validation_settings_obj: ValidationSettings,
 ) -> None:
-    metadata_table_names = ["brondataset", "brontabel", "bronattribuut",
-                            "regel"]
+    metadata_table_names = [
+        "brondataset",
+        "brontabel",
+        "bronattribuut",
+        "regel",
+    ]
 
     for table_name in metadata_table_names:
-        df = create_metadata_dataframe(table_name=table_name,
-                                       dq_rules_dict=dq_rules_dict,
-                                       spark_session=validation_settings_obj.spark_session)
+        df = create_metadata_dataframe(
+            table_name=table_name,
+            dq_rules_dict=dq_rules_dict,
+            spark_session=validation_settings_obj.spark_session,
+        )
 
         merge_df_with_unity_table(
             df=df,
@@ -426,14 +446,14 @@ def write_validation_metadata_tables(
 
 
 def create_validation_result_dataframe(
-df: DataFrame,
-        validation_output: CheckpointDescriptionDict,
-                                        table_name: str,
-                                       dataset_name: str,
-                                       run_time: datetime,
-                                       spark_session: SparkSession,
-                                       unique_identifier: str
-                                       ) -> DataFrame:
+    df: DataFrame,
+    validation_output: CheckpointDescriptionDict,
+    table_name: str,
+    dataset_name: str,
+    run_time: datetime,
+    spark_session: SparkSession,
+    unique_identifier: str,
+) -> DataFrame:
     if table_name == "validatie":
         extracted_data = extract_validatie_data(
             table_name=table_name,
@@ -493,7 +513,8 @@ def write_validation_result_tables(
                 schema = AFWIJKING_SCHEMA
             else:
                 raise ValueError(
-                    f"Unknown validation result table name '{table_name}'")
+                    f"Unknown validation result table name '{table_name}'"
+                )
 
             write_to_unity_catalog(
                 df=df_validation_result,
