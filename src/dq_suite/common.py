@@ -227,14 +227,17 @@ def merge_df_with_unity_table(
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
-    df_alias = f"{table_name}_df"
-    regel_tabel = DeltaTable.forName(sparkSession=spark_session,
-                                     tableOrViewName=full_table_name)
-    regel_tabel.alias(table_name).merge(
-        source=df.alias(df_alias),
-        condition=f"{table_name}.{merge_on} = {df_alias}.{merge_on}",
-    ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
-        values=merge_dict
+    df_new_alias = f"{table_name}_new_records"
+    unity_catalog_table = DeltaTable.forName(sparkSession=spark_session,
+                                             tableOrViewName=full_table_name)
+    (
+            unity_catalog_table.alias(table_name)
+            .merge(
+                source=df.alias(df_new_alias),
+                condition=f"{table_name}.{merge_on}={df_new_alias}.{merge_on}",
+            )
+            .whenMatchedUpdate(set=merge_dict)
+            .whenNotMatchedInsert(values=merge_dict)
     ).execute()
 
 
