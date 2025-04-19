@@ -25,7 +25,7 @@ from .common import Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_validation_metadata_tables,
-    write_validation_data_tables,
+    write_validation_result_tables,
 )
 from .validation_input import (
     filter_validation_dict_by_table_name,
@@ -394,7 +394,7 @@ def run_validation(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
         )
-        write_validation_data_tables(
+        write_validation_result_tables(
             validation_output=validation_output,
             validation_settings_obj=validation_settings_obj,
             df=df,

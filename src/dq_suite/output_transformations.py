@@ -12,7 +12,7 @@ from .common import (
     ValidationSettings,
     is_empty_dataframe,
     merge_df_with_unity_table,
-    write_to_unity_catalog, Rule,
+    write_to_unity_catalog, Rule, enforce_column_order,
 )
 from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
@@ -375,102 +375,6 @@ def extract_afwijking_data(
     return extracted_data
 
 
-def create_dq_validatie(
-    table_name: str,
-    dataset_name: str,
-    run_time: datetime,
-    validation_output: CheckpointDescriptionDict,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    [insert explanation here]
-
-    :param table_name: Name of the tables
-    :param dataset_name:
-    :param run_time:
-    :param validation_output:  # TODO: add dataclass?
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_validatie_data(
-        table_name=table_name,
-        dataset_name=dataset_name,
-        run_time=run_time,
-        validation_output=validation_output,
-    )
-    df_validatie = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=PRE_VALIDATIE_SCHEMA,
-    )
-    df_validatie_with_id_ordered = add_regel_id_column(
-        df=df_validatie,
-    ).select("regelId", "aantalValideRecords", "aantalReferentieRecords",
-             "percentageValideRecords", "dqDatum", "dqResultaat")
-    if not is_empty_dataframe(df=df_validatie_with_id_ordered):
-        write_to_unity_catalog(
-            df=df_validatie_with_id_ordered,
-            catalog_name=catalog_name,
-            table_name="validatie",
-            schema=VALIDATIE_SCHEMA,
-        )
-    else:
-        # TODO: implement (raise error?)
-        pass
-
-
-def create_dq_afwijking(
-    table_name: str,
-    dataset_name: str,
-    validation_output: CheckpointDescriptionDict,
-    df: DataFrame,
-    unique_identifier: str,
-    run_time: datetime,
-    catalog_name: str,
-    spark_session: SparkSession,
-) -> None:
-    """
-    [insert explanation here]
-
-    :param table_name: Name of the table
-    :param dataset_name:
-    :param validation_output:
-    :param df: A DataFrame containing the invalid (deviated) result
-    :param unique_identifier:
-    :param run_time:
-    :param catalog_name:
-    :param spark_session:
-    """
-    extracted_data = extract_afwijking_data(
-        df=df,
-        unique_identifier=unique_identifier,
-        table_name=table_name,
-        dataset_name=dataset_name,
-        run_time=run_time,
-        validation_output=validation_output,
-    )
-    df_afwijking = list_of_dicts_to_df(
-        list_of_dicts=extracted_data,
-        spark_session=spark_session,
-        schema=PRE_AFWIJKING_SCHEMA,
-    )
-    df_afwijking_with_id_ordered = add_regel_id_column(
-        df=df_afwijking,
-    ).select("regelId", "identifierVeldWaarde", "afwijkendeAttribuutWaarde",
-             "dqDatum")
-    if not is_empty_dataframe(df=df_afwijking):
-        write_to_unity_catalog(
-            df=df_afwijking_with_id_ordered,
-            catalog_name=catalog_name,
-            table_name="afwijking",
-            schema=AFWIJKING_SCHEMA,
-        )
-    else:
-        # TODO: implement (raise error?)
-        pass
-
-
 def create_metadata_dataframe(table_name: str, dq_rules_dict:
 DataQualityRulesDict, spark_session: SparkSession) -> DataFrame:
     if table_name == "brondataset":
@@ -521,7 +425,47 @@ def write_validation_metadata_tables(
         )
 
 
-def write_validation_data_tables(
+def create_validation_result_dataframe(
+df: DataFrame,
+        validation_output: CheckpointDescriptionDict,
+                                        table_name: str,
+                                       dataset_name: str,
+                                       run_time: datetime,
+                                       spark_session: SparkSession,
+                                       unique_identifier: str
+                                       ) -> DataFrame:
+    if table_name == "validatie":
+        extracted_data = extract_validatie_data(
+            table_name=table_name,
+            dataset_name=dataset_name,
+            run_time=run_time,
+            validation_output=validation_output,
+        )
+        schema = VALIDATIE_SCHEMA
+    elif table_name == "afwijking":
+        extracted_data = extract_afwijking_data(
+            df=df,
+            unique_identifier=unique_identifier,
+            table_name=table_name,
+            dataset_name=dataset_name,
+            run_time=run_time,
+            validation_output=validation_output,
+        )
+        schema = AFWIJKING_SCHEMA
+    else:
+        raise ValueError(f"Unknown validation result table name '{table_name}'")
+
+    df = list_of_dicts_to_df(
+        list_of_dicts=extracted_data,
+        spark_session=spark_session,
+        schema=schema.drop("regelId"),
+    )  # Note: regelId is added below
+
+    df = add_regel_id_column(df=df)
+    return enforce_column_order(df=df, schema=schema)
+
+
+def write_validation_result_tables(
     validation_output: CheckpointDescriptionDict,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
@@ -529,21 +473,34 @@ def write_validation_data_tables(
     unique_identifier: str,
     run_time: datetime,
 ):
-    create_dq_validatie(
-        table_name=validation_settings_obj.table_name,
-        dataset_name=dataset_name,
-        run_time=run_time,
-        validation_output=validation_output,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
-    create_dq_afwijking(
-        table_name=validation_settings_obj.table_name,
-        dataset_name=dataset_name,
-        validation_output=validation_output,
-        df=df,
-        unique_identifier=unique_identifier,
-        run_time=run_time,
-        catalog_name=validation_settings_obj.catalog_name,
-        spark_session=validation_settings_obj.spark_session,
-    )
+    validation_result_table_names = ["validatie", "afwijking"]
+
+    for table_name in validation_result_table_names:
+        df_validation_result = create_validation_result_dataframe(
+            df=df,
+            validation_output=validation_output,
+            table_name=table_name,
+            dataset_name=dataset_name,
+            run_time=run_time,
+            spark_session=validation_settings_obj.spark_session,
+            unique_identifier=unique_identifier,
+        )
+
+        if not is_empty_dataframe(df=df_validation_result):
+            if table_name == "validatie":
+                schema = VALIDATIE_SCHEMA
+            elif table_name == "afwijking":
+                schema = AFWIJKING_SCHEMA
+            else:
+                raise ValueError(
+                    f"Unknown validation result table name '{table_name}'")
+
+            write_to_unity_catalog(
+                df=df_validation_result,
+                catalog_name=validation_settings_obj.catalog_name,
+                table_name=table_name,
+                schema=schema,
+            )
+        else:
+            # TODO: implement (raise error?)
+            pass
