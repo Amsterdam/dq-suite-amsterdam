@@ -188,37 +188,37 @@ def merge_df_with_unity_table(
 ) -> None:
     """
     This function takes a dataframe with new records to be merged
-    into an existing delta table. The upsert operation is based on
-    the regel_id column.
+    into an existing delta table.
+    The upsert operation is based on the regel_id column.
     """
     if table_name == "brondataset":
         merge_dict = {
-            "bronDatasetId": "brondataset_df.bronDatasetId",
-            "medaillonLaag": "brondataset_df.medaillonLaag",
+            "bronDatasetId": f"{table_name}_df.bronDatasetId",
+            "medaillonLaag": f"{table_name}_df.medaillonLaag",
         }
         merge_on = "bronDatasetId"
     elif table_name == "brontabel":
         merge_dict = {
-            "bronTabelId": "brontabel_df.bronTabelId",
-            "tabelNaam": "brontabel_df.tabelNaam",
-            "uniekeSleutel": "brontabel_df.uniekeSleutel",
+            "bronTabelId": f"{table_name}_df.bronTabelId",
+            "tabelNaam": f"{table_name}_df.tabelNaam",
+            "uniekeSleutel": f"{table_name}_df.uniekeSleutel",
         }
         merge_on = "bronTabelId"
     elif table_name == "bronattribuut":
         merge_dict = {
-            "bronAttribuutId": "bronattribuut_df.bronAttribuutId",
-            "attribuutNaam": "bronattribuut_df.attribuutNaam",
-            "bronTabelId": "bronattribuut_df.bronTabelId",
+            "bronAttribuutId": f"{table_name}_df.bronAttribuutId",
+            "attribuutNaam": f"{table_name}_df.attribuutNaam",
+            "bronTabelId": f"{table_name}_df.bronTabelId",
         }
         merge_on = "bronAttribuutId"
     elif table_name == "regel":
         merge_dict = {
-            "regelId": "regel_df.regelId",
-            "regelNaam": "regel_df.regelNaam",
-            "regelParameters": "regel_df.regelParameters",
-            "norm": "regel_df.norm",
-            "bronTabelId": "regel_df.bronTabelId",
-            "attribuut": "regel_df.attribuut",
+            "regelId": f"{table_name}_df.regelId",
+            "regelNaam": f"{table_name}_df.regelNaam",
+            "regelParameters": f"{table_name}_df.regelParameters",
+            "norm": f"{table_name}_df.norm",
+            "bronTabelId": f"{table_name}_df.bronTabelId",
+            "attribuut": f"{table_name}_df.attribuut",
         }
         merge_on = "regelId"
     else:
@@ -228,10 +228,11 @@ def merge_df_with_unity_table(
         catalog_name=catalog_name, table_name=table_name
     )
     df_alias = f"{table_name}_df"
-    regel_tabel = DeltaTable.forName(spark_session, full_table_name)
+    regel_tabel = DeltaTable.forName(sparkSession=spark_session,
+                                     tableOrViewName=full_table_name)
     regel_tabel.alias(table_name).merge(
-        df.alias(df_alias),
-        f"{table_name}.{merge_on} = {df_alias}.{merge_on}",
+        source=df.alias(df_alias),
+        condition=f"{table_name}.{merge_on} = {df_alias}.{merge_on}",
     ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
         values=merge_dict
     ).execute()

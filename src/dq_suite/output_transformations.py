@@ -220,7 +220,7 @@ def extract_bronattribuut_data(dq_rules_dict: DataQualityRulesDict) -> list[dict
     return extracted_data
 
 
-def get_single_rule_dict(rule: str | Rule, table_id: str) -> dict:
+def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
     # Round min/max values (if present) to a single decimal
