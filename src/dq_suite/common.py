@@ -17,7 +17,7 @@ class Rule:
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
-    norm: int = None
+    norm: int = None  # TODO/check: what is the meaning of this field?
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):

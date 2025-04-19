@@ -88,8 +88,10 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     """
     Get the parameters from the GX results.
     """
-    parameters = result["kwargs"]
-    parameters.pop("batch_id", None)
+    parameters = copy.deepcopy(result["kwargs"])
+    if "batch_id" in parameters:
+        del parameters["batch_id"]  # We don't need this value
+    # parameters.pop("batch_id", None)
     # TODO/check: why is batch_id removed? Shouldn't this be documented?
     return parameters
 
@@ -266,7 +268,7 @@ def extract_validatie_data(
     Extract the validatie data from the dq_rules_dict.
     """
     validation_results: List[Dict[str, Any]] = validation_output["validation_results"]
-    tabel_id = f"{dataset_name}_{table_name}"
+    table_id = f"{dataset_name}_{table_name}"
 
     extracted_data = []
     for result in validation_results:
@@ -502,7 +504,7 @@ def write_validation_metadata_tables(
         )
 
 
-def write_validation_tables(
+def write_validation_data_tables(
     validation_output: CheckpointDescriptionDict,
     validation_settings_obj: ValidationSettings,
     df: DataFrame,
