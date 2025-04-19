@@ -86,7 +86,7 @@ def add_regel_id_column(
             col("regelNaam"), col("regelParameters"), col("bronTabelId")
         ).substr(
             2, 20
-        ),  # TODO/check: why characters 2-20?
+        ),  # TODO/check: why characters 2-20? Add documentation.
     )
     return df_with_id
 
@@ -99,7 +99,7 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     if "batch_id" in parameters:
         del parameters["batch_id"]  # We don't need this value
     # parameters.pop("batch_id", None)
-    # TODO/check: why is batch_id removed? Shouldn't this be documented?
+    # TODO/check: why is batch_id removed? Add documentation.
     return parameters
 
 
@@ -475,10 +475,17 @@ def create_validation_result_dataframe(
     else:
         raise ValueError(f"Unknown validation result table name '{table_name}'")
 
+    # StructType doesn't support .drop(), so use a workaround
+    reduced_schema = StructType()
+    for structfield in schema:
+        if structfield.name == "regelId":
+            continue
+        reduced_schema = reduced_schema.add(structfield.name, structfield.dataType,
+                                            structfield.nullable)
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
-        schema=schema.drop("regelId"),
+        schema=reduced_schema,
     )  # Note: regelId is added below
 
     df = add_regel_id_column(df=df)
