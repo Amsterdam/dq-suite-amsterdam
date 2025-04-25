@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict, List, Literal, Tuple
 
 from great_expectations import (
@@ -139,7 +140,9 @@ class ValidationRunner:
         gx_expectation_name = validation_rule["rule_name"]
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
 
-        gx_expectation_parameters: dict = validation_rule["parameters"]
+        gx_expectation_parameters: dict = copy.deepcopy(
+            validation_rule["parameters"]
+        )
         column_name = gx_expectation_parameters.get("column", None)
 
         gx_expectation_parameters["meta"] = {
