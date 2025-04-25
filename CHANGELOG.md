@@ -3,48 +3,103 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
- 
-## [Unreleased] - yyyy-mm-dd
- 
-Here we write upgrading notes for brands. It's a team effort to make them as
-straightforward as possible.
+
+
+## [0.11.15] - 19-03-2025
  
 ### Added
-- [PROJECTNAME-XXXX](http://tickets.projectname.com/browse/PROJECTNAME-XXXX)
-  MINOR Ticket title goes here.
-- [PROJECTNAME-YYYY](http://tickets.projectname.com/browse/PROJECTNAME-YYYY)
-  PATCH Ticket title goes here.
- 
+- Formatting for Slack messages
+
 ### Changed
  
 ### Fixed
- 
-## [1.2.4] - 2017-03-15
-  
-Here we would have the update steps for 1.2.4 for people to follow.
+
+## [0.11.0] - 11-2024
  
 ### Added
- 
+
 ### Changed
-  
-- [PROJECTNAME-ZZZZ](http://tickets.projectname.com/browse/PROJECTNAME-ZZZZ)
-  PATCH Drupal.org is now used for composer.
- 
+- Stability and testability improvements
 ### Fixed
- 
-- [PROJECTNAME-TTTT](http://tickets.projectname.com/browse/PROJECTNAME-TTTT)
-  PATCH Add logic to runsheet teaser delete to delete corresponding
-  schedule cards.
- 
-## [1.2.3] - 2017-03-14
+
+## [0.10.0] - 10-2024
  
 ### Added
-   
+
 ### Changed
- 
+- Switched to GX 1.0
 ### Fixed
+
+## [0.9.0] - 9-2024
  
-- [PROJECTNAME-UUUU](http://tickets.projectname.com/browse/PROJECTNAME-UUUU)
-  MINOR Fix module foo tests
-- [PROJECTNAME-RRRR](http://tickets.projectname.com/browse/PROJECTNAME-RRRR)
-  MAJOR Module foo's timeline uses the browser timezone for date resolution 
+### Added
+- Added dataset descriptions
+### Changed
+
+### Fixed
+
+## [0.8.0] - 8-2024
+ 
+### Added
+- Implemented output historization
+### Changed
+
+### Fixed
+
+## [0.7.0] - 7-2024
+ 
+### Added
+
+### Changed
+
+### Fixed
+- Refactored the solution
+
+## [0.6.0] - 6-2024
+ 
+### Added
+
+### Changed
+- The results are written to tables in the "dataquality" schema
+### Fixed
+
+## [0.5.0] - 5-2024
+ 
+### Added
+- Export schema from Unity Catalog
+### Changed
+
+### Fixed
+
+## [0.4.0] - 4-2024
+ 
+### Added
+- Added schema validation with Amsterdam Schema per table
+### Changed
+
+### Fixed
+
+## [0.3.0] - 3-2024
+ 
+### Added
+
+### Changed
+
+### Fixed
+- Refactored I/O
+
+## [0.2.0] - 2-2024
+ 
+### Added
+- Run a DQ check for multiple dataframes
+### Changed
+
+### Fixed
+
+## [0.1.0] - 1-2024
+ 
+### Added
+- Run a DQ check for a dataframe
+### Changed
+
+### Fixed
