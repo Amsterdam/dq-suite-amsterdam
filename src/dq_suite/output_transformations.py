@@ -92,7 +92,6 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     parameters = copy.deepcopy(result["kwargs"])
     if "batch_id" in parameters:
         del parameters["batch_id"]  # We don't need this value
-    # parameters.pop("batch_id", None)
     # TODO/check: why is batch_id removed? Add documentation.
     return parameters
 
@@ -107,7 +106,7 @@ def get_target_attr_for_rule(result: dict) -> str:
     elif "column_list" in result["kwargs"]:
         return result["kwargs"].get("column_list")
     else:
-        raise KeyError("blablabla")
+        raise KeyError("Expected either 'column' or 'column_list' in 'result' dict.")
 
 
 def get_unique_deviating_values(
@@ -157,6 +156,7 @@ def get_grouped_ids_per_deviating_value(
     """
     Get the grouped ids per deviating value.
     """
+    # TODO: add documentation. This function is very complex.
     ids = (
         filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
     )
