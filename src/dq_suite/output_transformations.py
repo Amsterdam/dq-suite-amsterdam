@@ -14,7 +14,7 @@ from .common import (
     enforce_column_order,
     is_empty_dataframe,
     merge_df_with_unity_table,
-    write_to_unity_catalog,
+    write_to_unity_catalog, RulesDictList, RulesDict, DatasetDict,
 )
 from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
@@ -170,9 +170,20 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     Get the dataset data from the dq_rules_dict.
     """
-    name = dq_rules_dict["dataset"]["name"]
-    layer = dq_rules_dict["dataset"]["layer"]
-    return [{"bronDatasetId": name, "medaillonLaag": layer}]
+    dataset_dict: DatasetDict = dq_rules_dict["dataset"]
+    return [{"bronDatasetId": dataset_dict["name"],
+             "medaillonLaag": dataset_dict["layer"]}]
+
+
+def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
+    table_name = rules_dict["table_name"]
+    unique_identifier = rules_dict["unique_identifier"]
+    table_id = f"{dataset_name}_{table_name}"
+    return {
+            "bronTabelId": table_id,
+            "tabelNaam": table_name,
+            "uniekeSleutel": unique_identifier,
+        }
 
 
 def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
@@ -181,18 +192,26 @@ def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
-    for param in dq_rules_dict["tables"]:
-        table_name = param["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
-        unique_identifier = param["unique_identifier"]
+    for rules_dict in dq_rules_dict["tables"]:
         extracted_data.append(
-            {
-                "bronTabelId": tabel_id,
-                "tabelNaam": table_name,
-                "uniekeSleutel": unique_identifier,
-            }
+            get_single_brontabel_dict(dataset_name=dataset_name,
+                                      rules_dict=rules_dict)
         )
     return extracted_data
+
+
+def get_single_bronattribuut_dict(rule: Rule, table_id: str) -> dict:
+    parameters = copy.deepcopy(rule["parameters"])
+
+    if isinstance(parameters, dict) and "column" in parameters:
+        attribute_name = parameters["column"]
+        unique_id = f"{table_id}_{attribute_name}"
+        return {
+                "bronAttribuutId": unique_id,
+                "attribuutNaam": attribute_name,
+                "bronTabelId": table_id,
+            }
+    return dict()
 
 
 def get_bronattribuut_data(
@@ -203,26 +222,18 @@ def get_bronattribuut_data(
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
-    used_ids = set()  # To keep track of used IDs
+    bronattribuut_id_set = set()  # To keep track of used IDs
     for param in dq_rules_dict["tables"]:
         table_name = param["table_name"]
-        tabel_id = f"{dataset_name}_{table_name}"
+        table_id = f"{dataset_name}_{table_name}"
         for rule in param["rules"]:
-            parameters = rule.get("parameters", [])
-            if isinstance(parameters, dict) and "column" in parameters:
-                attribute_name = parameters["column"]
-                # Create a unique ID
-                unique_id = f"{tabel_id}_{attribute_name}"
-                # Check if the ID is already used
-                if unique_id not in used_ids:
-                    used_ids.add(unique_id)
-                    extracted_data.append(
-                        {
-                            "bronAttribuutId": unique_id,
-                            "attribuutNaam": attribute_name,
-                            "bronTabelId": tabel_id,
-                        }
-                    )
+            bronattribuut_dict = get_single_bronattribuut_dict(rule=rule,
+                                                               table_id=table_id)
+            bronattribuut_id = bronattribuut_dict.get("bronAttribuutId", None)
+            if (len(bronattribuut_dict) != 0) and (bronattribuut_id not in
+                                                   bronattribuut_id_set):
+                bronattribuut_id_set.add(bronattribuut_id)
+                extracted_data.append(bronattribuut_dict)
     return extracted_data
 
 
