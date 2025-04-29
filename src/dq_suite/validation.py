@@ -402,6 +402,6 @@ def run_validation(
             df=df,
             dataset_name=validation_dict["dataset"]["name"],
             unique_identifier=rules_dict["unique_identifier"],
-            run_time=run_time,
-        )
+            run_time=run_time,  # TODO/check: can derive from validation_output?
+        )  # TODO/check: can derive dataset_name and ID from validation_dict?
     return checkpoint_result.success
