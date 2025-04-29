@@ -17,7 +17,7 @@ class Rule:
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
-    norm: int = None  # TODO/check: what is the meaning of this field? Add documentation.
+    norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -27,7 +27,8 @@ class Rule:
             raise TypeError("'parameters' should be of type Dict[str, Any]")
 
         if not isinstance(self.norm, int):
-            raise TypeError("'norm' should be of type int")
+            if self.norm is not None:
+                raise TypeError("'norm' should be of type int")
 
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
@@ -256,6 +257,7 @@ class ValidationSettings:
     dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    unique_identifier: ***<insert explanation>***
     batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
@@ -273,6 +275,7 @@ class ValidationSettings:
     dataset_name: str
     table_name: str
     validation_name: str
+    unique_identifier: str
     batch_name: str | None = None
     data_context_root_dir: str = "/dbfs/great_expectations/"
     slack_webhook: str | None = None
@@ -292,6 +295,9 @@ class ValidationSettings:
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
+        if not isinstance(self.unique_identifier, str):
+            if self.unique_identifier is not None:
+                raise TypeError("'unique_identifier' should be of type str")
         if not isinstance(self.batch_name, str):
             if self.batch_name is not None:
                 raise TypeError("'batch_name' should be of type str")
