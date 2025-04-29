@@ -288,7 +288,7 @@ def get_single_validation_result_dict(
         "aantalReferentieRecords": total_count,
         "percentageValideRecords": percentage_of_valid_records,
         "dqDatum": run_time,
-        # TODO/check: rename dqDatum
+        # TODO/check: rename dqDatum, discuss all field names
         "dqResultaat": validation_result,
         "regelNaam": expectation_result["expectation_type"],
         "regelParameters": validation_parameters,
