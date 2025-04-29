@@ -2,7 +2,8 @@ import copy
 import datetime
 from typing import Any, Dict, List
 
-from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict
+from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict, \
+    CheckpointResult
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
@@ -496,13 +497,14 @@ def create_validation_result_dataframe(
 
 
 def write_validation_result_tables(
-    validation_output: CheckpointDescriptionDict,
-    validation_settings_obj: ValidationSettings,
     df: DataFrame,
-    dataset_name: str,
+    checkpoint_result: CheckpointResult,
+    validation_settings_obj: ValidationSettings,
     unique_identifier: str,
-    run_time: datetime,
 ):
+    validation_output = checkpoint_result.describe_dict()
+    run_time = checkpoint_result.run_id.run_time
+
     validation_result_table_names = ["validatie", "afwijking"]
 
     for table_name in validation_result_table_names:
@@ -510,7 +512,7 @@ def write_validation_result_tables(
             df=df,
             validation_output=validation_output,
             table_name=table_name,
-            dataset_name=dataset_name,
+            dataset_name=validation_settings_obj.dataset_name,
             run_time=run_time,
             spark_session=validation_settings_obj.spark_session,
             unique_identifier=unique_identifier,

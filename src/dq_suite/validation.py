@@ -389,19 +389,15 @@ def run_validation(
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
-        validation_output = checkpoint_result.describe_dict()
-        run_time = checkpoint_result.run_id.run_time
-
         write_validation_metadata_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
         )
+
         write_validation_result_tables(
-            validation_output=validation_output,
-            validation_settings_obj=validation_settings_obj,
             df=df,
-            dataset_name=validation_dict["dataset"]["name"],
+            checkpoint_result=checkpoint_result,
+            validation_settings_obj=validation_settings_obj,
             unique_identifier=rules_dict["unique_identifier"],
-            run_time=run_time,  # TODO/check: can derive from validation_output?
         )  # TODO/check: can derive dataset_name and ID from validation_dict?
     return checkpoint_result.success
