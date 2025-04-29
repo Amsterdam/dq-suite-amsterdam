@@ -505,19 +505,21 @@ def write_validation_result_tables(
             unique_identifier=unique_identifier,
         )
 
-        if not is_empty_dataframe(df=df_validation_result):
-            if table_name == "validatie":
-                schema = VALIDATIE_SCHEMA
-            elif table_name == "afwijking":
-                schema = AFWIJKING_SCHEMA
-            else:
-                raise ValueError(
-                    f"Unknown validation result table name '{table_name}'"
-                )
+        assert not is_empty_dataframe(df=df_validation_result), \
+            f"No validation results to write for table '{table_name}'."
 
-            write_to_unity_catalog(
-                df=df_validation_result,
-                catalog_name=validation_settings_obj.catalog_name,
-                table_name=table_name,
-                schema=schema,
+        if table_name == "validatie":
+            schema = VALIDATIE_SCHEMA
+        elif table_name == "afwijking":
+            schema = AFWIJKING_SCHEMA
+        else:
+            raise ValueError(
+                f"Unknown validation result table name '{table_name}'"
             )
+
+        write_to_unity_catalog(
+            df=df_validation_result,
+            catalog_name=validation_settings_obj.catalog_name,
+            table_name=table_name,
+            schema=schema,
+        )
