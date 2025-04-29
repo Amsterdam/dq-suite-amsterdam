@@ -23,13 +23,6 @@ from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
-# def snake_case_to_camel_case(snake_str):
-#     """
-#     Convert a snake_case string to a camelCase string. All DQ rules must be camelCase.
-#     Example: "my_column" -> "myColumn
-#     """
-#     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
-
 
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
@@ -237,7 +230,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
     # Round min/max values (if present) to a single decimal
-    # TODO/check: why cast to float of min/max values?
+    # TODO/check: why cast to float of min/max values? Add documentation.
     if "min_value" in parameters.keys():
         min_value = float(parameters["min_value"])
         parameters["min_value"] = round(min_value, 1)
@@ -247,7 +240,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
 
     return {
         "regelNaam": rule["rule_name"],
-        "regelParameters": parameters,  # TODO/check: this includes 'column'?
+        "regelParameters": parameters,
         "norm": rule["norm"],
         "bronTabelId": table_id,
         "attribuut": parameters.get("column", None),
@@ -295,7 +288,7 @@ def get_single_validation_result_dict(
         "aantalReferentieRecords": total_count,
         "percentageValideRecords": percentage_of_valid_records,
         "dqDatum": run_time,
-        # TODO/check: why is a 'datum' assigned a timestamp?
+        # TODO/check: rename dqDatum
         "dqResultaat": validation_result,
         "regelNaam": expectation_result["expectation_type"],
         "regelParameters": validation_parameters,
@@ -353,9 +346,6 @@ def get_afwijking_data(
     for result in validation_results:
         for expectation_result in result["expectations"]:
             expectation_type = expectation_result["expectation_type"]
-            # TODO/check - no longer needed, this should be caught by input_validation
-            # if "_" in expectation_type:
-            #     expectation_type = snake_case_to_camel_case(expectation_type)
             parameter_list = get_parameters_from_results(
                 result=expectation_result
             )
@@ -531,6 +521,3 @@ def write_validation_result_tables(
                 table_name=table_name,
                 schema=schema,
             )
-        else:
-            # TODO: implement (raise error?)
-            pass
