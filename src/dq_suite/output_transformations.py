@@ -453,15 +453,13 @@ def create_validation_result_dataframe(
     df: DataFrame,
     validation_output: CheckpointDescriptionDict,
     table_name: str,
-    dataset_name: str,
     run_time: datetime,
-    spark_session: SparkSession,
-    unique_identifier: str,
+    validation_settings_obj: ValidationSettings
 ) -> DataFrame:
     if table_name == "validatie":
         extracted_data = get_validatie_data(
             table_name=table_name,
-            dataset_name=dataset_name,
+            dataset_name=validation_settings_obj.dataset_name,
             run_time=run_time,
             validation_output=validation_output,
         )
@@ -469,9 +467,9 @@ def create_validation_result_dataframe(
     elif table_name == "afwijking":
         extracted_data = get_afwijking_data(
             df=df,
-            unique_identifier=unique_identifier,
+            unique_identifier=validation_settings_obj.unique_identifier,
             table_name=table_name,
-            dataset_name=dataset_name,
+            dataset_name=validation_settings_obj.dataset_name,
             run_time=run_time,
             validation_output=validation_output,
         )
@@ -488,7 +486,7 @@ def create_validation_result_dataframe(
                                             structfield.nullable)
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
-        spark_session=spark_session,
+        spark_session=validation_settings_obj.spark_session,
         schema=reduced_schema,
     )  # Note: regelId is added below
 
@@ -500,7 +498,6 @@ def write_validation_result_tables(
     df: DataFrame,
     checkpoint_result: CheckpointResult,
     validation_settings_obj: ValidationSettings,
-    unique_identifier: str,
 ):
     validation_output = checkpoint_result.describe_dict()
     run_time = checkpoint_result.run_id.run_time
@@ -512,10 +509,8 @@ def write_validation_result_tables(
             df=df,
             validation_output=validation_output,
             table_name=table_name,
-            dataset_name=validation_settings_obj.dataset_name,
             run_time=run_time,
-            spark_session=validation_settings_obj.spark_session,
-            unique_identifier=unique_identifier,
+            validation_settings_obj=validation_settings_obj,
         )
 
         assert not is_empty_dataframe(df=df_validation_result), \
