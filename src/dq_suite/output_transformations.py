@@ -110,8 +110,10 @@ def get_target_attr_for_rule(result: dict) -> str:
     """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
-    else:  # TODO/check: what if 'column_list' doesnt exist?
+    elif "column_list" in result["kwargs"]:
         return result["kwargs"].get("column_list")
+    else:
+        raise KeyError("blablabla")
 
 
 def get_unique_deviating_values(
