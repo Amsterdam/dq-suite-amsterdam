@@ -51,6 +51,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         # TODO: refactor this output more neatly into a function
         if expectation_name == "ExpectTableColumnsToMatchSet":
             column_set = result["expectation_config"]["kwargs"]["column_set"]
+            print(results)
             return f"""
     \n *Expectation*: `{expectation_name}`\n\n
     :information_source: Details:
