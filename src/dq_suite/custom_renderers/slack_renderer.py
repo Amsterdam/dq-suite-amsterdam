@@ -61,11 +61,16 @@ class CustomSlackNotificationAction(SlackNotificationAction):
                 """
         else:
             parameters = self._get_expectation_parameters_dict(result=result)
+            partial_unexpected_list = results.get("partial_unexpected_list",
+                                                  None)
+            if partial_unexpected_list is not None:
+                partial_unexpected_list = partial_unexpected_list[:3]
             return f"""
     \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_name}`\n\n
     :information_source: Details:
-    *Sample unexpected values*:  ```{results['partial_unexpected_list'][:3]}```\n
-    *Unexpected / total count*: {results['unexpected_count']} / {results['element_count']}\n
+    *Sample unexpected values*:  ```{partial_unexpected_list}```\n
+    *Unexpected / total count*: {results.get('unexpected_count', None)} / 
+{results.get('element_count', None)}\n
     *Expectation parameters*: ```{parameters}```\n
     -----------------------\n
                 """
