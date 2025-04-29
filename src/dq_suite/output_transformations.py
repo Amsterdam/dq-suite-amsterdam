@@ -126,7 +126,7 @@ def get_unique_deviating_values(
 
 
 def filter_df_based_on_deviating_values(
-    value: str,
+    value: str,  # TODO: change parameter name, not very descriptive.
     attribute: str,
     df: DataFrame,
 ) -> DataFrame:
@@ -134,6 +134,8 @@ def filter_df_based_on_deviating_values(
     Filter the dataframe based on the deviating values.
     The output will contain only records that did not conform to the
     expectations set.
+
+    # TODO: add documentation per parameter.
     """
     if value is None:
         return df.filter(col(attribute).isNull())
