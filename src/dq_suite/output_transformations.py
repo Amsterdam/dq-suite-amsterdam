@@ -2,20 +2,24 @@ import copy
 import datetime
 from typing import Any, Dict, List
 
-from great_expectations.checkpoint.checkpoint import CheckpointDescriptionDict, \
-    CheckpointResult
+from great_expectations.checkpoint.checkpoint import (
+    CheckpointDescriptionDict,
+    CheckpointResult,
+)
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
 
 from .common import (
     DataQualityRulesDict,
+    DatasetDict,
     Rule,
+    RulesDict,
     ValidationSettings,
     enforce_column_order,
     is_empty_dataframe,
     merge_df_with_unity_table,
-    write_to_unity_catalog, RulesDictList, RulesDict, DatasetDict,
+    write_to_unity_catalog,
 )
 from .schemas.afwijking import SCHEMA as AFWIJKING_SCHEMA
 from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
@@ -106,7 +110,9 @@ def get_target_attr_for_rule(result: dict) -> str:
     elif "column_list" in result["kwargs"]:
         return result["kwargs"].get("column_list")
     else:
-        raise KeyError("Expected either 'column' or 'column_list' in 'result' dict.")
+        raise KeyError(
+            "Expected either 'column' or 'column_list' in 'result' dict."
+        )
 
 
 def get_unique_deviating_values(
@@ -174,8 +180,12 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     Get the dataset data from the dq_rules_dict.
     """
     dataset_dict: DatasetDict = dq_rules_dict["dataset"]
-    return [{"bronDatasetId": dataset_dict["name"],
-             "medaillonLaag": dataset_dict["layer"]}]
+    return [
+        {
+            "bronDatasetId": dataset_dict["name"],
+            "medaillonLaag": dataset_dict["layer"],
+        }
+    ]
 
 
 def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
@@ -183,10 +193,10 @@ def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
     unique_identifier = rules_dict["unique_identifier"]
     table_id = f"{dataset_name}_{table_name}"
     return {
-            "bronTabelId": table_id,
-            "tabelNaam": table_name,
-            "uniekeSleutel": unique_identifier,
-        }
+        "bronTabelId": table_id,
+        "tabelNaam": table_name,
+        "uniekeSleutel": unique_identifier,
+    }
 
 
 def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
@@ -197,8 +207,9 @@ def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     dataset_name = dq_rules_dict["dataset"]["name"]
     for rules_dict in dq_rules_dict["tables"]:
         extracted_data.append(
-            get_single_brontabel_dict(dataset_name=dataset_name,
-                                      rules_dict=rules_dict)
+            get_single_brontabel_dict(
+                dataset_name=dataset_name, rules_dict=rules_dict
+            )
         )
     return extracted_data
 
@@ -210,10 +221,10 @@ def get_single_bronattribuut_dict(rule: Rule, table_id: str) -> dict:
         attribute_name = parameters["column"]
         unique_id = f"{table_id}_{attribute_name}"
         return {
-                "bronAttribuutId": unique_id,
-                "attribuutNaam": attribute_name,
-                "bronTabelId": table_id,
-            }
+            "bronAttribuutId": unique_id,
+            "attribuutNaam": attribute_name,
+            "bronTabelId": table_id,
+        }
     return dict()
 
 
@@ -230,11 +241,13 @@ def get_bronattribuut_data(
         table_name = param["table_name"]
         table_id = f"{dataset_name}_{table_name}"
         for rule in param["rules"]:
-            bronattribuut_dict = get_single_bronattribuut_dict(rule=rule,
-                                                               table_id=table_id)
+            bronattribuut_dict = get_single_bronattribuut_dict(
+                rule=rule, table_id=table_id
+            )
             bronattribuut_id = bronattribuut_dict.get("bronAttribuutId", None)
-            if (len(bronattribuut_dict) != 0) and (bronattribuut_id not in
-                                                   bronattribuut_id_set):
+            if (len(bronattribuut_dict) != 0) and (
+                bronattribuut_id not in bronattribuut_id_set
+            ):
                 bronattribuut_id_set.add(bronattribuut_id)
                 extracted_data.append(bronattribuut_dict)
     return extracted_data
@@ -338,16 +351,15 @@ def get_validatie_data(
 
 
 def get_single_expectation_afwijking_data(
-        expectation_result: Any,
-        df: DataFrame,
-        unique_identifier: list[str],
-        run_time: datetime,
-        table_id: str) -> list[dict]:
+    expectation_result: Any,
+    df: DataFrame,
+    unique_identifier: list[str],
+    run_time: datetime,
+    table_id: str,
+) -> list[dict]:
     extracted_data = []
     expectation_type = expectation_result["expectation_type"]
-    parameter_list = get_parameters_from_results(
-        result=expectation_result
-    )
+    parameter_list = get_parameters_from_results(result=expectation_result)
     attribute = get_target_attr_for_rule(result=expectation_result)
     deviating_attribute_value = expectation_result["result"].get(
         "partial_unexpected_list", []
@@ -390,12 +402,16 @@ def get_afwijking_data(
     validation_results: List[Dict[str, Any]] = validation_output[
         "validation_results"
     ]
-    table_id = (f"{validation_settings_obj.dataset_name}_"
-                f"{validation_settings_obj.table_name}")
+    table_id = (
+        f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.table_name}"
+    )
     unique_identifier = validation_settings_obj.unique_identifier
 
     extracted_data = []
-    if not isinstance(unique_identifier, list):  # TODO/check: is this always a list[str]?
+    if not isinstance(
+        unique_identifier, list
+    ):  # TODO/check: is this always a list[str]?
         unique_identifier = [unique_identifier]
 
     for result in validation_results:
@@ -405,7 +421,7 @@ def get_afwijking_data(
                 df=df,
                 unique_identifier=unique_identifier,
                 run_time=run_time,
-                table_id=table_id
+                table_id=table_id,
             )
     return extracted_data
 
@@ -474,7 +490,7 @@ def create_validation_result_dataframe(
     validation_output: CheckpointDescriptionDict,
     table_name: str,
     run_time: datetime,
-    validation_settings_obj: ValidationSettings
+    validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
     if table_name == "validatie":
         extracted_data = get_validatie_data(
@@ -500,8 +516,9 @@ def create_validation_result_dataframe(
     for structfield in schema:
         if structfield.name == "regelId":
             continue
-        reduced_schema = reduced_schema.add(structfield.name, structfield.dataType,
-                                            structfield.nullable)
+        reduced_schema = reduced_schema.add(
+            structfield.name, structfield.dataType, structfield.nullable
+        )
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=validation_settings_obj.spark_session,
@@ -531,8 +548,9 @@ def write_validation_result_tables(
             validation_settings_obj=validation_settings_obj,
         )
 
-        assert not is_empty_dataframe(df=df_validation_result), \
-            f"No validation results to write for table '{table_name}'."
+        assert not is_empty_dataframe(
+            df=df_validation_result
+        ), f"No validation results to write for table '{table_name}'."
 
         if table_name == "validatie":
             schema = VALIDATIE_SCHEMA

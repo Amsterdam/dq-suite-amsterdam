@@ -21,7 +21,7 @@ from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
-from .common import Rule, RulesDict, ValidationSettings, DatasetDict
+from .common import DatasetDict, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_validation_metadata_tables,

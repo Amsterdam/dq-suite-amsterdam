@@ -8,17 +8,17 @@ from pyspark.sql import SparkSession
 from src.dq_suite.output_transformations import (
     add_regel_id_column,
     create_empty_dataframe,
+    filter_df_based_on_deviating_values,
     get_afwijking_data,
     get_bronattribuut_data,
     get_brondataset_data,
     get_brontabel_data,
-    get_regel_data,
-    get_validatie_data,
-    filter_df_based_on_deviating_values,
     get_grouped_ids_per_deviating_value,
     get_parameters_from_results,
+    get_regel_data,
     get_target_attr_for_rule,
     get_unique_deviating_values,
+    get_validatie_data,
     list_of_dicts_to_df,
 )
 
@@ -294,12 +294,8 @@ class TestGetTableData:
         with pytest.raises(TypeError):
             get_brondataset_data(dq_rules_dict="123")
 
-    def test_get_table_data_returns_correct_list(
-        self, read_test_rules_as_dict
-    ):
-        test_output = get_brontabel_data(
-            dq_rules_dict=read_test_rules_as_dict
-        )
+    def test_get_table_data_returns_correct_list(self, read_test_rules_as_dict):
+        test_output = get_brontabel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
                 "bronTabelId": "the_dataset_the_table",
@@ -353,9 +349,7 @@ class TestGetRegelData:
         with pytest.raises(TypeError):
             get_regel_data(dq_rules_dict="123")
 
-    def test_get_regel_data_returns_correct_list(
-        self, read_test_rules_as_dict
-    ):
+    def test_get_regel_data_returns_correct_list(self, read_test_rules_as_dict):
         test_output = get_regel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
