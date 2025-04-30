@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [0.11.16] - 19-03-2025
+## [0.11.16] - 30-04-2025
  
 ### Added
 - Changes are added to the CHANGELOG.md file
