@@ -5,14 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.11.16] - 19-03-2025
+ 
+### Added
+- Changes are added to the CHANGELOG.md file
+### Changed
+ 
+### Fixed
+- Formatting for Slack messages
+
 ## [0.11.15] - 19-03-2025
  
 ### Added
-- Formatting for Slack messages
 
 ### Changed
  
 ### Fixed
+- Formatting for Slack messages
 
 ## [0.11.0] - 11-2024
  
