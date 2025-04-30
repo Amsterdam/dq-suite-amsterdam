@@ -337,11 +337,50 @@ def get_validatie_data(
     return extracted_data
 
 
+def get_single_expectation_afwijking_data(
+        expectation_result: Any,
+        df: DataFrame,
+        unique_identifier: list[str],
+        run_time: datetime,
+        table_id: str) -> list[dict]:
+    extracted_data = []
+    expectation_type = expectation_result["expectation_type"]
+    parameter_list = get_parameters_from_results(
+        result=expectation_result
+    )
+    attribute = get_target_attr_for_rule(result=expectation_result)
+    deviating_attribute_value = expectation_result["result"].get(
+        "partial_unexpected_list", []
+    )
+    unique_deviating_values = get_unique_deviating_values(
+        deviating_attribute_value
+    )
+    for value in unique_deviating_values:
+        filtered_df = filter_df_based_on_deviating_values(
+            value=value, attribute=attribute, df=df
+        )
+        grouped_ids = get_grouped_ids_per_deviating_value(
+            filtered_df=filtered_df, unique_identifier=unique_identifier
+        )
+        if isinstance(attribute, list):
+            value = str(value)
+        extracted_data.append(
+            {
+                "identifierVeldWaarde": grouped_ids,
+                "afwijkendeAttribuutWaarde": value,
+                "dqDatum": run_time,
+                "regelNaam": expectation_type,
+                "regelParameters": parameter_list,
+                "bronTabelId": table_id,
+            }
+        )
+
+    return extracted_data
+
+
 def get_afwijking_data(
     df: DataFrame,
-    unique_identifier: str,
-    table_name: str,
-    dataset_name: str,
+    validation_settings_obj: ValidationSettings,
     run_time: datetime,
     validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
@@ -351,44 +390,23 @@ def get_afwijking_data(
     validation_results: List[Dict[str, Any]] = validation_output[
         "validation_results"
     ]
-    tabel_id = f"{dataset_name}_{table_name}"
+    table_id = (f"{validation_settings_obj.dataset_name}_"
+                f"{validation_settings_obj.table_name}")
+    unique_identifier = validation_settings_obj.unique_identifier
 
     extracted_data = []
-    if not isinstance(unique_identifier, list):
+    if not isinstance(unique_identifier, list):  # TODO/check: is this always a list[str]?
         unique_identifier = [unique_identifier]
 
     for result in validation_results:
         for expectation_result in result["expectations"]:
-            expectation_type = expectation_result["expectation_type"]
-            parameter_list = get_parameters_from_results(
-                result=expectation_result
+            extracted_data += get_single_expectation_afwijking_data(
+                expectation_result=expectation_result,
+                df=df,
+                unique_identifier=unique_identifier,
+                run_time=run_time,
+                table_id=table_id
             )
-            attribute = get_target_attr_for_rule(result=expectation_result)
-            deviating_attribute_value = expectation_result["result"].get(
-                "partial_unexpected_list", []
-            )
-            unique_deviating_values = get_unique_deviating_values(
-                deviating_attribute_value
-            )
-            for value in unique_deviating_values:
-                filtered_df = filter_df_based_on_deviating_values(
-                    value=value, attribute=attribute, df=df
-                )
-                grouped_ids = get_grouped_ids_per_deviating_value(
-                    filtered_df=filtered_df, unique_identifier=unique_identifier
-                )
-                if isinstance(attribute, list):
-                    value = str(value)
-                extracted_data.append(
-                    {
-                        "identifierVeldWaarde": grouped_ids,
-                        "afwijkendeAttribuutWaarde": value,
-                        "dqDatum": run_time,
-                        "regelNaam": expectation_type,
-                        "regelParameters": parameter_list,
-                        "bronTabelId": tabel_id,
-                    }
-                )
     return extracted_data
 
 
@@ -469,9 +487,7 @@ def create_validation_result_dataframe(
     elif table_name == "afwijking":
         extracted_data = get_afwijking_data(
             df=df,
-            unique_identifier=validation_settings_obj.unique_identifier,
-            table_name=table_name,
-            dataset_name=validation_settings_obj.dataset_name,
+            validation_settings_obj=validation_settings_obj,
             run_time=run_time,
             validation_output=validation_output,
         )
