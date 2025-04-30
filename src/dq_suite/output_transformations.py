@@ -324,8 +324,7 @@ def get_single_validation_result_dict(
 
 
 def get_validatie_data(
-    table_name: str,
-    dataset_name: str,
+    validation_settings_obj: ValidationSettings,
     run_time: datetime,
     validation_output: CheckpointDescriptionDict,
 ) -> list[dict]:
@@ -335,7 +334,10 @@ def get_validatie_data(
     validation_results: List[Dict[str, Any]] = validation_output[
         "validation_results"
     ]
-    table_id = f"{dataset_name}_{table_name}"
+    table_id = (
+        f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.table_name}"
+    )
 
     extracted_data = []
     for result in validation_results:
@@ -381,6 +383,7 @@ def get_single_expectation_afwijking_data(
                 "identifierVeldWaarde": grouped_ids,
                 "afwijkendeAttribuutWaarde": value,
                 "dqDatum": run_time,
+                # TODO/check: rename dqDatum, discuss all field names
                 "regelNaam": expectation_type,
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
@@ -427,24 +430,24 @@ def get_afwijking_data(
 
 
 def create_metadata_dataframe(
-    table_name: str,
+    metadata_table_name: str,
     dq_rules_dict: DataQualityRulesDict,
     spark_session: SparkSession,
 ) -> DataFrame:
-    if table_name == "brondataset":
+    if metadata_table_name == "brondataset":
         extracted_data = get_brondataset_data(dq_rules_dict=dq_rules_dict)
         schema = BRONDATASET_SCHEMA
-    elif table_name == "brontabel":
+    elif metadata_table_name == "brontabel":
         extracted_data = get_brontabel_data(dq_rules_dict=dq_rules_dict)
         schema = BRONTABEL_SCHEMA
-    elif table_name == "bronattribuut":
+    elif metadata_table_name == "bronattribuut":
         extracted_data = get_bronattribuut_data(dq_rules_dict=dq_rules_dict)
         schema = BRONATTRIBUUT_SCHEMA
-    elif table_name == "regel":
+    elif metadata_table_name == "regel":
         extracted_data = get_regel_data(dq_rules_dict=dq_rules_dict)
         schema = REGEL_SCHEMA
     else:
-        raise ValueError(f"Unknown metadata table name '{table_name}'")
+        raise ValueError(f"Unknown metadata table name '{metadata_table_name}'")
 
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
@@ -452,7 +455,7 @@ def create_metadata_dataframe(
         schema=schema,
     )
 
-    if table_name == "regel":
+    if metadata_table_name == "regel":
         return add_regel_id_column(
             df=df,
         ).select("regelId", *REGEL_SCHEMA.fieldNames())
@@ -470,9 +473,9 @@ def write_validation_metadata_tables(
         "regel",
     ]
 
-    for table_name in metadata_table_names:
+    for metadata_table_name in metadata_table_names:
         df = create_metadata_dataframe(
-            table_name=table_name,
+            metadata_table_name=metadata_table_name,
             dq_rules_dict=dq_rules_dict,
             spark_session=validation_settings_obj.spark_session,
         )
@@ -480,27 +483,28 @@ def write_validation_metadata_tables(
         merge_df_with_unity_table(
             df=df,
             catalog_name=validation_settings_obj.catalog_name,
-            table_name=table_name,
+            table_name=metadata_table_name,
             spark_session=validation_settings_obj.spark_session,
         )
 
 
 def create_validation_result_dataframe(
     df: DataFrame,
-    validation_output: CheckpointDescriptionDict,
-    table_name: str,
-    run_time: datetime,
+    checkpoint_result: CheckpointResult,
+    validation_table_name: str,
     validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
-    if table_name == "validatie":
+    validation_output = checkpoint_result.describe_dict()
+    run_time = checkpoint_result.run_id.run_time
+
+    if validation_table_name == "validatie":
         extracted_data = get_validatie_data(
-            table_name=table_name,
-            dataset_name=validation_settings_obj.dataset_name,
+            validation_settings_obj=validation_settings_obj,
             run_time=run_time,
             validation_output=validation_output,
         )
         schema = VALIDATIE_SCHEMA
-    elif table_name == "afwijking":
+    elif validation_table_name == "afwijking":
         extracted_data = get_afwijking_data(
             df=df,
             validation_settings_obj=validation_settings_obj,
@@ -509,7 +513,10 @@ def create_validation_result_dataframe(
         )
         schema = AFWIJKING_SCHEMA
     else:
-        raise ValueError(f"Unknown validation result table name '{table_name}'")
+        raise ValueError(
+            f"Unknown validation result table name '"
+            f"{validation_table_name}'"
+        )
 
     # StructType doesn't support .drop(), so use a workaround
     reduced_schema = StructType()
@@ -534,36 +541,32 @@ def write_validation_result_tables(
     checkpoint_result: CheckpointResult,
     validation_settings_obj: ValidationSettings,
 ):
-    validation_output = checkpoint_result.describe_dict()
-    run_time = checkpoint_result.run_id.run_time
-
     validation_result_table_names = ["validatie", "afwijking"]
 
-    for table_name in validation_result_table_names:
+    for validation_table_name in validation_result_table_names:
         df_validation_result = create_validation_result_dataframe(
             df=df,
-            validation_output=validation_output,
-            table_name=table_name,
-            run_time=run_time,
+            checkpoint_result=checkpoint_result,
+            validation_table_name=validation_table_name,
             validation_settings_obj=validation_settings_obj,
         )
 
         assert not is_empty_dataframe(
             df=df_validation_result
-        ), f"No validation results to write for table '{table_name}'."
+        ), f"No validation results to write for table '{validation_table_name}'."
 
-        if table_name == "validatie":
+        if validation_table_name == "validatie":
             schema = VALIDATIE_SCHEMA
-        elif table_name == "afwijking":
+        elif validation_table_name == "afwijking":
             schema = AFWIJKING_SCHEMA
         else:
             raise ValueError(
-                f"Unknown validation result table name '{table_name}'"
+                f"Unknown validation result table name '{validation_table_name}'"
             )
 
         write_to_unity_catalog(
             df=df_validation_result,
             catalog_name=validation_settings_obj.catalog_name,
-            table_name=table_name,
+            table_name=validation_table_name,
             schema=schema,
         )
