@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  
 ### Fixed
-- Formatting for Slack messages
 
 ## [0.11.15] - 19-03-2025
  
