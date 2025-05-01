@@ -1,12 +1,12 @@
-from unittest.mock import Mock
-
 import json
 from datetime import datetime
+from unittest.mock import Mock
 
 import pytest
 from chispa import assert_df_equality
 from pyspark.sql import SparkSession
 
+from src.dq_suite.common import ValidationSettings
 from src.dq_suite.output_transformations import (
     add_regel_id_column,
     create_empty_dataframe,
@@ -23,8 +23,6 @@ from src.dq_suite.output_transformations import (
     get_validatie_data,
     list_of_dicts_to_df,
 )
-
-from src.dq_suite.common import ValidationSettings
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
 from .test_data.test_schema import SCHEMA2 as AFWIJKING_SCHEMA2
@@ -167,7 +165,9 @@ class TestGetTargetAttrForRule:
         expected_output = ["age", "name"]
         assert get_target_attr_for_rule(result) == expected_output
 
-    def test_get_target_attr_for_rule_no_column_or_column_list_raises_key_error(self):
+    def test_get_target_attr_for_rule_no_column_or_column_list_raises_key_error(
+        self,
+    ):
         result = {"kwargs": {}}
         with pytest.raises(KeyError):
             get_target_attr_for_rule(result)
@@ -399,7 +399,9 @@ class TestGetRegelData:
 
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetValidatieData:
-    def test_get_validatie_data_raises_type_error(self, validation_settings_obj):
+    def test_get_validatie_data_raises_type_error(
+        self, validation_settings_obj
+    ):
         with pytest.raises(TypeError):
             get_validatie_data(
                 validation_settings_obj=validation_settings_obj,
@@ -438,7 +440,9 @@ class TestGetValidatieData:
 @pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetAfwijkingData:
-    def test_get_afwijking_data_raises_type_error(self, spark, validation_settings_obj):
+    def test_get_afwijking_data_raises_type_error(
+        self, spark, validation_settings_obj
+    ):
         with pytest.raises(TypeError):
             mock_data = [("str1", "str2")]
             mock_df = spark.createDataFrame(
