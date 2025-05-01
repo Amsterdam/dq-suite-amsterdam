@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import json
 from datetime import datetime
 
@@ -22,11 +24,13 @@ from src.dq_suite.output_transformations import (
     list_of_dicts_to_df,
 )
 
+from src.dq_suite.common import ValidationSettings
+
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
 from .test_data.test_schema import SCHEMA2 as AFWIJKING_SCHEMA2
 
 
-@pytest.mark.usefixtures("rules_file_path")
+@pytest.mark.usefixtures("rules_file_path")  # From conftest.py
 @pytest.fixture()
 def read_test_rules_as_dict(rules_file_path):
     with open(rules_file_path, "r") as json_file:
@@ -45,6 +49,21 @@ def read_test_result_as_dict(result_file_path):
 @pytest.fixture()
 def spark():
     return SparkSession.builder.master("local").appName("chispa").getOrCreate()
+
+
+@pytest.fixture
+def validation_settings_obj():
+    spark_session_mock = Mock(spec=SparkSession)
+    validation_settings_obj = ValidationSettings(
+        spark_session=spark_session_mock,
+        catalog_name="the_catalog",
+        table_name="the_table_name",
+        validation_name="the_validation",
+        dataset_layer="the_layer",
+        dataset_name="the_dataset_name",
+        unique_identifier="the_id",
+    )
+    return validation_settings_obj
 
 
 @pytest.mark.usefixtures("spark")
@@ -89,7 +108,7 @@ class TestConstructRegelId:
     def test_output_columns_list_raises_type_error(self, spark):
         df = spark.createDataFrame([("123", "456")], ["123", "456"])
         with pytest.raises(TypeError):
-            add_regel_id_column(df=df, output_columns_list="123")
+            add_regel_id_column(df=df)
 
     def test_construct_regel_id_returns_correct_hash(self, spark):
         input_data = [
@@ -99,13 +118,7 @@ class TestConstructRegelId:
             input_data, ["regelNaam", "regelParameters", "bronTabelId"]
         )
 
-        actual_df = add_regel_id_column(
-            df=input_df,
-            output_columns_list=[
-                "regelId",
-                "regelNaam",
-            ],
-        )
+        actual_df = add_regel_id_column(df=input_df)
 
         expected_data = [("287467170918921248", "test_regelNaam")]
         expected_df = spark.createDataFrame(
@@ -154,12 +167,12 @@ class TestGetTargetAttrForRule:
         expected_output = ["age", "name"]
         assert get_target_attr_for_rule(result) == expected_output
 
-    def test_get_target_attr_for_rule_no_column_or_column_list(self):
+    def test_get_target_attr_for_rule_no_column_or_column_list_raises_key_error(self):
         result = {"kwargs": {}}
-        expected_output = None
-        assert get_target_attr_for_rule(result) == expected_output
+        with pytest.raises(KeyError):
+            get_target_attr_for_rule(result)
 
-    def test_get_target_attr_for_rule_no_kwargs_key(self):
+    def test_get_target_attr_for_rule_no_kwargs_key_raises_key_error(self):
         result = {}
         with pytest.raises(KeyError):
             get_target_attr_for_rule(result)
@@ -384,28 +397,27 @@ class TestGetRegelData:
         assert test_output == expected_result
 
 
-@pytest.mark.usefixtures("read_test_result_as_dict")
+@pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetValidatieData:
-    def test_get_validatie_data_raises_type_error(self):
+    def test_get_validatie_data_raises_type_error(self, validation_settings_obj):
         with pytest.raises(TypeError):
             get_validatie_data(
-                table_name="table_name",
-                dataset_name="dataset_name",
+                validation_settings_obj=validation_settings_obj,
                 run_time=datetime.now(),
                 validation_output="123",
             )
 
     def test_get_validatie_data_returns_correct_list(
-        self, read_test_result_as_dict
+        self, read_test_result_as_dict, validation_settings_obj
     ):
+        dtt_now = datetime.now()
         test_output = get_validatie_data(
-            table_name="table_name",
-            dataset_name="dataset_name",
-            run_time=datetime.now(),
+            validation_settings_obj=validation_settings_obj,
+            run_time=dtt_now,
             validation_output=read_test_result_as_dict,
         )
         test_sample = test_output[0]
-        del test_sample["dqDatum"]  # timestamp will be impossible to get right
+
         expected_result = {
             "aantalValideRecords": 23537,
             "aantalReferentieRecords": 23538,
@@ -416,15 +428,17 @@ class TestGetValidatieData:
                 "column": "the_column",
                 "value_set": [1, 2, 3],
             },
-            "bronTabelId": "dataset_name_table_name",
+            "bronTabelId": "the_dataset_name_the_table_name",
+            "dqDatum": dtt_now,
         }
-        assert test_sample == expected_result
+        for key in test_sample.keys():
+            assert test_sample[key] == expected_result[key]
 
 
 @pytest.mark.usefixtures("spark")
-@pytest.mark.usefixtures("read_test_result_as_dict")
+@pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetAfwijkingData:
-    def test_get_afwijking_data_raises_type_error(self, spark):
+    def test_get_afwijking_data_raises_type_error(self, spark, validation_settings_obj):
         with pytest.raises(TypeError):
             mock_data = [("str1", "str2")]
             mock_df = spark.createDataFrame(
@@ -432,33 +446,32 @@ class TestGetAfwijkingData:
             )
             get_afwijking_data(
                 df=mock_df,
-                unique_identifier="id",
-                table_name="table_name",
-                dataset_name="dataset_name",
+                validation_settings_obj=validation_settings_obj,
                 run_time=datetime.now(),
                 validation_output="123",
             )
 
     def test_get_afwijking_data_returns_correct_list(
-        self, spark, read_test_result_as_dict
+        self, spark, read_test_result_as_dict, validation_settings_obj
     ):
+        dtt_now = datetime.now()
         input_data = [("id1", None), ("id2", "the_value")]
         input_df = spark.createDataFrame(input_data, ["the_key", "the_column"])
         test_output = get_afwijking_data(
             df=input_df,
-            unique_identifier="the_key",
-            table_name="table_name",
-            dataset_name="dataset_name",
-            run_time=datetime.now(),
+            validation_settings_obj=validation_settings_obj,
+            run_time=dtt_now,
             validation_output=read_test_result_as_dict,
         )
         test_sample = test_output[0]
-        del test_sample["dqDatum"]  # timestamp will be impossible to get right
+
         expected_result = {
             "identifierVeldWaarde": [["id1"]],
             "afwijkendeAttribuutWaarde": None,
             "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
             "regelParameters": {"column": "the_column", "value_set": [1, 2, 3]},
-            "bronTabelId": "dataset_name_table_name",
+            "bronTabelId": "the_dataset_name_the_table_name",
+            "dqDatum": dtt_now,
         }
-        assert test_sample == expected_result
+        for key in test_sample.keys():
+            assert test_sample[key] == expected_result[key]
