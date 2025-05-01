@@ -215,6 +215,7 @@ class TestValidationSettings:
         catalog_name="the_catalog",
         table_name="the_table",
         validation_name="the_validation",
+        unique_identifier="the_identifier",
         dataset_layer="the_layer",
         dataset_name="the_name",
     )
@@ -228,6 +229,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
             )
@@ -241,6 +243,7 @@ class TestValidationSettings:
                 catalog_name=123,
                 table_name="the_table",
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
             )
@@ -252,6 +255,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name=123,
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
             )
@@ -265,6 +269,21 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name=123,
+                unique_identifier="the_identifier",
+                dataset_layer="the_layer",
+                dataset_name="the_name",
+            )
+
+    def test_initialisation_with_wrong_typed_unique_identifier_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            assert ValidationSettings(
+                spark_session=self.spark_session_mock,
+                catalog_name="the_catalog",
+                table_name="the_table",
+                validation_name="the_validation",
+                unique_identifier=123,
                 dataset_layer="the_layer",
                 dataset_name="the_name",
             )
@@ -278,6 +297,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer=123,
                 dataset_name="the_name",
             )
@@ -291,6 +311,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name=123,
             )
@@ -304,6 +325,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
                 batch_name=123,
@@ -318,6 +340,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
                 data_context_root_dir=123,
@@ -332,6 +355,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
                 slack_webhook=123,
@@ -346,6 +370,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
                 ms_teams_webhook=123,
@@ -360,6 +385,7 @@ class TestValidationSettings:
                 catalog_name="the_catalog",
                 table_name="the_table",
                 validation_name="the_validation_name",
+                unique_identifier="the_identifier",
                 dataset_layer="the_layer",
                 dataset_name="the_name",
                 notify_on="haha_this_is_wrong",

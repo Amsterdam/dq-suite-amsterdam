@@ -17,6 +17,7 @@ class Rule:
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
+    norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -25,11 +26,17 @@ class Rule:
         if not isinstance(self.parameters, dict):
             raise TypeError("'parameters' should be of type Dict[str, Any]")
 
-    def __getitem__(self, key) -> str | Dict[str, Any] | None:
+        if not isinstance(self.norm, int):
+            if self.norm is not None:
+                raise TypeError("'norm' should be of type int")
+
+    def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name
         elif key == "parameters":
             return self.parameters
+        elif key == "norm":
+            return self.norm
         raise KeyError(key)
 
 
@@ -178,26 +185,62 @@ def merge_df_with_unity_table(
     df: DataFrame,
     catalog_name: str,
     table_name: str,
-    table_merge_id: str,
-    df_merge_id: str,
-    merge_dict: dict,
     spark_session: SparkSession,
 ) -> None:
     """
     This function takes a dataframe with new records to be merged
-    into an existing delta table. The upsert operation is based on
-    the regel_id column.
+    into an existing delta table.
+    The upsert operation is based on the regel_id column.
     """
+    df_new_alias = f"{table_name}_new_records"
+
+    if table_name == "brondataset":
+        merge_dict = {
+            "bronDatasetId": f"{df_new_alias}.bronDatasetId",
+            "medaillonLaag": f"{df_new_alias}.medaillonLaag",
+        }
+        merge_on = "bronDatasetId"
+    elif table_name == "brontabel":
+        merge_dict = {
+            "bronTabelId": f"{df_new_alias}.bronTabelId",
+            "tabelNaam": f"{df_new_alias}.tabelNaam",
+            "uniekeSleutel": f"{df_new_alias}.uniekeSleutel",
+        }
+        merge_on = "bronTabelId"
+    elif table_name == "bronattribuut":
+        merge_dict = {
+            "bronAttribuutId": f"{df_new_alias}.bronAttribuutId",
+            "attribuutNaam": f"{df_new_alias}.attribuutNaam",
+            "bronTabelId": f"{df_new_alias}.bronTabelId",
+        }
+        merge_on = "bronAttribuutId"
+    elif table_name == "regel":
+        merge_dict = {
+            "regelId": f"{df_new_alias}.regelId",
+            "regelNaam": f"{df_new_alias}.regelNaam",
+            "regelParameters": f"{df_new_alias}.regelParameters",
+            "norm": f"{df_new_alias}.norm",
+            "bronTabelId": f"{df_new_alias}.bronTabelId",
+            "attribuut": f"{df_new_alias}.attribuut",
+        }
+        merge_on = "regelId"
+    else:
+        raise ValueError(f"Unknown metadata table name '{table_name}'")
+
     full_table_name = get_full_table_name(
         catalog_name=catalog_name, table_name=table_name
     )
-    df_alias = f"{table_name}_df"
-    regel_tabel = DeltaTable.forName(spark_session, full_table_name)
-    regel_tabel.alias(table_name).merge(
-        df.alias(df_alias),
-        f"{table_name}.{table_merge_id} = {df_alias}.{df_merge_id}",
-    ).whenMatchedUpdate(set=merge_dict).whenNotMatchedInsert(
-        values=merge_dict
+    unity_catalog_table = DeltaTable.forName(
+        sparkSession=spark_session, tableOrViewName=full_table_name
+    )
+    (
+        unity_catalog_table.alias(table_name)
+        .merge(
+            source=df.alias(df_new_alias),
+            condition=f"{table_name}.{merge_on}={df_new_alias}.{merge_on}",
+        )
+        .whenMatchedUpdate(set=merge_dict)
+        .whenNotMatchedInsert(values=merge_dict)
     ).execute()
 
 
@@ -214,6 +257,7 @@ class ValidationSettings:
     dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
+    unique_identifier: ***<insert explanation>***
     batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"
@@ -231,6 +275,7 @@ class ValidationSettings:
     dataset_name: str
     table_name: str
     validation_name: str
+    unique_identifier: str
     batch_name: str | None = None
     data_context_root_dir: str = "/dbfs/great_expectations/"
     slack_webhook: str | None = None
@@ -250,6 +295,9 @@ class ValidationSettings:
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
+        if not isinstance(self.unique_identifier, str):
+            if self.unique_identifier is not None:
+                raise TypeError("'unique_identifier' should be of type str")
         if not isinstance(self.batch_name, str):
             if self.batch_name is not None:
                 raise TypeError("'batch_name' should be of type str")
