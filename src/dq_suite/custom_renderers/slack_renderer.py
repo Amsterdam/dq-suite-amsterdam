@@ -53,11 +53,13 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             column_set = result["expectation_config"]["kwargs"]["column_set"]
             unexpected_values = results["details"]["mismatched"].get(
                 "unexpected", None)  # Could be an empty collection/absent
+            missing_values = results["details"]["mismatched"].get(
+                "missing", None)  # Could be an empty collection/absent
             return f"""
     \n *Expectation*: `{expectation_name}`\n\n
     :information_source: Details:
     *Unexpected columns*:  ```{unexpected_values}```\n
-    *Missing columns*:  ```{results["details"]["mismatched"]["missing"]}```\n
+    *Missing columns*:  ```{missing_values}```\n
     *Expected columns*: ```{column_set}```\n
     -----------------------\n
                 """
