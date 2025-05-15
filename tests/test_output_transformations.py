@@ -167,13 +167,6 @@ class TestGetTargetAttrForRule:
         expected_output = ["age", "name"]
         assert get_target_attr_for_rule(result) == expected_output
 
-    def test_get_target_attr_for_rule_no_column_or_column_list_raises_key_error(
-        self,
-    ):
-        result = {"kwargs": {}}
-        with pytest.raises(KeyError):
-            get_target_attr_for_rule(result)
-
     def test_get_target_attr_for_rule_no_kwargs_key_raises_key_error(self):
         result = {}
         with pytest.raises(KeyError):

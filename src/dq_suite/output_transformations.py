@@ -100,15 +100,18 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     return parameters
 
 
-def get_target_attr_for_rule(result: dict) -> str:
+def get_target_attr_for_rule(result: dict) -> str | None:
     """
     Get the target attribute from the GX results. It will only return results
     for DQ rules applied to specific attributes.
     """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
-    else:
+    elif "column_list" in result["kwargs"]:
         return result["kwargs"].get("column_list")
+    else:
+        # Some rules do not specify columns, but are scoped on table level
+        return None
 
 
 def get_unique_deviating_values(
