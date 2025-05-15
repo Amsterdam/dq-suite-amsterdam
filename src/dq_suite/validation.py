@@ -21,11 +21,11 @@ from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
-from .common import Rule, RulesDict, ValidationSettings
+from .common import DatasetDict, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
-    write_non_validation_tables,
-    write_validation_table,
+    write_validation_metadata_tables,
+    write_validation_result_tables,
 )
 from .validation_input import (
     filter_validation_dict_by_table_name,
@@ -353,8 +353,10 @@ def run_validation(
         validation_dict=validation_dict,
         table_name=table_name,
     )
-    dataset_layer = validation_dict["dataset"]["layer"]
-    dataset_name = validation_dict["dataset"]["name"]
+    dataset_dict: DatasetDict = validation_dict["dataset"]
+    dataset_layer = dataset_dict["layer"]
+    dataset_name = dataset_dict["name"]
+    unique_identifier = rules_dict["unique_identifier"]
 
     if rules_dict is None:
         raise ValueError(
@@ -371,6 +373,7 @@ def run_validation(
         dataset_name=dataset_name,
         table_name=table_name,
         validation_name=validation_name,
+        unique_identifier=unique_identifier,
         batch_name=batch_name,
         data_context_root_dir=data_context_root_dir,
         slack_webhook=slack_webhook,
@@ -389,19 +392,14 @@ def run_validation(
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
-        validation_output = checkpoint_result.describe_dict()
-        run_time = checkpoint_result.run_id.run_time
-
-        write_non_validation_tables(
+        write_validation_metadata_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
         )
-        write_validation_table(
-            validation_output=validation_output,
-            validation_settings_obj=validation_settings_obj,
+
+        write_validation_result_tables(
             df=df,
-            dataset_name=validation_dict["dataset"]["name"],
-            unique_identifier=rules_dict["unique_identifier"],
-            run_time=run_time,
+            checkpoint_result=checkpoint_result,
+            validation_settings_obj=validation_settings_obj,
         )
     return checkpoint_result.success

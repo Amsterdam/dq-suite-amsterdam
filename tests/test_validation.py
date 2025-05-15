@@ -22,6 +22,7 @@ def validation_settings_obj():
         validation_name="the_validation",
         dataset_layer="the_layer",
         dataset_name="the_name",
+        unique_identifier="the_id",
     )
     return validation_settings_obj
 

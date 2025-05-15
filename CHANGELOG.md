@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.11.19] - 15-05-2025
+ 
+### Added
+
+### Changed
+- Refactor `output_transformations.py`
+- Modify `Rule` and `ValidationSettings` dataclasses
+ 
+### Fixed
+ 
 ## [0.11.18] - 14-05-2025
 
 ### Added
@@ -14,7 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix for Slack messages resulting from `ExpectTableColumnsToMatchSet` expectations
 
-
 ## [0.11.17] - 30-04-2025
 
 ### Added
@@ -23,7 +32,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Allow for Slack messages resulting from validations of empty source files
-
 
 ## [0.11.16] - 30-04-2025
  
