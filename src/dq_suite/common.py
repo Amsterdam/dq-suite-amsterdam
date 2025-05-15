@@ -46,7 +46,7 @@ class RulesDict:
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
     table_name: str
-    rules_list: RulesList
+    rules: RulesList
 
     def __post_init__(self):
         if not isinstance(self.unique_identifier, str):
@@ -55,16 +55,16 @@ class RulesDict:
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
 
-        if not isinstance(self.rules_list, list):
-            raise TypeError("'rules_list' should be RulesList")
+        if not isinstance(self.rules, list):
+            raise TypeError("'rules' should be RulesList")
 
     def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
             return self.unique_identifier
         elif key == "table_name":
             return self.table_name
-        elif key == "rules_list":
-            return self.rules_list
+        elif key == "rules":
+            return self.rules
         raise KeyError(key)
 
 
