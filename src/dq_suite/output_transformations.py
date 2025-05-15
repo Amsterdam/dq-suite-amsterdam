@@ -27,6 +27,7 @@ from .schemas.brondataset import SCHEMA as BRONDATASET_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
+from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
 
 
 def create_empty_dataframe(
@@ -84,7 +85,7 @@ def add_regel_id_column(
             col("regelNaam"), col("regelParameters"), col("bronTabelId")
         ).substr(
             2, 20
-        ),  # TODO/check: why characters 2-20? Add documentation.
+        ),  # We start from the 2nd hash value to avoid negative values. This increases performance in PowerBI
     )
     return df_with_id
 
@@ -94,9 +95,9 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     Get the parameters from the GX results.
     """
     parameters = copy.deepcopy(result["kwargs"])
+    print(parameters)
     if "batch_id" in parameters:
-        del parameters["batch_id"]  # We don't need this value
-    # TODO/check: why is batch_id removed? Add documentation.
+        del parameters["batch_id"]  # We don't need this value. It describes the data, but is not relevant for the rule description
     return parameters
 
 
@@ -107,12 +108,8 @@ def get_target_attr_for_rule(result: dict) -> str:
     """
     if "column" in result["kwargs"]:
         return result["kwargs"].get("column")
-    elif "column_list" in result["kwargs"]:
-        return result["kwargs"].get("column_list")
     else:
-        raise KeyError(
-            "Expected either 'column' or 'column_list' in 'result' dict."
-        )
+        return result["kwargs"].get("column_list")
 
 
 def get_unique_deviating_values(
@@ -132,7 +129,7 @@ def get_unique_deviating_values(
 
 
 def filter_df_based_on_deviating_values(
-    value: str,  # TODO: change parameter name, not very descriptive.
+    deviating_value: str,
     attribute: str,
     df: DataFrame,
 ) -> DataFrame:
@@ -143,18 +140,18 @@ def filter_df_based_on_deviating_values(
 
     # TODO: add documentation per parameter.
     """
-    if value is None:
+    if deviating_value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
-        # In case of compound keys, "attribute" is a list and "value" is a dict
-        # like tuple. The indices will match, and we take [1] for value,
+        # In case of compound keys, "attribute" is a list and "deviating_value" is a dict
+        # like tuple. The indices will match, and we take [1] for deviating_value,
         # because the "key" is stored in [0].
         number_of_attrs = len(attribute)
         for i in range(number_of_attrs):
-            df = df.filter(col(attribute[i]) == value[i][1])
+            df = df.filter(col(attribute[i]) == deviating_value[i][1])
         return df
     else:
-        return df.filter(col(attribute) == lit(value))
+        return df.filter(col(attribute) == lit(deviating_value))
 
 
 def get_grouped_ids_per_deviating_value(
@@ -257,7 +254,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
     # Round min/max values (if present) to a single decimal
-    # TODO/check: why cast to float of min/max values? Add documentation.
+    # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
     if "min_value" in parameters.keys():
         min_value = float(parameters["min_value"])
         parameters["min_value"] = round(min_value, 1)
@@ -371,7 +368,7 @@ def get_single_expectation_afwijking_data(
     )
     for value in unique_deviating_values:
         filtered_df = filter_df_based_on_deviating_values(
-            value=value, attribute=attribute, df=df
+            deviating_value=value, attribute=attribute, df=df
         )
         grouped_ids = get_grouped_ids_per_deviating_value(
             filtered_df=filtered_df, unique_identifier=unique_identifier
@@ -526,6 +523,8 @@ def create_validation_result_dataframe(
         reduced_schema = reduced_schema.add(
             structfield.name, structfield.dataType, structfield.nullable
         )
+    for inputfield in REGEL_ID_INPUT_SCHEMA.fields:
+        reduced_schema = reduced_schema.add(inputfield)
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=validation_settings_obj.spark_session,
