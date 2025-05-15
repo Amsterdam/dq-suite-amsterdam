@@ -95,7 +95,6 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     Get the parameters from the GX results.
     """
     parameters = copy.deepcopy(result["kwargs"])
-    print(parameters)
     if "batch_id" in parameters:
         del parameters["batch_id"]  # We don't need this value. It describes the data, but is not relevant for the rule description
     return parameters
