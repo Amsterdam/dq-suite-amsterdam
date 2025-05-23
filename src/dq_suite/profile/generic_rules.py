@@ -1,6 +1,16 @@
 from typing import Dict, Any
 import json
-from dq_suite.common import RulesDict, Rule
+from dq_suite.common import RulesDict, Rule, DatasetDict
+
+from dq_suite.profile.rules_module import (
+    row_count_rule,
+    column_match_rule,
+    column_unique_rule,
+    column_not_null_rule,
+    column_between_rule,
+    column_type_rule,
+    regex_rule,
+)
 
 
 def create_dq_rules(
@@ -9,52 +19,26 @@ def create_dq_rules(
     """
     Create data quality rules based on the profiling report.
     """
-    rules = [
-        Rule(
-            rule_name="ExpectTableRowCountToBeBetween",
-            parameters={
-                "min_value": "<TO BE FILLED IN AS INT>",
-                "max_value": "<TO BE FILLED IN AS INT>",
-            },
-        ),
-        Rule(
-            rule_name="ExpectTableColumnsToMatchSet",
-            parameters={
-                "column_set": "[<COLUMNS TO BE FILLED IN>]",
-                "exact_match": True,
-            },
-        ),
-    ]
+    rules = [row_count_rule, column_match_rule]
 
     for variable, details in profiling_json["variables"].items():
+        col_type = details["type"]
 
-        if "DateTime" in details["type"]:
+        if "DateTime" in col_type:
+            rules.append(regex_rule(variable))
+
+        if details.get("p_distinct", 0) == 1.0:
+            rules.append(column_unique_rule(variable))
+
+        if details.get("p_missing", 0) == 0.0:
+            rules.append(column_not_null_rule(variable))
+
+        if "min" in details and "max" in details:
             rules.append(
-                Rule(
-                    rule_name="ExpectColumnValuesToMatchRegex",
-                    parameters={
-                        "column": variable,
-                        "regex": "^(\\d{4})(0[1-9]|1[0-2])(0[1-9]|[12]\\d|30|31)",
-                    },
-                )
+                column_between_rule(variable, details["min"], details["max"])
             )
 
-        if "id" in variable:
-            rules.append(
-                Rule(
-                    rule_name="ExpectColumnValuesToBeUnique",
-                    parameters={"column": variable},
-                )
-            )
-
-        p_missing = details.get("p_missing", 0)
-        if p_missing >= 0.4:
-            rules.append(
-                Rule(
-                    rule_name="ExpectColumnValuesToNotBeNull",
-                    parameters={"column": variable},
-                )
-            )
+        rules.append(column_type_rule(variable, col_type))
 
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
@@ -62,12 +46,19 @@ def create_dq_rules(
         rules=rules,
     )
 
-    return dq_rules
+    dataset = DatasetDict(name=dataset_name, layer="<LAYER TO BE FILLED IN>")
+
+    dq_json = {
+        "dataset": dataset,
+        "tables": [dq_rules],
+    }
+
+    return dq_json
 
 
-def save_rules_to_file(dq_rules: Dict, rule_path: str) -> None:
+def save_rules_to_file(dq_json: Dict, rule_path: str) -> None:
     """
     Save the data quality rules to a file.
     """
     with open(rule_path, "w") as f:
-        json.dump(dq_rules, f, indent=4, default=lambda o: o.__dict__)
+        json.dump(dq_json, f, indent=4, default=lambda o: o.__dict__)
