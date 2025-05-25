@@ -1,5 +1,6 @@
 import json
 import os.path
+import warnings
 from typing import Any
 
 import humps
@@ -93,6 +94,21 @@ def validate_rules_dict(rules_dict: dict) -> None:
 
     if not isinstance(rules_dict["rules"], list):
         raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
+
+    if len(rules_dict["rules"]) > 0:  # no schema validation
+        if "rules_version" not in rules_dict:
+            # raise KeyError(f"No 'rules_version' key found in {rules_dict}")
+            warnings.warn(f"No 'rules_version' key found in "
+                               f"{rules_dict}. Defaulting to a "
+                          f"rules_version of 0 for now. "
+                          f"***Note: absence of 'rules_version' will result in "
+                          f"KeyError on a future version of dq-suite*** ",
+                          FutureWarning)
+            rules_dict["rules_version"] = 0
+            return rules_dict
+        if not isinstance(rules_dict["rules_version"], int):
+            raise TypeError(
+                f"In {rules_dict}, 'rules_version' should be of type 'int'")
 
 
 def validate_table_schema(rules_dict: dict) -> None:
