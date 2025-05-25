@@ -1,5 +1,6 @@
 import json
 from unittest.mock import patch
+import warnings
 
 import pytest
 from tests import TEST_DATA_FOLDER
@@ -233,6 +234,48 @@ class TestValidateRulesDict:
                     "unique_identifier": 123,
                     "table_name": 456,
                     "rules": 789,
+                }
+            )
+
+    def test_validate_rules_dict_without_rules_version_raises_future_warning_and_adds_version_0(
+        self,
+    ):
+        # TODO: remove once 'rules_version' throws an error instead of a warning
+        with warnings.catch_warnings(record=True) as w:
+            updated_rules_dict = validate_rules_dict(
+                rules_dict={
+                    "unique_identifier": 123,
+                    "table_name": 456,
+                    "rules": ["list_typed_rules_are_the_best_rules"],
+                }
+            )
+            assert issubclass(w[-1].category, FutureWarning)
+            assert "rules_version" in updated_rules_dict.keys()
+            assert updated_rules_dict["rules_version"] == 0
+
+    # def test_validate_rules_dict_without_rules_version_raises_key_error(
+    #     self,
+    # ):
+    # TODO: activate once 'rules_version' throws an error instead of a warning
+    #     with pytest.raises(KeyError):
+    #         validate_rules_dict(
+    #             rules_dict={
+    #                 "unique_identifier": 123,
+    #                 "table_name": 456,
+    #                 "rules": ["list_typed_rules_are_the_best_rules"],
+    #             }
+    #         )
+
+    def test_validate_rules_dict_without_int_typed_rules_version_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            validate_rules_dict(
+                rules_dict={
+                    "unique_identifier": 123,
+                    "table_name": 456,
+                    "rules": ["list_typed_rules_are_the_best_rules"],
+                    "rules_version": "the_worst_version",
                 }
             )
 

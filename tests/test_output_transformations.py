@@ -129,27 +129,33 @@ class TestConstructRegelId:
 
 
 class TestGetParametersFromResults:
-    def test_get_parameters_from_results_with_and_without_batch_id(self):
-        result = {
+    def test_get_parameters_from_results_with_and_without_batch_id_are_equal(
+            self):
+        dict_with_batch_id = {
             "kwargs": {
                 "param1": 10,
                 "param2": "example",
                 "batch_id": 123,
             }
         }
-        result2 = {"kwargs": {"param1": 10, "param2": "example"}}
+        dict_without_batch_id = {"kwargs": {"param1": 10, "param2":
+            "example"}}
+
         expected_output = {"param1": 10, "param2": "example"}
 
-        assert get_parameters_from_results(result) == expected_output
-        assert get_parameters_from_results(result2) == expected_output
+        assert (get_parameters_from_results(result=dict_with_batch_id) ==
+                expected_output)
+        assert (get_parameters_from_results(result=dict_without_batch_id) ==
+                expected_output)
 
-    def get_parameters_from_results(self):
+    def test_get_parameters_from_results(self):
+        # TODO: fix unit test. Apparently, a dict is returned, not a list[dict].
         result = {"kwargs": {}}
 
         expected_output = [{}]
         assert get_parameters_from_results(result) == expected_output
 
-    def get_parameters_from_results_raises_key_error(self):
+    def test_get_parameters_from_results_no_kwargs_key_raises_key_error(self):
         result = {}
 
         with pytest.raises(KeyError):
