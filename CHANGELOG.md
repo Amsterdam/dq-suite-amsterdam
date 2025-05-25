@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.12.0] - 26-05-2025
+ 
+### Added
+- New `rules_version` key to the expected data quality rules JSON format, for rules versioning at the table level
+
+### Changed
+ 
+### Fixed
+- Fixed broken/inactive `TestGetParametersFromResults` in `test_output_transformations.py`
+
+
 ## [0.11.19] - 15-05-2025
  
 ### Added
