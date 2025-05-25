@@ -38,7 +38,10 @@ def validate_data_quality_rules_dict(
     validate_tables(data_quality_rules_dict=data_quality_rules_dict)
 
     for rules_dict in data_quality_rules_dict["tables"]:
-        validate_rules_dict(rules_dict=rules_dict)
+        dict_with_default_values = validate_rules_dict(rules_dict=rules_dict)
+
+        if dict_with_default_values is not None:
+            rules_dict = dict_with_default_values
 
         if len(rules_dict["rules"]) == 0:
             validate_table_schema(rules_dict=rules_dict)
@@ -77,7 +80,7 @@ def validate_tables(data_quality_rules_dict: Any) -> None:
         raise TypeError("'tables' should be of type 'list'")
 
 
-def validate_rules_dict(rules_dict: dict) -> None:
+def validate_rules_dict(rules_dict: dict) -> None | dict:
     # All RulesDict objects in 'tables' should...
 
     # ... be a dict
