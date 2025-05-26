@@ -156,6 +156,8 @@ class TestGetParametersFromResults:
         assert get_parameters_from_results(result) == expected_output
 
     def test_get_parameters_from_results_no_kwargs_key_raises_key_error(self):
+        # TODO/check: do we really need this test? It just tests a Python
+        #  internal thing.
         result = {}
 
         with pytest.raises(KeyError):
