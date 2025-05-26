@@ -95,10 +95,12 @@ def validate_rules_dict(rules_dict: dict) -> None | dict:
     if "rules" not in rules_dict:
         raise KeyError(f"No 'rules' key found in {rules_dict}")
 
-    if not isinstance(rules_dict["rules"], list):
+    if not isinstance(rules_dict.get("rules", None), list):
         raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
 
-    if len(rules_dict["rules"]) > 0:  # no schema validation
+    # ... and contain a 'rules_version' key, if there are any rules to be
+    # applied
+    if len(rules_dict.get("rules", list())) > 0:  # no schema validation
         if "rules_version" not in rules_dict:
             # raise KeyError(f"No 'rules_version' key found in {rules_dict}")
             warnings.warn(f"No 'rules_version' key found in "
@@ -109,7 +111,7 @@ def validate_rules_dict(rules_dict: dict) -> None | dict:
                           FutureWarning)
             rules_dict["rules_version"] = 0
             return rules_dict
-        if not isinstance(rules_dict["rules_version"], int):
+        if not isinstance(rules_dict.get("rules_version", None), int):
             raise TypeError(
                 f"In {rules_dict}, 'rules_version' should be of type 'int'")
 
