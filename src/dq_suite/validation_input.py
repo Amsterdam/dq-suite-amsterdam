@@ -106,8 +106,8 @@ def validate_rules_dict(rules_dict: dict) -> None | dict:
             warnings.warn(f"No 'rules_version' key found in "
                                f"{rules_dict}. Defaulting to a "
                           f"rules_version of 0 for now. "
-                          f"***Note: absence of 'rules_version' will result in "
-                          f"KeyError on a future version of dq-suite*** ",
+                          f"*** Note: absence of 'rules_version' will result "
+                          f"in a KeyError on a future version of dq-suite *** ",
                           FutureWarning)
             rules_dict["rules_version"] = 0
             return rules_dict
