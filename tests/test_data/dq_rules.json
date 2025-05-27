@@ -15,7 +15,8 @@
                             "value_set": [1, 2, 3]
                         }
                 }
-            ]
+            ],
+            "rules_version": 1
         },
         {
             "unique_identifier": "other_id",
@@ -36,7 +37,8 @@
                         "max_value": 1000
                     }
                 }
-            ]
+            ],
+            "rules_version": 1
         },
         {
             "unique_identifier": "id",

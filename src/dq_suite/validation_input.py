@@ -1,5 +1,6 @@
 import json
 import os.path
+import warnings
 from typing import Any
 
 import humps
@@ -37,7 +38,10 @@ def validate_data_quality_rules_dict(
     validate_tables(data_quality_rules_dict=data_quality_rules_dict)
 
     for rules_dict in data_quality_rules_dict["tables"]:
-        validate_rules_dict(rules_dict=rules_dict)
+        dict_with_default_values = validate_rules_dict(rules_dict=rules_dict)
+
+        if dict_with_default_values is not None:
+            rules_dict = dict_with_default_values
 
         if len(rules_dict["rules"]) == 0:
             validate_table_schema(rules_dict=rules_dict)
@@ -76,7 +80,7 @@ def validate_tables(data_quality_rules_dict: Any) -> None:
         raise TypeError("'tables' should be of type 'list'")
 
 
-def validate_rules_dict(rules_dict: dict) -> None:
+def validate_rules_dict(rules_dict: dict) -> None | dict:
     # All RulesDict objects in 'tables' should...
 
     # ... be a dict
@@ -91,8 +95,25 @@ def validate_rules_dict(rules_dict: dict) -> None:
     if "rules" not in rules_dict:
         raise KeyError(f"No 'rules' key found in {rules_dict}")
 
-    if not isinstance(rules_dict["rules"], list):
+    if not isinstance(rules_dict.get("rules", None), list):
         raise TypeError(f"In {rules_dict}, 'rules' should be of type 'list'")
+
+    # ... and contain a 'rules_version' key, if there are any rules to be
+    # applied
+    if len(rules_dict.get("rules", list())) > 0:  # no schema validation
+        if "rules_version" not in rules_dict:
+            # raise KeyError(f"No 'rules_version' key found in {rules_dict}")
+            warnings.warn(f"No 'rules_version' key found in "
+                               f"{rules_dict}. Defaulting to a "
+                          f"rules_version of 0 for now. "
+                          f"*** Note: absence of 'rules_version' will result "
+                          f"in a KeyError on a future version of dq-suite *** ",
+                          FutureWarning)
+            rules_dict["rules_version"] = 0
+            return rules_dict
+        if not isinstance(rules_dict.get("rules_version", None), int):
+            raise TypeError(
+                f"In {rules_dict}, 'rules_version' should be of type 'int'")
 
 
 def validate_table_schema(rules_dict: dict) -> None:
