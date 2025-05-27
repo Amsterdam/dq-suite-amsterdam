@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from delta.tables import *
+from delta.tables import *  # TODO: import specific objects
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
@@ -17,7 +17,7 @@ class Rule:
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
-    norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
+    norm: int | None = None  # TODO/check: what is the meaning of this field?Add documentation. And/or rename
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -257,7 +257,7 @@ class ValidationSettings:
     dataset_name: data set (source system) name
     table_name: name of table in unity catalog
     validation_name: name of data quality check
-    unique_identifier: ***<insert explanation>***
+    unique_identifier: ***<insert explanation>***  # TODO: add
     batch_name: name of the batch to validate
     data_context_root_dir: path to write GX data
     context - default "/dbfs/great_expectations/"

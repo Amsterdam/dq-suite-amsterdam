@@ -413,7 +413,7 @@ def get_afwijking_data(
     extracted_data = []
     if not isinstance(
         unique_identifier, list
-    ):  # TODO/check: is this always a list[str]?
+    ):  # TODO/check: is this always a list[str]? see also common.py
         unique_identifier = [unique_identifier]
 
     for result in validation_results:

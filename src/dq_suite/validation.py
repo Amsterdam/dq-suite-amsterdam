@@ -343,7 +343,7 @@ def run_validation(
     """
     if not hasattr(df, "table_name"):
         # TODO/check: we can have df.table_name !=
-        #  table_name: is this wrong?
+        #  table_name: is this wrong? Check: remove/unused?
         df.table_name = table_name
 
     # 1) extract the data quality rules to be applied...
