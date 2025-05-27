@@ -4,15 +4,15 @@ from typing import Dict, Any
 row_count_rule = Rule(
     rule_name="ExpectTableRowCountToBeBetween",
     parameters={
-        "min_value": "<TO BE FILLED IN AS INT>",
-        "max_value": "<TO BE FILLED IN AS INT>",
+        "min_value": "<TO BE FILLED IN AS INT>", # 0 ?
+        "max_value": "<TO BE FILLED IN AS INT>", # take count of table rows directly? 
     },
 )
 
 column_match_rule = Rule(
     rule_name="ExpectTableColumnsToMatchSet",
     parameters={
-        "column_set": "[<COLUMNS TO BE FILLED IN>]",
+        "column_set": "[<COLUMNS TO BE FILLED IN>]",  # take all column names?
         "exact_match": True,
     },
 )
@@ -28,7 +28,7 @@ def column_type_rule(column: str, type_: str):
     )
 
 
-def regex_rule(column_name: str) -> Rule:
+def datetime_regex_rule(column_name: str) -> Rule:
     return Rule(
         rule_name="ExpectColumnValuesToMatchRegex",
         parameters={
@@ -61,3 +61,6 @@ def column_between_rule(column: str, min_val: Any, max_val: Any) -> Rule:
             "max_value": max_val,
         },
     )
+
+
+## "ExpectColumnValuesToBeInSet" ????
