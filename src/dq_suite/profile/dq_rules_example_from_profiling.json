@@ -1,0 +1,199 @@
+{
+    "dataset": {
+        "name": "Taxiritten",
+        "layer": "<LAYER TO BE FILLED IN>"
+    },
+    "tables": [
+        {
+            "unique_identifier": "<TO BE FILLED IN>",
+            "table_name": "nyc_taxi",
+            "rules": [
+                {
+                    "rule_name": "ExpectCompoundColumnsToBeUnique",
+                    "parameters": {
+                        "column_list": [
+                            "<COLUMNS TO BE FILLED IN AS A LIST>"
+                        ]
+                    }
+                },
+                {
+                    "rule_name": "ExpectTableRowCountToBeBetween",
+                    "parameters": {
+                        "min_value": "<TO BE FILLED IN AS INT>",
+                        "max_value": "<TO BE FILLED IN AS INT>"
+                    }
+                },
+                {
+                    "rule_name": "ExpectTableColumnsToMatchSet",
+                    "parameters": {
+                        "column_set": "[<COLUMNS TO BE FILLED IN>]",
+                        "exact_match": true
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToMatchRegex",
+                    "parameters": {
+                        "column": "tpep_pickup_datetime",
+                        "regex": "^(\\d{4})(0[1-9]|1[0-2])(0[1-9]|[12]\\d|30|31)"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "tpep_pickup_datetime",
+                        "min_value": "2016-02-01 06:43:24",
+                        "max_value": "2016-02-29 22:19:22"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "tpep_pickup_datetime",
+                        "type_": "DateTime"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToMatchRegex",
+                    "parameters": {
+                        "column": "tpep_dropoff_datetime",
+                        "regex": "^(\\d{4})(0[1-9]|1[0-2])(0[1-9]|[12]\\d|30|31)"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "tpep_dropoff_datetime",
+                        "min_value": "2016-02-01 06:43:24",
+                        "max_value": "2016-02-29 20:32:44"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "tpep_dropoff_datetime",
+                        "type_": "DateTime"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "trip_distance"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "trip_distance",
+                        "min_value": 0.0,
+                        "max_value": 25.0
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "trip_distance",
+                        "type_": "Numeric"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "fare_amount"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "fare_amount",
+                        "min_value": 0.0,
+                        "max_value": 88.0
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "fare_amount",
+                        "type_": "Numeric"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "pickup_zip"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "pickup_zip",
+                        "min_value": 10001,
+                        "max_value": 11422
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "pickup_zip",
+                        "type_": "Numeric"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "dropoff_zip"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "dropoff_zip",
+                        "min_value": 7302,
+                        "max_value": 11426
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "dropoff_zip",
+                        "type_": "Numeric"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeUnique",
+                    "parameters": {
+                        "column": "id"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "id"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "id",
+                        "min_value": 0,
+                        "max_value": 999
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "id",
+                        "type_": "Numeric"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnPairValuesAToBeGreaterThanB",
+                    "parameters": {
+                        "column_A": "tpep_dropoff_datetime",
+                        "column_B": "tpep_pickup_datetime",
+                        "or_equal": false
+                    }
+                }
+            ]
+        }
+    ]
+}
