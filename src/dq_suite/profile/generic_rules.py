@@ -10,6 +10,8 @@ from dq_suite.profile.rules_module import (
     column_between_rule,
     column_type_rule,
     datetime_regex_rule,
+    column_greater_rule,
+    column_compound_unique_rule,
 )
 
 
@@ -19,29 +21,39 @@ def create_dq_rules(
     """
     Create data quality rules based on the profiling report.
     """
-    rules = [row_count_rule, column_match_rule]
+    rules = [
+        column_compound_unique_rule,
+        row_count_rule,
+        column_match_rule,
+    ]
+    datetime_columns = []
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
 
-        if "DateTime" in col_type:  ### is there any other column with regex rule???
+        if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
+            datetime_columns.append(variable)  # Collect for comparison
 
-        if details.get("p_distinct", 0) == 1.0:  ## need condition by Data team
+        if details.get("p_distinct", 0) == 1.0:  # condition??
             rules.append(column_unique_rule(variable))
 
-        if details.get("p_missing", 0) == 0.0:  ## need condition by Data team
+        if details.get("p_missing", 0) == 0.0:  # condition???
             rules.append(column_not_null_rule(variable))
 
         if "min" in details and "max" in details:
             rules.append(
-                column_between_rule(
-                    variable, details["min"], details["max"]
-                )  ### if usage of this rule is OK???
+                column_between_rule(variable, details["min"], details["max"])
             )
 
         rules.append(column_type_rule(variable, col_type))
-
+    # Generate datetime pair comparison rules
+    for i in range(len(datetime_columns)):
+        for j in range(i + 1, len(datetime_columns)):
+            col_a = datetime_columns[j]
+            col_b = datetime_columns[i]
+            rules.append(column_greater_rule(col_a, col_b))
+    
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
         table_name=table_name,
