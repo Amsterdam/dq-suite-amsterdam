@@ -70,23 +70,12 @@ def column_between_rule(column: str, min_val: Any, max_val: Any) -> Rule:
     )
 
 
-def column_greater_rule(column_name_A: str, column_name_B: str) -> Rule:
+def column_values_in_set_rule(column_name: str, value_set: list) -> Rule:
     return Rule(
-        rule_name="ExpectColumnPairValuesAToBeGreaterThanB",
+        rule_name="ExpectColumnValuesToBeInSet",
         parameters={
-            "column_A": column_name_A,
-            "column_B": column_name_B,
-            "or_equal": False,
+            "column": column_name,
+            "value_set": value_set,
+            "mostly": .5,
         },
     )
-
-
-## "ExpectColumnValuesToBeInSet" ????
-# def column_in_set_rule(column: str, allowed_values: list) -> Rule:
-#     return Rule(
-#         rule_name="ExpectColumnValuesToBeInSet",
-#         parameters={
-#             "column": column,
-#             "value_set": allowed_values,
-#         },
-#     )

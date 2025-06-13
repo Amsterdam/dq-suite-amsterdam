@@ -10,8 +10,8 @@ from dq_suite.profile.rules_module import (
     column_between_rule,
     column_type_rule,
     datetime_regex_rule,
-    column_greater_rule,
     column_compound_unique_rule,
+    column_values_in_set_rule,
 )
 
 
@@ -33,7 +33,6 @@ def create_dq_rules(
 
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
-            datetime_columns.append(variable)  # Collect for comparison
 
         if details.get("p_distinct", 0) == 1.0:  # condition??
             rules.append(column_unique_rule(variable))
@@ -41,18 +40,18 @@ def create_dq_rules(
         if details.get("p_missing", 0) == 0.0:  # condition???
             rules.append(column_not_null_rule(variable))
 
+        if details.get("n_distinct", 0) < 10:  # condition???
+            value_counts = details.get("value_counts_without_nan", {})
+            value_set = list(value_counts.keys()) 
+            rules.append(column_values_in_set_rule(variable,value_set))
+
         if "min" in details and "max" in details:
             rules.append(
                 column_between_rule(variable, details["min"], details["max"])
             )
 
         rules.append(column_type_rule(variable, col_type))
-    # Generate datetime pair comparison rules
-    for i in range(len(datetime_columns)):
-        for j in range(i + 1, len(datetime_columns)):
-            col_a = datetime_columns[j]
-            col_b = datetime_columns[i]
-            rules.append(column_greater_rule(col_a, col_b))
+
     
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
