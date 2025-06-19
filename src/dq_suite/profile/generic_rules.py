@@ -45,7 +45,7 @@ def create_dq_rules(
             value_set = list(value_counts.keys()) 
             rules.append(column_values_in_set_rule(variable,value_set))
 
-        if "min" in details and "max" in details:
+        if "min" in details and "max" in details and "DateTime" not in col_type:
             rules.append(
                 column_between_rule(variable, details["min"], details["max"])
             )
