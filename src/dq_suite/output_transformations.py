@@ -2,6 +2,7 @@ import copy
 import datetime
 from typing import Any, Dict, List
 
+import humps
 from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
     CheckpointResult,
@@ -26,8 +27,8 @@ from .schemas.bronattribuut import SCHEMA as BRONATTRIBUUT_SCHEMA
 from .schemas.brondataset import SCHEMA as BRONDATASET_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
-from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
+from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
 def create_empty_dataframe(
@@ -96,7 +97,9 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     """
     parameters = copy.deepcopy(result["kwargs"])
     if "batch_id" in parameters:
-        del parameters["batch_id"]  # We don't need this value. It describes the data, but is not relevant for the rule description
+        del parameters[
+            "batch_id"
+        ]  # We don't need this value. It describes the data, but is not relevant for the rule description
     return parameters
 
 
@@ -265,7 +268,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         parameters["max_value"] = round(max_value, 1)
 
     return {
-        "regelNaam": rule["rule_name"],
+        "regelNaam": humps.pascalize(rule["rule_name"]),
         "regelParameters": parameters,
         "norm": rule.get("norm", None),
         "bronTabelId": table_id,
@@ -316,7 +319,7 @@ def get_single_validation_result_dict(
         "dqDatum": run_time,
         # TODO/check: rename dqDatum, discuss all field names
         "dqResultaat": validation_result,
-        "regelNaam": expectation_result["expectation_type"],
+        "regelNaam": humps.pascalize(expectation_result["expectation_type"]),
         "regelParameters": validation_parameters,
         "bronTabelId": table_id,
     }
@@ -383,7 +386,7 @@ def get_single_expectation_afwijking_data(
                 "afwijkendeAttribuutWaarde": value,
                 "dqDatum": run_time,
                 # TODO/check: rename dqDatum, discuss all field names
-                "regelNaam": expectation_type,
+                "regelNaam": humps.pascalize(expectation_type),
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
             }

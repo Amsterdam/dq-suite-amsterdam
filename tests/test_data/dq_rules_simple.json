@@ -1,0 +1,25 @@
+{
+    "dataset": {
+        "name": "the_name",
+        "layer": "the_layer"
+    },
+    "tables": [
+        {
+            "unique_identifier": "id",
+            "table_name": "the_table",
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnDistinctValuesToEqualSet",
+                    "parameters": {
+                        "column": "the_column",
+                        "value_set": [
+                            1,
+                            2,
+                            3
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

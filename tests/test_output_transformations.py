@@ -118,11 +118,17 @@ class TestConstructRegelId:
 
         actual_df = add_regel_id_column(df=input_df)
 
-        expected_data = [("test_regelNaam", "test_regelParameters",
-                          "test_bronTabelId", "287467170918921248")]
+        expected_data = [
+            (
+                "test_regelNaam",
+                "test_regelParameters",
+                "test_bronTabelId",
+                "287467170918921248",
+            )
+        ]
         expected_df = spark.createDataFrame(
-            expected_data, ["regelNaam", "regelParameters",
-                            "bronTabelId", "regelId"]
+            expected_data,
+            ["regelNaam", "regelParameters", "bronTabelId", "regelId"],
         )
         expected_df.schema["regelId"].nullable = False
         assert_df_equality(actual_df, expected_df)
