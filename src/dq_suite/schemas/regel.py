@@ -7,4 +7,5 @@ SCHEMA = (
     .add("norm", "integer")
     .add("bronTabelId", "string")
     .add("attribuut", "string")
+    .add("severity", "string")
 )

@@ -270,6 +270,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         "norm": rule.get("norm", None),
         "bronTabelId": table_id,
         "attribuut": parameters.get("column", None),
+        "severity": rule.get("severity", None),
     }
 
 
@@ -447,7 +448,6 @@ def create_metadata_dataframe(
         schema = REGEL_SCHEMA
     else:
         raise ValueError(f"Unknown metadata table name '{metadata_table_name}'")
-
     df = list_of_dicts_to_df(
         list_of_dicts=extracted_data,
         spark_session=spark_session,
@@ -571,3 +571,43 @@ def write_validation_result_tables(
             table_name=validation_table_name,
             schema=schema,
         )
+
+
+def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str | None:
+   """
+    validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
+    rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
+    
+    Returns:
+        The highest severity level ('fatal', 'error', 'warning') or None
+    """
+
+    rules_by_name = {
+        rule["rule_name"]: rule["severity"]
+        for rule in rules_dict.get("rules", [])
+    }
+
+    failed_severities = []
+
+    severity_priority = {
+        "fatal": 3,
+        "error": 2,
+        "warning": 1,
+    }
+
+    for result in validation_result.get("results", []):
+        if result.get("success") is False:
+            expectation_type = result["expectation_config"]["type"]
+            expectation_type = expectation_type[len("expect_") :]
+            rule_name = "Expect" + "".join(
+                word.capitalize() for word in expectation_type.split("_")
+            )
+            severity = rules_by_name.get(rule_name)
+            if severity:
+                failed_severities.append(severity)
+
+    if not failed_severities:
+        return None
+
+    highest_severity = max(failed_severities, key=lambda sev: severity_priority.get(sev, 0))
+    return highest_severity

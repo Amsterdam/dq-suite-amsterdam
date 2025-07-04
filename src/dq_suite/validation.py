@@ -26,6 +26,7 @@ from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     write_validation_metadata_tables,
     write_validation_result_tables,
+    get_highest_severity_from_validation_result
 )
 from .validation_input import (
     filter_validation_dict_by_table_name,
@@ -348,11 +349,13 @@ def run_validation(
 
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
+
     validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=table_name,
     )
+
     dataset_dict: DatasetDict = validation_dict["dataset"]
     dataset_layer = dataset_dict["layer"]
     dataset_name = dataset_dict["name"]
@@ -387,6 +390,10 @@ def run_validation(
         validation_settings_obj=validation_settings_obj,
     )
 
+    validation_result = list(checkpoint_result.run_results.values())[0]
+
+    highest_severity = get_highest_severity_from_validation_result(validation_result, rules_dict)
+
     if debug_mode:  # Don't write to UC in debug mode
         return checkpoint_result.success, checkpoint_result
 
@@ -402,4 +409,5 @@ def run_validation(
             checkpoint_result=checkpoint_result,
             validation_settings_obj=validation_settings_obj,
         )
-    return checkpoint_result.success
+
+    return checkpoint_result.success, highest_severity
