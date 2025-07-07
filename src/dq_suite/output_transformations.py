@@ -574,10 +574,10 @@ def write_validation_result_tables(
 
 
 def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str | None:
-   """
+    """
     validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
-    
+
     Returns:
         The highest severity level ('fatal', 'error', 'warning') or None
     """
@@ -598,7 +598,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
-            expectation_type = expectation_type[len("expect_") :]
+            expectation_type = expectation_type[len("expect_"):]
             rule_name = "Expect" + "".join(
                 word.capitalize() for word in expectation_type.split("_")
             )

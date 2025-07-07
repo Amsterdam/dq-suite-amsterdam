@@ -121,12 +121,8 @@ def validate_rule(rule: dict) -> None:
         raise KeyError(f"No 'rule_name' key found in {rule}")
     if "parameters" not in rule:
         raise KeyError(f"No 'parameters' key found in {rule}")
-    # if "severity" not in rule:
-    #     raise KeyError(f"No 'severity' key found in {rule}") do we need this????
 
     # ... contain string-typed expectation names...
-    if not isinstance(rule["severity"], str):
-        raise TypeError(f"In {rule}, 'severity' should be of type 'str'")
     if not isinstance(rule["rule_name"], str):
         raise TypeError(f"In {rule}, 'rule_name' should be of type 'str'")
     # ... as defined in GX (which switched to Pascal case in v1.0)
