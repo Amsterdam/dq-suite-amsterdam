@@ -6,6 +6,7 @@ This page contains a collection of various useful functionalities provided by th
 - [Validate the schema of a table](#validate-the-schema-of-a-table)
 - [Sending notifications to Slack](#sending-notifications-to-slack)
 - [Sending notifications to MS Teams](#sending-notifications-to-ms-teams)
+- [Add severity level to the Input Form](#Add-severity-level-to-the-input-form)
 
 ## Export the schema from Unity Catalog to the Input Form
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
@@ -41,3 +42,14 @@ The `dq_suite.validation.run_validation` function takes an `ms_teams_webhook` (s
 For more info on MS Teams webhooks, click [here](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=newteams%2Cdotnet#create-an-incoming-webhook).
 
 *Note*: this notification method is also supported [via Great Expectations](https://docs.greatexpectations.io/docs/reference/api/checkpoint/MicrosoftTeamsNotificationAction_class) by default, but (as of March '25) needs to be significantly improved to be on par with the contents of the Slack notifications. 
+
+
+## Add severity level to the Input Form
+`get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str | None`
+This function returns the highest severity level among failed rules in the validation result.
+
+Severity levels (from highest to lowest): `'fatal', 'error', 'warning'`
+
+Returns None if there are no failed expectations with matching severities.
+
+The function is used within `dq_suite.validation.run_validation`, where its output is included as part of the validation output for easier downstream processing and reporting.
