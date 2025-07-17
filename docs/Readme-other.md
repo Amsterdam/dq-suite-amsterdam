@@ -45,11 +45,23 @@ For more info on MS Teams webhooks, click [here](https://learn.microsoft.com/en-
 
 
 ## Add severity level to the Input Form
-`get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str | None`
-This function returns the highest severity level among failed rules in the validation result.
+We added a severity level to the `Input Form` to help with prioritizing failed validation rules based on their criticality.
 
-Severity levels (from highest to lowest): `'fatal', 'error', 'warning'`
+The severity level is determined using the function:
 
-Returns None if there are no failed expectations with matching severities.
+`get_highest_severity_from_validation_result`
+(imported `from src.dq_suite.output_transformations`)
 
-The function is used within `dq_suite.validation.run_validation`, where its output is included as part of the validation output for easier downstream processing and reporting.
+This function extracts the highest severity level from the validation result by checking which failed rules have the most critical severity assigned.
+
+Severity levels (from highest to lowest):
+
+`fatal`: Fails the workflow. Workflow can't continue with this error.
+
+`error`: Does not fail the workflow, but should be fixed A.S.A.P.
+
+`warning`: Does not fail the workflow, but should be fixed eventually.
+
+If no failed expectations match any defined severity, the function returns None.
+
+This function is used within `dq_suite.validation.run_validation`, and its output is included in the final validation result for easier downstream processing and reporting.

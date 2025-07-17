@@ -16,7 +16,7 @@ class Rule:
 
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
-    severity: str # severity value of rule: fatal, error, or warning 
+    severity: Literal["fatal", "error", "warning"] | None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
@@ -31,8 +31,8 @@ class Rule:
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
 
-        if not isinstance(self.severity, str):
-            raise TypeError("'severity' should be of type str")
+        if (self.severity is not None and self.severity not in allowed_severities):
+            raise ValueError("'severity' must be one of ('fatal', 'error', 'warning') or None")
 
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":

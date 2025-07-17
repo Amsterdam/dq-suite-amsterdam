@@ -1,6 +1,7 @@
 import copy
 import datetime
 from typing import Any, Dict, List
+import humps
 
 from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
@@ -579,7 +580,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
 
     Returns:
-        The highest severity level ('fatal', 'error', 'warning') or None
+        The highest severity level ('fatal', 'error', 'warning', 'ok') 
     """
 
     rules_by_name = {
@@ -589,25 +590,19 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
 
     failed_severities = []
 
-    severity_priority = {
-        "fatal": 3,
-        "error": 2,
-        "warning": 1,
-    }
+    severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
 
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
-            expectation_type = expectation_type[len("expect_"):]
-            rule_name = "Expect" + "".join(
-                word.capitalize() for word in expectation_type.split("_")
-            )
+            rule_name = humps.pascalize(expectation_type)
             severity = rules_by_name.get(rule_name)
             if severity:
                 failed_severities.append(severity)
+                print("failed_severities: ", failed_severities)
 
     if not failed_severities:
-        return None
+        failed_severities.append("ok")
 
     highest_severity = max(failed_severities, key=lambda sev: severity_priority.get(sev, 0))
     return highest_severity
