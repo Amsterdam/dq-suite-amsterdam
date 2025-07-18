@@ -10,6 +10,7 @@
             "rules": [
                 {
                     "rule_name": "ExpectColumnDistinctValuesToEqualSet",
+                    "severity" : "fatal",
                     "parameters": {
                             "column": "the_column",
                             "value_set": [1, 2, 3]
@@ -23,6 +24,7 @@
             "rules": [
                 {
                     "rule_name": "ExpectColumnValuesToBeBetween",
+                    "severity" : "fatal",
                     "parameters": {
                         "column": "the_other_column",
                         "min_value": 6,
@@ -31,6 +33,7 @@
                 },
                 {
                     "rule_name": "ExpectTableRowCountToBeBetween",
+                    "severity" : "fatal",
                     "parameters": {
                         "min_value": 1,
                         "max_value": 1000

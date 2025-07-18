@@ -271,7 +271,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         "norm": rule.get("norm", None),
         "bronTabelId": table_id,
         "attribuut": parameters.get("column", None),
-        "severity": rule.get("severity", None),
+        "severity": rule.get("severity", "ok"),
     }
 
 
@@ -574,7 +574,7 @@ def write_validation_result_tables(
         )
 
 
-def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str | None:
+def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str:
     """
     validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
@@ -591,7 +591,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     failed_severities = []
 
     severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
-
+    
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
@@ -599,7 +599,6 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
             severity = rules_by_name.get(rule_name)
             if severity:
                 failed_severities.append(severity)
-                print("failed_severities: ", failed_severities)
 
     if not failed_severities:
         failed_severities.append("ok")

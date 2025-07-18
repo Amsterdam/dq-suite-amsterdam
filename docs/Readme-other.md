@@ -62,6 +62,6 @@ Severity levels (from highest to lowest):
 
 `warning`: Does not fail the workflow, but should be fixed eventually.
 
-If no failed expectations match any defined severity, the function returns None.
+If no failed expectations match any defined severity, the function returns `ok`.
 
 This function is used within `dq_suite.validation.run_validation`, and its output is included in the final validation result for easier downstream processing and reporting.

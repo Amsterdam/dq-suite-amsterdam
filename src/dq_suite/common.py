@@ -31,7 +31,7 @@ class Rule:
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
 
-        if (self.severity is not None and self.severity not in allowed_severities):
+        if (self.severity is not None and self.severity not in ('fatal', 'error', 'warning')):
             raise ValueError("'severity' must be one of ('fatal', 'error', 'warning') or None")
 
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:

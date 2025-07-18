@@ -4,8 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.20] - 15-05-2025
+ 
+### Added
 
-## [0.11.19] - 15-05-2025
+### Changed
+- Added `highest severity level` to output
+- Modify `Rule` dataclass to include a severity field
+
+## [0.11.19] - 18-07-2025
  
 ### Added
 
