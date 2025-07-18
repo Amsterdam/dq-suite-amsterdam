@@ -392,10 +392,10 @@ def run_validation(
 
     validation_result = list(checkpoint_result.run_results.values())[0]
 
-    highest_severity = get_highest_severity_from_validation_result(validation_result, rules_dict)
-
     if debug_mode:  # Don't write to UC in debug mode
         return checkpoint_result.success, checkpoint_result
+
+    highest_severity = get_highest_severity_from_validation_result(validation_result, rules_dict)
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added `highest severity level` to output
 - Modify `Rule` dataclass to include a severity field
 
-## [0.11.19] - 18-07-2025
+## [0.11.20] - 18-07-2025
  
 ### Added
 

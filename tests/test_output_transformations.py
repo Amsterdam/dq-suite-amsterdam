@@ -490,6 +490,52 @@ def test_get_highest_severity_from_validation_result():
     result = get_highest_severity_from_validation_result(validation_result, rules_dict)
     assert result == "fatal"
 
+    def test_get_highest_severity_all_successful():
+        validation_result = {
+            "results": [
+                {
+                    "success": True,
+                    "expectation_config": {"type": "expect_column_values_to_not_be_null"}
+                }
+            ]
+        }
+
+        rules_dict = {
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {"column": "name"},
+                    "severity": "warning"
+                }
+            ]
+        }
+
+        result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+        assert result == "ok"
+
+    def test_get_highest_severity_no_matching_severity():
+        validation_result = {
+            "results": [
+                {
+                    "success": False,
+                    "expectation_config": {"type": "expect_column_values_to_be_unique"}
+                }
+            ]
+        }
+
+        rules_dict = {
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {"column": "name"},
+                    "severity": "warning"
+                }
+            ]
+        }
+
+        result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+        assert result == "ok"
+
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.
     # def test_get_afwijking_data_returns_correct_list(
