@@ -146,6 +146,12 @@ def validate_rule(rule: dict) -> None:
     if not isinstance(rule["parameters"], dict):
         raise TypeError(f"In {rule}, 'parameters' should be of type 'dict'")
 
+    # Validate optional 'description' field
+    if "description" in rule:
+        if not isinstance(rule["description"], str):
+            raise TypeError(f"In {rule}, 'description' should be of type 'str'")
+        if len(rule["description"]) > 250:
+            raise ValueError(f"In {rule}, 'description' should not exceed 250 characters (current: {len(rule['description'])})")
 
 def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(

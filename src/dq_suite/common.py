@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Dict, List, Literal
 
 from delta.tables import *
 from pyspark.sql import DataFrame, SparkSession
@@ -18,6 +18,7 @@ class Rule:
     parameters: Dict[str, Any]  # Collection of parameters required for
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
+    description: str | None = None  # Natural language description for business stakeholders
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -30,6 +31,14 @@ class Rule:
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
 
+        if not isinstance(self.description, str):
+            if self.description is not None:
+                raise TypeError("'description' should be of type str")
+        
+        # Limit description to 250 characters for practical alerting purposes
+        if self.description is not None and len(self.description) > 250:
+            raise ValueError("'description' should not exceed 250 characters")
+
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name
@@ -37,6 +46,8 @@ class Rule:
             return self.parameters
         elif key == "norm":
             return self.norm
+        elif key == "description":
+            return self.description
         raise KeyError(key)
 
 
