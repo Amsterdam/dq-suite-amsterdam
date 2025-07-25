@@ -51,7 +51,6 @@ See the documentation of `dq_suite.validation.run_validation` for what other par
 For further documentation, see:
 - [other functionalities](docs/Readme-other.md)
 - [notes for developers](docs/Readme-dev.md)
-- [description field for business-friendly alerts](docs/description-field.md)
 - [notes for data engineers at Gemeente Amsterdam](https://dev.azure.com/CloudCompetenceCenter/Dataplatform%20en%20Data%20organisatie/_git/vakgroep_data_engineering?path=/docs/03_knowledge_bank/topics/data_quality/data_quality.md&_a=preview) (in Dutch, employees only)
 
 
