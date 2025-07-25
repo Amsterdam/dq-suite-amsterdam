@@ -1,0 +1,38 @@
+{
+    "dataset": {
+        "name": "TestDataset",
+        "layer": "Bronze"
+    },
+    "tables": [
+        {   
+            "unique_identifier": "id",
+            "table_name": "customers",
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "description": "Customer email must always be provided for communication purposes",
+                    "parameters": {
+                        "column": "email"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "description": "Customer age should be within reasonable human lifespan (0-150 years)",
+                    "parameters": {
+                        "column": "age",
+                        "min_value": 0,
+                        "max_value": 150
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnDistinctValuesToEqualSet",
+                    "description": "Customer status must be one of the predefined valid states",
+                    "parameters": {
+                        "column": "status",
+                        "value_set": ["active", "inactive", "pending"]
+                    }
+                }
+            ]
+        }
+    ]
+}

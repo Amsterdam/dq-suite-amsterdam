@@ -312,6 +312,31 @@ class TestValidateRule:
         with pytest.raises(TypeError):
             validate_rule(rule={"rule_name": "TheRule", "parameters": 456})
 
+    def test_validate_rule_with_non_string_description_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError, match="'description' should be of type 'str'"):
+            validate_rule(
+                rule={
+                    "rule_name": "TheRule",
+                    "parameters": {"some_key": "some_value"},
+                    "description": 123,
+                }
+            )
+
+    def test_validate_rule_with_long_description_raises_value_error(
+        self,
+    ):
+        long_description = "x" * 251  # Exceeds 250 character limit
+        with pytest.raises(ValueError, match="'description' should not exceed 250 characters"):
+            validate_rule(
+                rule={
+                    "rule_name": "TheRule",
+                    "parameters": {"some_key": "some_value"},
+                    "description": long_description,
+                }
+            )
+
     def test_validate_rule_works_as_expected(
         self,
     ):
@@ -319,6 +344,7 @@ class TestValidateRule:
             rule={
                 "rule_name": "TheRule",
                 "parameters": {"some_key": "some_value"},
+                "description": "This is a business-friendly description",
             }
         )
 
