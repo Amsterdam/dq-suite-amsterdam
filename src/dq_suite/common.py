@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Dict, List, Literal
 
 from delta.tables import *
 from pyspark.sql import DataFrame, SparkSession
