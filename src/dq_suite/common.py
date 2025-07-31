@@ -16,6 +16,7 @@ class Rule:
 
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
+    severity: Literal["fatal", "error", "warning"] | None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
@@ -30,6 +31,9 @@ class Rule:
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
 
+        if (self.severity is not None and self.severity not in ('fatal', 'error', 'warning')):
+            raise ValueError("'severity' must be one of ('fatal', 'error', 'warning') or None")
+
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name
@@ -37,6 +41,8 @@ class Rule:
             return self.parameters
         elif key == "norm":
             return self.norm
+        elif key == "severity":
+            return self.severity
         raise KeyError(key)
 
 
@@ -53,7 +59,7 @@ class RulesDict:
 
     unique_identifier: str  # TODO: List[str] for more complex keys?
     table_name: str
-    rules_list: RulesList
+    rules: RulesList
 
     def __post_init__(self):
         if not isinstance(self.unique_identifier, str):
@@ -62,16 +68,16 @@ class RulesDict:
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
 
-        if not isinstance(self.rules_list, list):
-            raise TypeError("'rules_list' should be RulesList")
+        if not isinstance(self.rules, list):
+            raise TypeError("'rules' should be RulesList")
 
     def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
             return self.unique_identifier
         elif key == "table_name":
             return self.table_name
-        elif key == "rules_list":
-            return self.rules_list
+        elif key == "rules":
+            return self.rules
         raise KeyError(key)
 
 
@@ -222,6 +228,7 @@ def merge_df_with_unity_table(
             "norm": f"{df_new_alias}.norm",
             "bronTabelId": f"{df_new_alias}.bronTabelId",
             "attribuut": f"{df_new_alias}.attribuut",
+            "severity": f"{df_new_alias}.severity",
         }
         merge_on = "regelId"
     else:

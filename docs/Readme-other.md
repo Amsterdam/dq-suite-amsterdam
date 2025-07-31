@@ -6,6 +6,7 @@ This page contains a collection of various useful functionalities provided by th
 - [Validate the schema of a table](#validate-the-schema-of-a-table)
 - [Sending notifications to Slack](#sending-notifications-to-slack)
 - [Sending notifications to MS Teams](#sending-notifications-to-ms-teams)
+- [Add severity level to the Input Form](#Add-severity-level-to-the-input-form)
 
 ## Export the schema from Unity Catalog to the Input Form
 In order to output the schema from Unity Catalog, use the following commands (using the required schema name):
@@ -41,3 +42,26 @@ The `dq_suite.validation.run_validation` function takes an `ms_teams_webhook` (s
 For more info on MS Teams webhooks, click [here](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=newteams%2Cdotnet#create-an-incoming-webhook).
 
 *Note*: this notification method is also supported [via Great Expectations](https://docs.greatexpectations.io/docs/reference/api/checkpoint/MicrosoftTeamsNotificationAction_class) by default, but (as of March '25) needs to be significantly improved to be on par with the contents of the Slack notifications. 
+
+
+## Add severity level to the Input Form
+We added a severity level to the `Input Form` to help with prioritizing failed validation rules based on their criticality.
+
+The severity level is determined using the function:
+
+`get_highest_severity_from_validation_result`
+(imported `from src.dq_suite.output_transformations`)
+
+This function extracts the highest severity level from the validation result by checking which failed rules have the most critical severity assigned.
+
+Severity levels (from highest to lowest):
+
+`fatal`: Fails the workflow. Workflow can't continue with this error.
+
+`error`: Does not fail the workflow, but should be fixed A.S.A.P.
+
+`warning`: Does not fail the workflow, but should be fixed eventually.
+
+If no failed expectations match any defined severity, the function returns `ok`.
+
+This function is used within `dq_suite.validation.run_validation`, and its output is included in the final validation result for easier downstream processing and reporting.

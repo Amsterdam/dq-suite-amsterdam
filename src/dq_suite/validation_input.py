@@ -146,6 +146,15 @@ def validate_rule(rule: dict) -> None:
     if not isinstance(rule["parameters"], dict):
         raise TypeError(f"In {rule}, 'parameters' should be of type 'dict'")
 
+    # severity check (if present, it must be valid)
+    if "severity" in rule:
+        allowed_severities = {"fatal", "error", "warning"}
+        if rule["severity"] not in allowed_severities:
+            raise ValueError(
+                f"Invalid severity level '{rule['severity']}'. "
+                f"Allowed values: {sorted(allowed_severities)}"
+            )
+
 
 def get_data_quality_rules_dict(file_path: str) -> DataQualityRulesDict:
     dq_rules_json_string = read_data_quality_rules_from_json(

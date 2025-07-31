@@ -321,6 +321,28 @@ class TestValidateRule:
                 "parameters": {"some_key": "some_value"},
             }
         )
+    def test_validate_rule_with_invalid_severity_raises_value_error(
+        self,
+    ):
+        with pytest.raises(ValueError, match="Invalid severity level"):
+            validate_rule(
+                rule={
+                    "rule_name": "TheRule",
+                    "parameters": {"some_key": "some_value"},
+                    "severity": "critical"
+                }
+            )
+
+    def test_validate_rule_works_as_expected(
+        self,
+    ):
+        validate_rule(
+            rule={
+                "rule_name": "TheRule",
+                "parameters": {"some_key": "some_value"},
+                "severity": "fatal", 
+            }
+        )
 
 
 @pytest.mark.usefixtures("real_json_file_invalid_formatting_path")
