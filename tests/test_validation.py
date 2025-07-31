@@ -98,6 +98,7 @@ class TestValidationRunner:
         with pytest.raises(AttributeError):
             the_rule = Rule(
                 rule_name="NonExistentExpectation",
+                severity="fatal",
                 parameters={"column": "the_column", "value_set": [1, 2, 3]},
             )
 
@@ -108,6 +109,7 @@ class TestValidationRunner:
     def test_get_gx_expectation_object(self, validation_runner_obj):
         the_rule = Rule(
             rule_name="ExpectColumnDistinctValuesToEqualSet",
+            severity="fatal",
             parameters={"column": "the_column", "value_set": [1, 2, 3]},
         )
         the_expectation_object = (
@@ -131,6 +133,7 @@ class TestValidationRunner:
         validation_rules_list = [
             Rule(
                 rule_name="ExpectColumnDistinctValuesToEqualSet",
+                severity="fatal",
                 parameters={"column": "the_column", "value_set": [1, 2, 3]},
             )
         ]
