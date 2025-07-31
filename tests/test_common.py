@@ -17,8 +17,9 @@ from src.dq_suite.common import (
 class TestRule:
     expected_rule_name = "the_rule"
     expected_parameters = {"q": 42}
+    expected_severity="fatal"
     rule_obj = Rule(
-        rule_name=expected_rule_name, parameters=expected_parameters
+        rule_name=expected_rule_name, parameters=expected_parameters, severity=expected_severity
     )
 
     def test_initialisation_with_wrong_typed_rule_name_raises_type_error(self):
@@ -42,14 +43,14 @@ class TestRule:
 
 
 class TestRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42})
+    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42}, severity="fatal")
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
     rules_dict_obj = RulesDict(
         unique_identifier=expected_unique_identifier,
         table_name=expected_table_name,
-        rules_list=expected_rules_list,
+        rules=expected_rules_list,
     )
 
     def test_initialisation_with_wrong_typed_unique_identifier_raises_type_error(
@@ -59,7 +60,7 @@ class TestRulesDict:
             assert RulesDict(
                 unique_identifier=123,
                 table_name=self.expected_table_name,
-                rules_list=self.expected_rules_list,
+                rules=self.expected_rules_list,
             )
 
     def test_initialisation_with_wrong_typed_table_name_raises_type_error(self):
@@ -67,7 +68,7 @@ class TestRulesDict:
             assert RulesDict(
                 unique_identifier=self.expected_unique_identifier,
                 table_name=123,
-                rules_list=self.expected_rules_list,
+                rules=self.expected_rules_list,
             )
 
     def test_initialisation_with_wrong_typed_rules_list_raises_type_error(self):
@@ -75,7 +76,7 @@ class TestRulesDict:
             assert RulesDict(
                 unique_identifier=self.expected_unique_identifier,
                 table_name=self.expected_table_name,
-                rules_list=123,
+                rules=123,
             )
 
     def test_rules_dict_is_dataclass(self):
@@ -87,7 +88,7 @@ class TestRulesDict:
             == self.expected_unique_identifier
         )
         assert self.rules_dict_obj["table_name"] == self.expected_table_name
-        assert self.rules_dict_obj["rules_list"] == self.expected_rules_list
+        assert self.rules_dict_obj["rules"] == self.expected_rules_list
 
     def test_get_value_from_rule_dict_by_non_existing_key_raises_key_error(
         self,
@@ -124,14 +125,14 @@ class TestDatasetDict:
 
 
 class TestDataQualityRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42})
+    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42}, severity="fatal")
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
     rules_dict_obj = RulesDict(
         unique_identifier=expected_unique_identifier,
         table_name=expected_table_name,
-        rules_list=expected_rules_list,
+        rules=expected_rules_list,
     )
     expected_rules_dict_obj_list = [rules_dict_obj]
     expected_dataset_name = "the_dataset"
@@ -148,7 +149,7 @@ class TestDataQualityRulesDict:
                     RulesDict(
                         unique_identifier="id",
                         table_name="the_table",
-                        rules_list=[
+                        rules=[
                             Rule(rule_name="the_rule", parameters={"q": 42})
                         ],
                     )
