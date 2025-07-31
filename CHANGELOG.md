@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.11.20] - 15-05-2025
+## [0.11.20] - 18-07-2025
  
 ### Added
 
@@ -12,11 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added `highest severity level` to output
 - Modify `Rule` dataclass to include a severity field
 
-## [0.11.20] - 18-07-2025
+## [0.11.19] - 15-05-2025
  
 ### Added
 
-### Changed
+### Changeds
 - Refactor `output_transformations.py`
 - Modify `Rule` and `ValidationSettings` dataclasses
  
