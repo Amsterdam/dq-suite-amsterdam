@@ -1,15 +1,23 @@
+import json
+import os
 from unittest.mock import Mock
 
 import pytest
+from chispa import assert_df_equality
 from great_expectations.checkpoint import (
     MicrosoftTeamsNotificationAction,
     SlackNotificationAction,
 )
 from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
+from pyspark.sql.types import IntegerType, StructField, StructType
 
 from src.dq_suite.common import Rule, ValidationSettings
-from src.dq_suite.validation import ValidationRunner
+from src.dq_suite.output_transformations import (
+    create_metadata_dataframe,
+    create_validation_result_dataframe,
+)
+from src.dq_suite.validation import ValidationRunner, validate
 
 
 @pytest.fixture
@@ -28,8 +36,53 @@ def validation_settings_obj():
 
 
 @pytest.fixture
+def spark():
+    return SparkSession.builder.master("local").appName("chispa").getOrCreate()
+
+
+@pytest.fixture
 def validation_runner_obj(validation_settings_obj):
     return ValidationRunner(validation_settings_obj=validation_settings_obj)
+
+
+@pytest.mark.usefixtures("spark")
+@pytest.fixture
+def simple_test_df(spark):
+    # Create 13 rows: 4 with value 1, 4 with 2, 4 with 3, and 1 with 4
+    data = [
+        (i, val)
+        for i, val in enumerate([1] * 4 + [2] * 4 + [3] * 4 + [4], start=1)
+    ]
+
+    schema = StructType(
+        [
+            StructField("id", IntegerType(), True),
+            StructField("value", IntegerType(), True),
+        ]
+    )
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def simple_rules_dict():
+    filepath = os.path.join(
+        os.path.dirname(__file__), "test_data", "dq_rules_simple.json"
+    )
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@pytest.fixture
+def gx_checkpoint_result(
+    validation_settings_obj, simple_test_df, simple_rules_dict
+):
+    rules_dict = simple_rules_dict["tables"][0]
+    return validate(
+        df=simple_test_df,
+        rules_dict=rules_dict,
+        validation_settings_obj=validation_settings_obj,
+    )
 
 
 @pytest.mark.usefixtures("validation_settings_obj")
@@ -222,21 +275,38 @@ class TestValidationRunner:
         pass
 
 
-class TestValidate:
+@pytest.mark.usefixtures("gx_checkpoint_result")
+@pytest.mark.usefixtures("simple_rules_dict")
+@pytest.mark.usefixtures("spark")
+@pytest.mark.usefixtures("validation_settings_obj")
+class TestOutputModelValidity:
     """
-    Note: this function is not yet tested, because it consists entirely of
-    (a sequence of calls to) GX methods/functions.
-    """
-
-    def test_validate(self):
-        pass
-
-
-class TestRun:
-    """
-    Note: this function is not yet tested, because it consists entirely of
-    (a sequence of calls to) GX methods/functions.
+    Note: this is an integration test that checks for alignment between the DQ suite and Great Expectations without invoking Unity Catalog.
     """
 
-    def test_run(self):
-        pass
+    def test_create_matching_regelids(
+        self,
+        simple_rules_dict,
+        spark,
+        gx_checkpoint_result,
+        validation_settings_obj,
+    ):
+        # Create regel ID from rule JSON
+        regel_df = create_metadata_dataframe(
+            metadata_table_name="regel",
+            dq_rules_dict=simple_rules_dict,
+            spark_session=spark,
+        )
+
+        # Create regel ID from GX validation results
+        validation_settings_obj.spark_session = spark
+        validation_df = create_validation_result_dataframe(
+            df=[],
+            checkpoint_result=gx_checkpoint_result,
+            validation_table_name="validatie",
+            validation_settings_obj=validation_settings_obj,
+        )
+
+        assert_df_equality(
+            regel_df.select("regelId"), validation_df.select("regelId")
+        )
