@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.21] - 12-08-2025
+ 
+### Added
+
+### Changed
+- Rule names reformatted in output to match with input rule name.
+  
 ## [0.11.20] - 18-07-2025
  
 ### Added
