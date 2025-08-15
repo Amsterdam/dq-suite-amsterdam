@@ -45,8 +45,8 @@ def create_dq_rules(
 
         if details.get("n_distinct", 0) < 10:  # condition???
             value_counts = details.get("value_counts_without_nan", {})
-            value_set = list(value_counts.keys()) 
-            rules.append(column_values_in_set_rule(variable,value_set))
+            value_set = list(value_counts.keys())
+            rules.append(column_values_in_set_rule(variable, value_set))
 
         if "min" in details and "max" in details and "DateTime" not in col_type:
             rules.append(
@@ -56,8 +56,7 @@ def create_dq_rules(
         if "Categorical" in col_type:
             col_type = "String"
         rules.append(column_type_rule(variable, col_type))
-        
- 
+
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
         table_name=table_name,
