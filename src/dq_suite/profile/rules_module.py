@@ -1,14 +1,6 @@
 from dq_suite.common import Rule
 from typing import Dict, Any
 
-row_count_rule = Rule(
-    rule_name="ExpectTableRowCountToBeBetween",
-    parameters={
-        "min_value": "<TO BE FILLED IN AS INT>",  # 0 ?
-        "max_value": "<TO BE FILLED IN AS INT>",  # take count of table rows directly?
-    },
-)
-
 column_match_rule = Rule(
     rule_name="ExpectTableColumnsToMatchSet",
     parameters={
@@ -24,6 +16,16 @@ column_compound_unique_rule = Rule(
     },
 )
 
+
+def row_count_rule(n: int):
+    return(Rule(
+    rule_name="ExpectTableRowCountToBeBetween",
+    parameters={
+        "min_value": 0,
+        "max_value": n,  
+    },
+))
+    
 
 def column_type_rule(column: str, type_: str):
     return Rule(

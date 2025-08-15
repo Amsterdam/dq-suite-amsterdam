@@ -21,11 +21,14 @@ def create_dq_rules(
     """
     Create data quality rules based on the profiling report.
     """
+
+    n = profiling_json["table"]["n"]
     rules = [
         column_compound_unique_rule,
-        row_count_rule,
+        row_count_rule(n),
         column_match_rule,
     ]
+
     datetime_columns = []
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
@@ -50,9 +53,11 @@ def create_dq_rules(
                 column_between_rule(variable, details["min"], details["max"])
             )
 
+        if "Categorical" in col_type:
+            col_type = "String"
         rules.append(column_type_rule(variable, col_type))
-
-    
+        
+ 
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
         table_name=table_name,
