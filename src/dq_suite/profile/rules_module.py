@@ -12,20 +12,20 @@ column_match_rule = Rule(
 column_compound_unique_rule = Rule(
     rule_name="ExpectCompoundColumnsToBeUnique",
     parameters={
-        "column_list": ["<COLUMNS TO BE FILLED IN AS A LIST>"], 
+        "column_list": ["<COLUMNS TO BE FILLED IN AS A LIST>"],
     },
 )
 
 
 def row_count_rule(n: int):
-    return(Rule(
-    rule_name="ExpectTableRowCountToBeBetween",
-    parameters={
-        "min_value": 0,
-        "max_value": n,  
-    },
-))
-    
+    return Rule(
+        rule_name="ExpectTableRowCountToBeBetween",
+        parameters={
+            "min_value": 0,
+            "max_value": n,
+        },
+    )
+
 
 def column_type_rule(column: str, type_: str):
     return Rule(
@@ -78,6 +78,6 @@ def column_values_in_set_rule(column_name: str, value_set: list) -> Rule:
         parameters={
             "column": column_name,
             "value_set": value_set,
-            "mostly": .5,
+            "mostly": 0.5,
         },
     )
