@@ -36,7 +36,7 @@ def create_dq_rules(
 
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
-            col_type = "DateType"
+            col_type = "TimestampType"
 
         if details.get("p_distinct", 0) == 1.0:  # condition??
             rules.append(column_unique_rule(variable))
@@ -49,7 +49,7 @@ def create_dq_rules(
             value_set = list(value_counts.keys())
             rules.append(column_values_in_set_rule(variable, value_set))
 
-        if "min" in details and "max" in details and "DateType" not in col_type:
+        if "min" in details and "max" in details and "TimestampType" not in col_type:
             rules.append(
                 column_between_rule(variable, details["min"], details["max"])
             )
