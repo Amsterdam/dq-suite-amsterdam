@@ -1,0 +1,235 @@
+{
+    "dataset": {
+        "name": "Customer",
+        "layer": "<LAYER TO BE FILLED IN>"
+    },
+    "tables": [
+        {
+            "unique_identifier": "<TO BE FILLED IN>",
+            "table_name": "customer",
+            "rules": [
+                {
+                    "rule_name": "ExpectCompoundColumnsToBeUnique",
+                    "parameters": {
+                        "column_list": [
+                            "<COLUMNS TO BE FILLED IN AS A LIST>"
+                        ]
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectTableRowCountToBeBetween",
+                    "parameters": {
+                        "min_value": 0,
+                        "max_value": 1000
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectTableColumnsToMatchSet",
+                    "parameters": {
+                        "column_set": "[<COLUMNS TO BE FILLED IN>]",
+                        "exact_match": true
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeUnique",
+                    "parameters": {
+                        "column": "id"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "id"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "id",
+                        "min_value": 1,
+                        "max_value": 1000
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "id",
+                        "type_": "Numeric"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "firstName"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "firstName",
+                        "type_": "StringType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "middleName"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "middleName",
+                        "type_": "StringType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "lastName"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "lastName",
+                        "type_": "StringType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "gender"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeInSet",
+                    "parameters": {
+                        "column": "gender",
+                        "value_set": [
+                            "F"
+                        ],
+                        "mostly": 0.5
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "gender",
+                        "type_": "StringType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToMatchRegex",
+                    "parameters": {
+                        "column": "birthDate",
+                        "regex": "^(\\d{4})(0[1-9]|1[0-2])(0[1-9]|[12]\\d|30|31)"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "birthDate"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "birthDate",
+                        "type_": "TimestampType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeUnique",
+                    "parameters": {
+                        "column": "ssn"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "ssn"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "ssn",
+                        "type_": "StringType"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToNotBeNull",
+                    "parameters": {
+                        "column": "salary"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeBetween",
+                    "parameters": {
+                        "column": "salary",
+                        "min_value": -6523,
+                        "max_value": 134393
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfType",
+                    "parameters": {
+                        "column": "salary",
+                        "type_": "Numeric"
+                    },
+                    "severity": "fatal",
+                    "norm": null
+                }
+            ]
+        }
+    ]
+}
