@@ -56,6 +56,11 @@ def create_dq_rules(
 
         if "Categorical" in col_type:
             col_type = "StringType"
+        if col_type == "Numeric":
+            col_min = details["min"]
+            col_max = details["max"]
+            if isinstance(col_min, int) and isinstance(col_max, int): col_type = "IntegerType"
+            else: col_type = "DoubleType"
         rules.append(column_type_rule(variable, col_type))
 
     dq_rules = RulesDict(
