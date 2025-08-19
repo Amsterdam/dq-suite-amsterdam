@@ -49,7 +49,11 @@ def create_dq_rules(
             value_set = list(value_counts.keys())
             rules.append(column_values_in_set_rule(variable, value_set))
 
-        if "min" in details and "max" in details and "TimestampType" not in col_type:
+        if (
+            "min" in details
+            and "max" in details
+            and "TimestampType" not in col_type
+        ):
             rules.append(
                 column_between_rule(variable, details["min"], details["max"])
             )
@@ -59,8 +63,10 @@ def create_dq_rules(
         if col_type == "Numeric":
             col_min = details["min"]
             col_max = details["max"]
-            if isinstance(col_min, int) and isinstance(col_max, int): col_type = "IntegerType"
-            else: col_type = "DoubleType"
+            if isinstance(col_min, int) and isinstance(col_max, int):
+                col_type = "IntegerType"
+            else:
+                col_type = "DoubleType"
         rules.append(column_type_rule(variable, col_type))
 
     dq_rules = RulesDict(
