@@ -35,6 +35,7 @@ pip install dq-suite-amsterdam
 
 
 4. Finally, perform the validation by running (*note*: the library is imported as `dq_suite`, not as `dq_suite_amsterdam`!)
+
 ```python
 from dq_suite.validation import run_validation
 
@@ -49,9 +50,19 @@ run_validation(
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 
-**Profiling Functionality- to perform prfiling result and rules.json from it:**
-
-
+**Profiling Functionality- to perform profiling result and rules.json from it:**
+1. Run the following command:
+```
+pip install dq-suite-amsterdam
+```
+2. Get ready to validate your first table. To do so, define
+- `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
+- `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
+- `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
+- `dq_rule_json_path` as a path to a JSON file, wil be formatted in [this](src/dq_suite/profile/dq_rules_example_from_profiling.json) way after running profiling function
+- `dataset_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
+- `table_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
+3. Finally, perform the profiling by running 
 ```python
 from dq_suite.profile.profile import profile_and_create_rules
 
@@ -60,14 +71,15 @@ profile_and_create_rules(
     dataset_name=dataset_name,
     table_name=table_name,
     spark_session=spark,
-    generate_rules=True,  # Set to False if you only want profiling without rule generation
+    generate_rules=True,
     rule_path=dq_rule_json_path
 )
 ```
 
 **Result of profiling**
 
-The rule.json file will be created at the specified path.
+Profiling result will be created in HTML view.
+The rule.json file will be created at the specified path.(if you set `generate_rules=True`)
 You can edit this file to refine the rules according to your data validation needs.
 The JSON rule file can then be used as input for dq_suite validation.
 
