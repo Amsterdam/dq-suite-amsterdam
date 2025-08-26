@@ -48,6 +48,29 @@ run_validation(
 ```
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
+
+**Profiling Functionality- to perform prfiling result and rules.json from it:**
+
+
+```python
+from dq_suite.profile.profile import profile_and_create_rules
+
+profile_and_create_rules(
+    df=df,
+    dataset_name="Customer",
+    table_name="customer",
+    spark_session=spark,
+    generate_rules=True,  # Set to False if you only want profiling without rule generation
+    rule_path=dq_rule_json_path
+)
+```
+
+**Result of profiling**
+
+The rule.json file will be created at the specified path.
+You can edit this file to refine the rules according to your data validation needs.
+The JSON rule file can then be used as input for dq_suite validation.
+
 For further documentation, see:
 - [other functionalities](docs/Readme-other.md)
 - [notes for developers](docs/Readme-dev.md)
