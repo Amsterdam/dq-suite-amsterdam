@@ -57,8 +57,8 @@ from dq_suite.profile.profile import profile_and_create_rules
 
 profile_and_create_rules(
     df=df,
-    dataset_name="Customer",
-    table_name="customer",
+    dataset_name=dataset_name,
+    table_name=table_name,
     spark_session=spark,
     generate_rules=True,  # Set to False if you only want profiling without rule generation
     rule_path=dq_rule_json_path
