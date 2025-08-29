@@ -5,7 +5,7 @@ column_match_rule = Rule(
     rule_name="ExpectTableColumnsToMatchSet",
     severity=None,
     parameters={
-        "column_set": "[<COLUMNS TO BE FILLED IN>]",  # take all column names?
+        "column_set": "[<COLUMNS TO BE FILLED IN>]",
         "exact_match": True,
     },
 )
