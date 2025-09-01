@@ -1,14 +1,6 @@
 from dq_suite.common import Rule
 from typing import Dict, Any
 
-column_match_rule = Rule(
-    rule_name="ExpectTableColumnsToMatchSet",
-    severity="warning",
-    parameters={
-        "column_set": "[<COLUMNS TO BE FILLED IN>]",
-        "exact_match": True,
-    },
-)
 
 column_compound_unique_rule = Rule(
     rule_name="ExpectCompoundColumnsToBeUnique",
@@ -17,6 +9,17 @@ column_compound_unique_rule = Rule(
         "column_list": ["<COLUMNS TO BE FILLED IN AS A LIST>"],
     },
 )
+
+
+def column_match_rule(columns: list):
+    return Rule(
+        rule_name="ExpectTableColumnsToMatchSet",
+        severity="warning",
+        parameters={
+            "column_set": columns,
+            "exact_match": True,
+        },
+    )
 
 
 def row_count_rule(n: int):

@@ -23,9 +23,10 @@ def create_dq_rules(
     """
 
     n = profiling_json["table"]["n"]
+    columns = list(profiling_json["variables"].keys())
     rules = [
         column_compound_unique_rule,
-        column_match_rule,
+        column_match_rule(columns),
         row_count_rule(n),
     ]
 
