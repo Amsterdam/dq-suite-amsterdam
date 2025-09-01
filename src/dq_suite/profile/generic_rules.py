@@ -25,8 +25,8 @@ def create_dq_rules(
     n = profiling_json["table"]["n"]
     rules = [
         column_compound_unique_rule,
-        row_count_rule(n),
         column_match_rule,
+        row_count_rule(n),
     ]
 
     datetime_columns = []

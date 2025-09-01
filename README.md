@@ -100,3 +100,7 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 - At time of writing (late Aug 2024), Great Expectations v1.0.0 has just been released, and is not (yet) compatible with Python 3.12. Hence, make sure you are using the correct version of Python as interpreter for your project.
 
 - The `run_time` value is defined separately from Great Expectations in `validation.py`. We plan on fixing this when Great Expectations has documented how to access it from the RunIdentifier object.
+
+- Profiling rules/Rule condition logic
+ 
+Current profiling-based rule conditions are placeholders and should be defined and validated by the data teams to ensure they are generic and reusable.
