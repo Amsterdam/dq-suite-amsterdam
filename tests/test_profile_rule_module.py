@@ -27,9 +27,11 @@ def test_row_count_rule():
 
 
 def test_column_match_rule():
-    assert column_match_rule.rule_name == "ExpectTableColumnsToMatchSet"
-    assert column_match_rule.parameters["exact_match"] is True
-    assert "column_set" in column_match_rule.parameters
+    rule = column_match_rule(["id", "timestamp"])  # Call the function with a test list
+    assert rule.rule_name == "ExpectTableColumnsToMatchSet"
+    assert rule.parameters["exact_match"] is True
+    assert "column_set" in rule.parameters
+    assert rule.parameters["column_set"] == ["id", "timestamp"]
 
 
 def test_column_type_rule():

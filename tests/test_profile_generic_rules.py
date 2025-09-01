@@ -68,6 +68,7 @@ def test_rule_logic(profiling_input):
     dq_json = create_dq_rules("test_dataset", "test_table", profiling_input)
     rules = dq_json["tables"][0].rules
     rule_names = [rule.rule_name for rule in rules]
+    columns = list(profiling_input["variables"].keys())
 
     # Check key expected rules
     assert "ExpectColumnValuesToBeUnique" in rule_names
@@ -75,6 +76,11 @@ def test_rule_logic(profiling_input):
     assert "ExpectColumnValuesToBeBetween" in rule_names
     assert "ExpectTableRowCountToBeBetween" in rule_names
     assert "ExpectColumnValuesToBeInSet" in rule_names
+    assert any(
+        rule.rule_name == "ExpectTableColumnsToMatchSet"
+        and rule.parameters["column_set"] == columns
+        for rule in rules
+    )
     assert any(
         rule.rule_name == "ExpectColumnValuesToBeOfType"
         and rule.parameters["column"] == "id"
