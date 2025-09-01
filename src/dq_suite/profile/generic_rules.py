@@ -38,13 +38,13 @@ def create_dq_rules(
             rules.append(datetime_regex_rule(variable))
             col_type = "TimestampType"
 
-        if details.get("p_distinct", 0) == 1.0: 
+        if details.get("p_distinct", 0) == 1.0:
             rules.append(column_unique_rule(variable))
 
-        if details.get("p_missing", 0) == 0.0:  
+        if details.get("p_missing", 0) == 0.0:
             rules.append(column_not_null_rule(variable))
 
-        if details.get("n_distinct", 0) < 10:  
+        if details.get("n_distinct", 0) < 10:
             value_counts = details.get("value_counts_without_nan", {})
             value_set = list(value_counts.keys())
             rules.append(column_values_in_set_rule(variable, value_set))
@@ -69,8 +69,6 @@ def create_dq_rules(
                 col_type = "DoubleType"
         rules.append(column_type_rule(variable, col_type))
 
-    for r in rules: r.severity = "warning"
-    
     dq_rules = RulesDict(
         unique_identifier="<TO BE FILLED IN>",
         table_name=table_name,
