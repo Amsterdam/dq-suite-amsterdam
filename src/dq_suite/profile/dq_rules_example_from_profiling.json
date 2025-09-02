@@ -44,7 +44,7 @@
                     },
                     "severity": "warning",
                     "norm": null
-                }},
+                },
                 {
                     "rule_name": "ExpectColumnValuesToBeUnique",
                     "parameters": {
