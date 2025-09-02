@@ -90,6 +90,5 @@ def column_values_in_set_rule(column_name: str, value_set: list) -> Rule:
         parameters={
             "column": column_name,
             "value_set": value_set,
-            "mostly": 0.5,
         },
     )
