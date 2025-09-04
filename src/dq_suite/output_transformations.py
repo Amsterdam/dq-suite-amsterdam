@@ -324,7 +324,7 @@ def get_single_validation_result_dict(
         # percentage_of_valid_records if unexpected_percent is numeric
         unexpected_percent_value = result.get("unexpected_percent")
         if _is_number(unexpected_percent_value):
-            percentage_of_valid_records = (100.0 - float(unexpected_percent_value)) / 100.0
+            percentage_of_valid_records = int(100.0 - float(unexpected_percent_value)) / 100.0
     else:
         # Table row-count expectations:
         # total_count comes from observed_value (if numeric); other two metrics do not apply.
