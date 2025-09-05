@@ -50,7 +50,11 @@ run_validation(
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 
-**Profiling Functionality- to perform profiling result and rules.json from it:**
+**Profiling**
+
+Profiling is the process of analyzing a dataset to understand its structure, patterns, and data quality characteristics (such as completeness, uniqueness, or value distributions). 
+
+The profiling functionality in dq_suite generates profiling results and automatically produces a rules.json file, which can be used as input for the validation—making it easier to gain insights and validate data quality.
 1. Run the following command:
 ```
 pip install dq-suite-amsterdam

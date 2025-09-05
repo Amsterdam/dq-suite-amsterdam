@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.12.21] - 29-08-2025
+## [0.12.00] - 05-09-2025
  
 ### Added
 - Added  `profile_and_create_rules` function and placed in `profile` folder
