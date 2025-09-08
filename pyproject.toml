@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dq-suite-amsterdam"
-version = "0.12.00"
+version = "0.12.01"
 authors = [
   { name="Arthur Kordes", email="a.kordes@amsterdam.nl" },
   { name="Aysegul Cayir Aydar", email="a.cayiraydar@amsterdam.nl" },
@@ -23,7 +23,7 @@ dependencies = [
     "delta-spark~=3.2.0",
     "validators==0.34.0",
     "typing_extensions>=4.7.1",
-    "ydata-profiling==4.0.0",
+    "ydata-profiling>=4.0.0",
 ]
 
 
