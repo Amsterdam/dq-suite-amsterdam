@@ -4,12 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.11.22] - 04-09-2025
+
+## [0.12.03] - 08-09-2025
  
 ### Added
 
 ### Changed
 - Normalize parameters for consistent regelId, and process `observed_value` for `ExpectTableRowCountToEqual` and `ExpectTableRowCountToBeBetween` rules.
+=======
+## [0.12.00] - 05-09-2025
+ 
+### Added
+- Added  `profile_and_create_rules` function and placed in `profile` folder
 
 ## [0.11.21] - 12-08-2025
  
