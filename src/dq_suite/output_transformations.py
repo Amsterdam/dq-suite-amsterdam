@@ -91,7 +91,7 @@ def add_regel_id_column(
     )
     return df_with_id
 
-def normalize_parameters(params: dict) -> dict:
+def round_numeric_params(params: dict) -> dict:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
         if k in params and params[k] is not None:
@@ -267,7 +267,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
 
     # Round min/max values (if present) to a single decimal
     # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
-    parameters = normalize_parameters(parameters)
+    parameters = round_numeric_params(parameters)
 
     return {
         "regelNaam": humps.pascalize(rule["rule_name"]),
@@ -334,7 +334,7 @@ def get_single_validation_result_dict(
 
     validation_result = "success" if expectation_result["success"] else "failure"
 
-    validation_parameters = normalize_parameters( 
+    validation_parameters = round_numeric_params( 
         get_parameters_from_results(result=expectation_result)
     )
 
@@ -389,7 +389,7 @@ def get_single_expectation_afwijking_data(
 ) -> list[dict]:
     extracted_data = []
     expectation_type = expectation_result["expectation_type"]
-    parameter_list = normalize_parameters(
+    parameter_list = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
     attribute = get_target_attr_for_rule(result=expectation_result)
