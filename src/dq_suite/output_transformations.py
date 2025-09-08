@@ -91,6 +91,12 @@ def add_regel_id_column(
     )
     return df_with_id
 
+def round_numeric_params(params: dict) -> dict:
+    params = copy.deepcopy(params)
+    for k in ("min_value", "max_value", "value"):
+        if k in params and params[k] is not None:
+            params[k] = round(float(params[k]), 1)
+    return params
 
 def get_parameters_from_results(result: dict) -> list[dict]:
     """
@@ -261,12 +267,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
 
     # Round min/max values (if present) to a single decimal
     # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
-    if "min_value" in parameters.keys():
-        min_value = float(parameters["min_value"])
-        parameters["min_value"] = round(min_value, 1)
-    if "max_value" in parameters.keys():
-        max_value = float(parameters["max_value"])
-        parameters["max_value"] = round(max_value, 1)
+    parameters = round_numeric_params(parameters)
 
     return {
         "regelNaam": humps.pascalize(rule["rule_name"]),
@@ -292,36 +293,59 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
             )
     return extracted_data
 
+def _is_number(x):
+    # Return True only for real numbers (int/float). Explicitly exclude boolean values.
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 def get_single_validation_result_dict(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
-    total_count = int(expectation_result["result"].get("element_count", 0))
-    unexpected_count = int(
-        expectation_result["result"].get("unexpected_count", 0)
-    )
-    percentage_of_valid_records = float(
-        int(100 - expectation_result["result"].get("unexpected_percent", 0))
-        / 100
-    )
+    expectation_type: str = expectation_result.get("expectation_type", "")
+    result: dict = expectation_result.get("result", {}) or {}
+    is_row_count_exp = expectation_type.startswith("expect_table_row_count_to_")
 
-    if expectation_result["success"]:
-        validation_result = "success"
+    # defaults
+    total_count = None
+    valid_records = None
+    percentage_of_valid_records = None
+
+    if not is_row_count_exp:
+        # Non row-count expectations:
+        # total_count comes from element_count (if numeric)
+        element_count_value = result.get("element_count")
+        if _is_number(element_count_value):
+            total_count = int(element_count_value)
+
+            # valid_records if unexpected_count is numeric
+            unexpected_count_value = result.get("unexpected_count")
+            if _is_number(unexpected_count_value):
+                valid_records = max(total_count - int(unexpected_count_value), 0)
+
+        # percentage_of_valid_records if unexpected_percent is numeric
+        unexpected_percent_value = result.get("unexpected_percent")
+        if _is_number(unexpected_percent_value):
+            percentage_of_valid_records = int(100.0 - float(unexpected_percent_value)) / 100.0
     else:
-        validation_result = "failure"
+        # Table row-count expectations:
+        # total_count comes from observed_value (if numeric); other two metrics do not apply.
+        observed_value = result.get("observed_value")
+        if _is_number(observed_value):
+            total_count = int(observed_value)
 
-    validation_parameters = get_parameters_from_results(
-        result=expectation_result
+    validation_result = "success" if expectation_result["success"] else "failure"
+
+    validation_parameters = round_numeric_params( 
+        get_parameters_from_results(result=expectation_result)
     )
 
     return {
-        "aantalValideRecords": total_count - unexpected_count,
+        "aantalValideRecords": valid_records,
         "aantalReferentieRecords": total_count,
         "percentageValideRecords": percentage_of_valid_records,
-        "dqDatum": run_time,
         # TODO/check: rename dqDatum, discuss all field names
+        "dqDatum": run_time,
         "dqResultaat": validation_result,
-        "regelNaam": humps.pascalize(expectation_result["expectation_type"]),
+        "regelNaam": humps.pascalize(expectation_type),
         "regelParameters": validation_parameters,
         "bronTabelId": table_id,
     }
@@ -365,7 +389,9 @@ def get_single_expectation_afwijking_data(
 ) -> list[dict]:
     extracted_data = []
     expectation_type = expectation_result["expectation_type"]
-    parameter_list = get_parameters_from_results(result=expectation_result)
+    parameter_list = round_numeric_params(
+        get_parameters_from_results(result=expectation_result)
+    )
     attribute = get_target_attr_for_rule(result=expectation_result)
     deviating_attribute_value = expectation_result["result"].get(
         "partial_unexpected_list", []
