@@ -1,5 +1,7 @@
 import copy
 import datetime
+import humps
+import re
 from typing import Any, Dict, List
 import humps
 
@@ -8,6 +10,7 @@ from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
     CheckpointResult,
 )
+
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
@@ -89,6 +92,9 @@ def add_regel_id_column(
             2, 20
         ),  # We start from the 2nd hash value to avoid negative values. This increases performance in PowerBI
     )
+    print("DF WITH ID")
+    print(df_with_id)
+    df_with_id.show(truncate=False)
     return df_with_id
 
 def round_numeric_params(params: dict) -> dict:
@@ -102,11 +108,20 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     """
     Get the parameters from the GX results.
     """
-    parameters = copy.deepcopy(result["kwargs"])
-    if "batch_id" in parameters:
-        del parameters[
-            "batch_id"
-        ]  # We don't need this value. It describes the data, but is not relevant for the rule description
+    print(f"***RESULT*** {result}")
+    if "expectation_config" in result and "meta" in result["expectation_config"]:
+        parameters = copy.deepcopy(result["expectation_config"]["meta"])
+    else:
+        raise ValueError("No meta found in result.")
+    print(f"***PARAMETERS*** {parameters}")
+    keys_to_remove = ["table_name", "rule_name"]
+    
+    for key in keys_to_remove:
+        if key in parameters:
+            del parameters[key]
+    if "geometry_type" in parameters and parameters["geometry_type"] is None:
+        del parameters["geometry_type"]
+    print(f"***PARAMETERS-after removing*** {parameters}")
     return parameters
 
 
@@ -115,10 +130,13 @@ def get_target_attr_for_rule(result: dict) -> str | None:
     Get the target attribute from the GX results. It will only return results
     for DQ rules applied to specific attributes.
     """
-    if "column" in result["kwargs"]:
-        return result["kwargs"].get("column")
-    elif "column_list" in result["kwargs"]:
-        return result["kwargs"].get("column_list")
+    expectation_config = result.get("expectation_config", {})
+    meta = expectation_config.get("meta", {})
+
+    if "column" in meta:
+        return meta.get("column")
+    elif "column_list" in meta:
+        return meta.get("column_list")
     else:
         # Some rules do not specify columns, but are scoped on table level
         return None
@@ -264,7 +282,7 @@ def get_bronattribuut_data(
 
 def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
-
+    
     # Round min/max values (if present) to a single decimal
     # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
     parameters = round_numeric_params(parameters)
@@ -297,7 +315,7 @@ def _is_number(x):
     # Return True only for real numbers (int/float). Explicitly exclude boolean values.
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
-def get_single_validation_result_dict(
+def get_standard_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
     expectation_type: str = expectation_result.get("expectation_type", "")
@@ -338,6 +356,7 @@ def get_single_validation_result_dict(
         get_parameters_from_results(result=expectation_result)
     )
 
+    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
     return {
         "aantalValideRecords": valid_records,
         "aantalReferentieRecords": total_count,
@@ -345,80 +364,133 @@ def get_single_validation_result_dict(
         # TODO/check: rename dqDatum, discuss all field names
         "dqDatum": run_time,
         "dqResultaat": validation_result,
-        "regelNaam": humps.pascalize(expectation_type),
+        "regelNaam": rule_name,
+        "regelParameters": validation_parameters,
+        "bronTabelId": table_id,
+    }
+ 
+ 
+def get_custom_validation_results(
+    expectation_result: dict, run_time: datetime, table_id: str, df: DataFrame
+) -> dict:
+    observed_str = expectation_result["result"].get("observed_value", "")
+    #print(f"Expectation result:{expectation_result}")
+
+    # Catch the number with regex
+    match = re.match(r"(\d+)", observed_str)
+    unexpected_count = int(match.group(1)) if match else 0
+
+    total_count = df.count()
+
+    percentage_of_valid_records = (
+        (total_count - unexpected_count) / total_count
+        if total_count and total_count > 0
+        else None
+    )
+
+    validation_result = "success" if unexpected_count == 0 else "failure"
+    print(f"expectation result: {expectation_result}")
+    validation_parameters = get_parameters_from_results(result=expectation_result)
+    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
+
+    return {
+        "aantalValideRecords": total_count - unexpected_count,
+        "aantalReferentieRecords": total_count,
+        "percentageValideRecords": percentage_of_valid_records,
+        "dqDatum": run_time,
+        "dqResultaat": validation_result,
+        "regelNaam": rule_name,
         "regelParameters": validation_parameters,
         "bronTabelId": table_id,
     }
 
 
+def get_single_validation_result_dict(
+    expectation_result: dict, run_time: datetime, table_id: str , df: DataFrame
+) -> dict:
+    expectation_type = expectation_result["expectation_config"]["type"]
+    if expectation_type == "unexpected_rows_expectation":
+        validation_results = get_custom_validation_results(expectation_result, run_time, table_id, df)
+    else:
+        validation_results = get_standard_validation_results(expectation_result, run_time, table_id)
+
+    return validation_results
+
 def get_validatie_data(
     validation_settings_obj: ValidationSettings,
     run_time: datetime,
-    validation_output: CheckpointDescriptionDict,
+    validation_output: CheckpointResult,
+    df: DataFrame,
 ) -> list[dict]:
     """
     Get the validatie data from the dq_rules_dict.
     """
-    validation_results: List[Dict[str, Any]] = validation_output[
-        "validation_results"
-    ]
+
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
         f"{validation_settings_obj.table_name}"
     )
 
     extracted_data = []
-    for result in validation_results:
-        for expectation_result in result["expectations"]:
+    for run_result in validation_output.run_results.values():
+        expectation_results = run_result["results"]
+
+        for expectation_result in expectation_results:
             extracted_data.append(
                 get_single_validation_result_dict(
                     expectation_result=expectation_result,
                     run_time=run_time,
                     table_id=table_id,
+                    df=df,
                 )
             )
+
     return extracted_data
 
+def format_value(val):
+    return val.wkt if hasattr(val, 'wkt') else val
 
-def get_single_expectation_afwijking_data(
-    expectation_result: Any,
-    df: DataFrame,
-    unique_identifier: list[str],
-    run_time: datetime,
-    table_id: str,
-) -> list[dict]:
+def format_attribute_value(row, attribute):
+    if isinstance(attribute, list):
+        return {attr: format_value(row.get(attr)) for attr in attribute}
+    return format_value(row.get(attribute))
+
+def get_single_expectation_afwijking_data(expectation_result, df, unique_identifier, run_time, table_id):
     extracted_data = []
-    expectation_type = expectation_result["expectation_type"]
+    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
     parameter_list = round_numeric_params(
-        get_parameters_from_results(result=expectation_result)
+        get_parameters_from_results(expectation_result)
     )
-    attribute = get_target_attr_for_rule(result=expectation_result)
-    deviating_attribute_value = expectation_result["result"].get(
-        "partial_unexpected_list", []
-    )
-    unique_deviating_values = get_unique_deviating_values(
-        deviating_attribute_value
-    )
-    for value in unique_deviating_values:
-        filtered_df = filter_df_based_on_deviating_values(
-            deviating_value=value, attribute=attribute, df=df
-        )
-        grouped_ids = get_grouped_ids_per_deviating_value(
-            filtered_df=filtered_df, unique_identifier=unique_identifier
-        )
-        if isinstance(attribute, list):
-            value = str(value)
-        extracted_data.append(
-            {
-                "identifierVeldWaarde": grouped_ids,
-                "afwijkendeAttribuutWaarde": value,
+    attribute = get_target_attr_for_rule(expectation_result)
+
+    unexpected_rows = expectation_result.get("result", {}).get("details", {}).get("unexpected_rows")
+
+    if unexpected_rows:
+        for row in unexpected_rows:
+            grouped_id = [row[uid] for uid in unique_identifier]
+            afwijkende_value = format_attribute_value(row, attribute)
+            extracted_data.append({
+                "identifierVeldWaarde": [grouped_id],
+                "afwijkendeAttribuutWaarde": afwijkende_value,
                 "dqDatum": run_time,
-                # TODO/check: rename dqDatum, discuss all field names
-                "regelNaam": humps.pascalize(expectation_type),
+                "regelNaam": rule_name,
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
-            }
-        )
+            })
+    else:
+        deviating_attribute_value = expectation_result["result"].get("partial_unexpected_list", [])
+        unique_deviating_values = get_unique_deviating_values(deviating_attribute_value)
+        for value in unique_deviating_values:
+            filtered_df = filter_df_based_on_deviating_values(value, attribute, df)
+            grouped_ids = get_grouped_ids_per_deviating_value(filtered_df, unique_identifier)
+            extracted_data.append({
+                "identifierVeldWaarde": grouped_ids,
+                "afwijkendeAttribuutWaarde": str(value) if isinstance(attribute, list) else value,
+                "dqDatum": run_time,
+                "regelNaam": rule_name,
+                "regelParameters": parameter_list,
+                "bronTabelId": table_id,
+            })
 
     return extracted_data
 
@@ -427,14 +499,13 @@ def get_afwijking_data(
     df: DataFrame,
     validation_settings_obj: ValidationSettings,
     run_time: datetime,
-    validation_output: CheckpointDescriptionDict,
+    validation_output: CheckpointResult,
 ) -> list[dict]:
     """
     Get the afwijking data from the dq_rules_dict.
     """
-    validation_results: List[Dict[str, Any]] = validation_output[
-        "validation_results"
-    ]
+    run_results = list(validation_output.run_results.values())
+    print(f"VALIDATIONSETTINGSOBJ-afwijking: {validation_settings_obj}")
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
         f"{validation_settings_obj.table_name}"
@@ -447,8 +518,8 @@ def get_afwijking_data(
     ):  # TODO/check: is this always a list[str]?
         unique_identifier = [unique_identifier]
 
-    for result in validation_results:
-        for expectation_result in result["expectations"]:
+    for validation_result in run_results:
+        for expectation_result in validation_result.results:
             extracted_data += get_single_expectation_afwijking_data(
                 expectation_result=expectation_result,
                 df=df,
@@ -523,7 +594,8 @@ def create_validation_result_dataframe(
     validation_table_name: str,
     validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
-    validation_output = checkpoint_result.describe_dict()
+    validation_output = checkpoint_result
+     
     run_time = checkpoint_result.run_id.run_time
 
     if validation_table_name == "validatie":
@@ -531,6 +603,7 @@ def create_validation_result_dataframe(
             validation_settings_obj=validation_settings_obj,
             run_time=run_time,
             validation_output=validation_output,
+            df=df,
         )
         schema = VALIDATIE_SCHEMA
     elif validation_table_name == "afwijking":

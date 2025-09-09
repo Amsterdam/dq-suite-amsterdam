@@ -288,6 +288,7 @@ class ValidationSettings:
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
+    
 
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
