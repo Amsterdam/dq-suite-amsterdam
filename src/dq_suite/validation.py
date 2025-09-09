@@ -18,7 +18,7 @@ from great_expectations.data_context.types.base import (
 from great_expectations.datasource.fluent import SparkDatasource
 from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
-from great_expectations.expectations import core as gx_core
+from great_expectations.expectations import core as gx_core, UnexpectedRowsExpectation
 from pyspark.sql import DataFrame, SparkSession
 
 from .common import DatasetDict, Rule, RulesDict, ValidationSettings
@@ -147,20 +147,82 @@ class ValidationRunner:
 
         gx_expectation_parameters["meta"] = {
             "table_name": table_name,
-            "column_name": column_name,
-            "expectation_name": gx_expectation_name,
+            "column": column_name,
+            "rule_name": gx_expectation_name,
         }
         return gx_expectation_class(**gx_expectation_parameters)
+
+    def _create_geo_expectation(self, expectation_suite_obj, validation_rule):
+        rule_name = validation_rule.get("rule_name")
+        geometry_column = validation_rule.get("parameters", {}).get("column", "geometry")
+        expected_geometry_type = validation_rule.get("parameters", {}).get("geometry_type")
+        
+        # Define your custom SQL query.
+        if rule_name == "ExpectColumnValuesToHaveValidGeometry":
+            custom_rule_query = f"""
+                SELECT
+                    *
+                FROM
+                    {{batch}}
+                WHERE
+                    NOT ST_IsValid({geometry_column})"""
+            custom_rule_description = "All geometry data should be valid."
+        
+        elif rule_name == "ExpectGeometryColumnValuesToNotBeEmpty":
+            custom_rule_query = f"""
+                SELECT
+                    *
+                FROM
+                    {{batch}}
+                WHERE
+                    ST_IsEmpty({geometry_column})"""
+            custom_rule_description = "Geometry column should not contain empty geometries."
+
+        elif rule_name == "ExpectColumnValuesToBeOfGeometryType":
+            if not expected_geometry_type:
+                raise ValueError("Missing 'geometry_type' in parameters for rule ExpectColumnValuesToHaveCorrectGeometrytype.")
+
+            expected_geometry_type_formatted = f"ST_{expected_geometry_type}"
+
+            custom_rule_query = f"""
+                SELECT
+                    *
+                FROM
+                    {{batch}}
+                WHERE
+                    ST_GeometryType({geometry_column}) != '{expected_geometry_type_formatted}'"""
+            custom_rule_description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
+
+        else:
+            raise ValueError(f"Unsupported rule_name: {rule_name}")
+
+            # Create an Expectation using the UnexpectedRowsExpectation class and your parameters.
+        return UnexpectedRowsExpectation(
+            unexpected_rows_query=custom_rule_query,
+            description=custom_rule_description,
+            meta={
+                "rule_name": rule_name,
+                "column": geometry_column,
+                "geometry_type": expected_geometry_type
+            },
+        )
+
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
         expectation_suite_obj = self._get_or_add_expectation_suite()  # Add if
         # it does not exist
 
         for validation_rule in validation_rules_list:
-            gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule, table_name=self.table_name
-            )
+            if validation_rule.get("type") == "geo":
+                gx_expectation_obj = self._create_geo_expectation(
+                    expectation_suite_obj, validation_rule
+                )
+            else:
+                gx_expectation_obj = self._get_gx_expectation_object(
+                    validation_rule=validation_rule, table_name=self.table_name
+                )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
+
 
     def create_batch_definition(self):  # pragma: no cover - only GX functions
         self.data_source = self.data_context.data_sources.add_or_update_spark(
@@ -292,6 +354,7 @@ def validate(
     validation_runner_obj.add_expectations_to_suite(
         validation_rules_list=rules_dict["rules"]
     )
+    
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
@@ -386,7 +449,7 @@ def run_validation(
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
-
+    print(f"Checkpoint result: {checkpoint_result}")
     if debug_mode:  # Don't write to UC in debug mode
         return checkpoint_result.success, checkpoint_result
 
