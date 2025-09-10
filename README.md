@@ -60,7 +60,7 @@ The profiling functionality in dq_suite generates profiling results and automati
 pip install dq-suite-amsterdam
 ```
 2. Get ready to validate your first table. To do so, define
-- `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
+- `df` as a Panda dataframe containing the table that needs to be validated (e.g. via `pd.read_csv`)
 - `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
 - `dq_rule_json_path` as a path to a JSON file, wil be formatted in [this](src/dq_suite/profile/dq_rules_example_from_profiling.json) way after running profiling function
