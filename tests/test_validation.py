@@ -8,7 +8,7 @@ from great_expectations.checkpoint import (
     MicrosoftTeamsNotificationAction,
     SlackNotificationAction,
 )
-from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
+from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet, UnexpectedRowsExpectation
 from pyspark.sql import SparkSession
 from pyspark.sql.types import IntegerType, StructField, StructType
 
@@ -188,17 +188,21 @@ class TestValidationRunner:
                 rule_name="ExpectColumnDistinctValuesToEqualSet",
                 severity="fatal",
                 parameters={"column": "the_column", "value_set": [1, 2, 3]},
-            )
+            ),
+            Rule(
+                rule_name="ExpectColumnValuesToHaveValidGeometry",
+                parameters={"column": "geometry"},
+                rule_type="geo",
+            ),
         ]
         validation_runner_obj.add_expectations_to_suite(
             validation_rules_list=validation_rules_list
         )
         suites_list = list(validation_runner_obj.data_context.suites.all())
         expectations_list = suites_list[0]["expectations"]
-        assert len(expectations_list) == 1
-        assert isinstance(
-            expectations_list[0], ExpectColumnDistinctValuesToEqualSet
-        )
+        assert len(expectations_list) == 2
+        assert isinstance(expectations_list[0], ExpectColumnDistinctValuesToEqualSet)
+        assert isinstance(expectations_list[1], UnexpectedRowsExpectation)
 
     def test_create_batch_definition(self, validation_runner_obj):
         # Initially, no batch definitions exist in the data context

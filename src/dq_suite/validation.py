@@ -154,9 +154,10 @@ class ValidationRunner:
         return gx_expectation_class(**gx_expectation_parameters)
 
     def _create_geo_expectation(self, expectation_suite_obj, validation_rule):
-        rule_name = validation_rule.get("rule_name")
-        geometry_column = validation_rule.get("parameters", {}).get("column", "geometry")
-        expected_geometry_type = validation_rule.get("parameters", {}).get("geometry_type")
+        rule_name = validation_rule.rule_name
+        params = validation_rule.parameters or {}
+        geometry_column = params.get("column", "geometry")
+        expected_geometry_type = params.get("geometry_type")
         
         # Define your custom SQL query.
         if rule_name == "ExpectColumnValuesToHaveValidGeometry":
@@ -214,7 +215,7 @@ class ValidationRunner:
         # it does not exist
 
         for validation_rule in validation_rules_list:
-            if validation_rule.get("type") == "geo":
+            if validation_rule.rule_type == "geo":
                 gx_expectation_obj = self._create_geo_expectation(
                     expectation_suite_obj, validation_rule
                 )

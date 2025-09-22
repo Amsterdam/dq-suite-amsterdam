@@ -519,7 +519,7 @@ def get_afwijking_data(
         unique_identifier = [unique_identifier]
 
     for validation_result in run_results:
-        for expectation_result in validation_result.results:
+        for expectation_result in validation_result["results"]:
             extracted_data += get_single_expectation_afwijking_data(
                 expectation_result=expectation_result,
                 df=df,
