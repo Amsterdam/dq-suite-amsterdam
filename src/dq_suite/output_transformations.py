@@ -582,10 +582,6 @@ def write_validation_result_tables(
             validation_settings_obj=validation_settings_obj,
         )
 
-        assert not is_empty_dataframe(
-            df=df_validation_result
-        ), f"No validation results to write for table '{validation_table_name}'."
-
         if validation_table_name == "validatie":
             schema = VALIDATIE_SCHEMA
         elif validation_table_name == "afwijking":
