@@ -154,8 +154,8 @@ class ValidationRunner:
         return gx_expectation_class(**gx_expectation_parameters)
 
     def _create_geo_expectation(self, expectation_suite_obj, validation_rule):
-        rule_name = validation_rule.rule_name
-        params = validation_rule.parameters or {}
+        rule_name = validation_rule.get("rule_name")
+        params = validation_rule.get("parameters", {})
         geometry_column = params.get("column", "geometry")
         expected_geometry_type = params.get("geometry_type")
         
@@ -215,7 +215,7 @@ class ValidationRunner:
         # it does not exist
 
         for validation_rule in validation_rules_list:
-            if validation_rule.rule_type == "geo":
+            if validation_rule.get("rule_type") == "geo":
                 gx_expectation_obj = self._create_geo_expectation(
                     expectation_suite_obj, validation_rule
                 )

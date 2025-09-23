@@ -135,51 +135,122 @@ class TestConstructRegelId:
         expected_df.schema["regelId"].nullable = False
         assert_df_equality(actual_df, expected_df)
 
+
 def _wrap_meta(meta: dict) -> dict:
     """ Helper to build the input structure the function expects:
     {"expectation_config": {"meta": <meta>}} """
     return {"expectation_config": {"meta": deepcopy(meta)}}
+
+def _wrap_kwargs(kwargs: dict) -> dict:
+    """ Helper that puts kwargs under expectation_config.kwargs """
+    return {"expectation_config": {"kwargs": deepcopy(kwargs)}}
+
 class TestGetParametersFromResults:
     @pytest.mark.parametrize(
-        "meta, expected",
-        [
-            (
-                # "table_name" and "rule_name" are stripped; "geometry_type" is removed if it's None
-                {
-                    "value": 10,
-                    "table_name": "table",
-                    "rule_name": "ExpectColumnValuesToNotBeNull",
-                    "geometry_type": None,
-                },
-                {"value": 10},
-            ),
-            (
-                # "geometry_type" with a concrete value is kept
-                {
-                    "value": 10,
-                    "geometry_type": "Polygon",
-                    "rule_name": "ExpectColumnValuesToNotBeNull",
-                },
-                {"value": 10, "geometry_type": "Polygon"},
-            ),
-        ],
-    )
+    "meta, expected",
+    [
+        (
+            {
+                "value": 10,
+                "table_name": "table",
+                "rule_name": "ExpectColumnValuesToNotBeNull",
+            },
+            {"value": 10},
+        ),
+        (
+            {
+                "geometry_type": "Polygon",
+                "rule_name": "ExpectColumnValuesToBeOfGeometryType",
+            },
+            {"geometry_type": "Polygon"},
+        ),
+    ],
+)
+
     def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(self, meta, expected):
         result = _wrap_meta(meta)
         assert get_parameters_from_results(result) == expected
 
-
-    def test_get_parameters_from_results_raises_when_meta_missing(self):
-        """
-        The function should raise when "expectation_config.meta" is missing.
-        """
-        # No expectation_config at all
-        with pytest.raises(ValueError, match="No meta found in result"):
+    def test_get_parameters_from_results_raises_when_expectation_config_missing(self):
+        with pytest.raises(ValueError, match="No expectation_config in result."):
             get_parameters_from_results({})
 
-        # expectation_config present but "meta" missing
-        with pytest.raises(ValueError, match="No meta found in result"):
+    def test_get_parameters_from_results_raises_when_no_meta_and_no_kwargs(self):
+        with pytest.raises(ValueError, match="No meta or kwargs found to build parameters."):
             get_parameters_from_results({"expectation_config": {}})
+
+    def test_kwargs_only_includes_rule_args_and_drops_runtime_keys(self):
+        result = _wrap_kwargs({
+            "column": "the_column",
+            "batch_id": "abc123",
+            "unexpected_rows_query": "SELECT * FROM t",
+            "value_set": [1, 2, 3],
+            "min_value": 0,
+            "max_value": 10,
+        })
+        expected = {"value_set": [1, 2, 3], "min_value": 0, "max_value": 10}
+        assert get_parameters_from_results(result) == expected
+
+    def test_meta_and_kwargs_merge_kwargs_wins(self):
+        result = {
+            "expectation_config": {
+                "meta": {"value_set": [9, 9], "table_name": "will_be_removed"},
+                "kwargs": {
+                    "value_set": (1, 2, 3),  # tuple should normalize to list
+                    "column": "drop_me",
+                    "batch_id": "drop_me",
+                },
+            }
+        }
+        expected = {"value_set": [1, 2, 3]}
+        assert get_parameters_from_results(result) == expected
+
+
+# def _wrap_meta(meta: dict) -> dict:
+#     """ Helper to build the input structure the function expects:
+#     {"expectation_config": {"meta": <meta>}} """
+#     return {"expectation_config": {"meta": deepcopy(meta)}}
+# class TestGetParametersFromResults:
+#     @pytest.mark.parametrize(
+#         "meta, expected",
+#         [
+#             (
+#                 # "table_name" and "rule_name" are stripped; "geometry_type" is removed if it's None
+#                 {
+#                     "value": 10,
+#                     "table_name": "table",
+#                     "rule_name": "ExpectColumnValuesToNotBeNull",
+#                     "geometry_type": None,
+#                 },
+#                 {"value": 10},
+#             ),
+#             (
+#                 # "geometry_type" with a concrete value is kept
+#                 {
+#                     "value": 10,
+#                     "geometry_type": "Polygon",
+#                     "rule_name": "ExpectColumnValuesToNotBeNull",
+#                 },
+#                 {"value": 10, "geometry_type": "Polygon"},
+#             ),
+#         ],
+#     )
+#     def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(self, meta, expected):
+#         result = _wrap_meta(meta)
+#         assert get_parameters_from_results(result) == expected
+
+
+#     def test_get_parameters_from_results_raises_when_meta_missing(self):
+#         """
+#         The function should raise when "expectation_config.meta" is missing.
+#         """
+#         # No expectation_config at all
+#         with pytest.raises(ValueError, match="No meta found in result"):
+#             get_parameters_from_results({})
+
+#         # expectation_config present but "meta" missing
+#         with pytest.raises(ValueError, match="No meta found in result"):
+#             get_parameters_from_results({"expectation_config": {}})
 
 class TestGetTargetAttrForRule:
     def test_get_attr_for_rule_with_column(self):

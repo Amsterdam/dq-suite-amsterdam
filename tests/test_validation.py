@@ -184,17 +184,18 @@ class TestValidationRunner:
         self, validation_runner_obj
     ):
         validation_rules_list = [
-            Rule(
-                rule_name="ExpectColumnDistinctValuesToEqualSet",
-                severity="fatal",
-                parameters={"column": "the_column", "value_set": [1, 2, 3]},
-            ),
-            Rule(
-                rule_name="ExpectColumnValuesToHaveValidGeometry",
-                parameters={"column": "geometry"},
-                rule_type="geo",
-            ),
-        ]
+        {
+            "rule_name": "ExpectColumnDistinctValuesToEqualSet",
+            "severity": "fatal",
+            "parameters": {"column": "the_column", "value_set": [1, 2, 3]}
+        },
+        {
+            "rule_name": "ExpectColumnValuesToHaveValidGeometry",
+            "severity": "fatal",
+            "parameters": {"column": "geometry"},
+            "rule_type": "geo"
+        }
+    ]
         validation_runner_obj.add_expectations_to_suite(
             validation_rules_list=validation_rules_list
         )

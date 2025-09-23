@@ -104,25 +104,72 @@ def round_numeric_params(params: dict) -> dict:
             params[k] = round(float(params[k]), 1)
     return params
 
-def get_parameters_from_results(result: dict) -> list[dict]:
+def get_parameters_from_results(result: dict) -> dict:
     """
-    Get the parameters from the GX results.
+    Extracts parameters from a Great Expectations result.
+
+    Behavior:
+    - Look inside result["expectation_config"].
+    - If present, copy fields from .meta.
+    - Also copy fields from .kwargs, but drop 'batch_id' and 'column'.
+    - Remove meta-only helper keys like 'table_name' and 'rule_name'.
+    - Normalize certain values (e.g., convert value_set tuples to lists).
+    - Return a single flat dict of parameters suitable for regelId hashing.
     """
-    print(f"***RESULT*** {result}")
-    if "expectation_config" in result and "meta" in result["expectation_config"]:
-        parameters = copy.deepcopy(result["expectation_config"]["meta"])
-    else:
-        raise ValueError("No meta found in result.")
-    print(f"***PARAMETERS*** {parameters}")
-    keys_to_remove = ["table_name", "rule_name"]
-    
-    for key in keys_to_remove:
-        if key in parameters:
-            del parameters[key]
-    if "geometry_type" in parameters and parameters["geometry_type"] is None:
-        del parameters["geometry_type"]
-    print(f"***PARAMETERS-after removing*** {parameters}")
+
+    if "expectation_config" not in result or result["expectation_config"] is None:
+        raise ValueError("No expectation_config in result.")
+    exp_cfg = result.get("expectation_config")
+    parameters: dict = {}
+
+    # 1) From meta (if any)
+    if "meta" in exp_cfg and exp_cfg["meta"] is not None:
+        parameters.update(copy.deepcopy(exp_cfg["meta"]))
+
+    # 2) From kwargs (if any) — keep only rule-specific args
+    if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
+        kw = copy.deepcopy(exp_cfg["kwargs"])
+        # Drop runtime / structural args that shouldn't affect the rule identity
+        for drop_key in ("batch_id", "column", "unexpected_rows_query"):
+            kw.pop(drop_key, None)
+        parameters.update(kw)
+
+    if not parameters:
+        raise ValueError("No meta or kwargs found to build parameters.")
+
+    # 3) Remove meta helper keys not part of rule semantics
+    for k in ("table_name", "rule_name"):
+        if k in parameters:
+            parameters.pop(k, None)
+
+    # Remove geometry_type if explicitly None
+    if parameters.get("geometry_type") is None:
+        parameters.pop("geometry_type", None)
+
+    # 4) Normalize list-like values for determinism
+    if isinstance(parameters.get("value_set"), (list, tuple)):
+        parameters["value_set"] = list(parameters["value_set"])
+
     return parameters
+# def get_parameters_from_results(result: dict) -> list[dict]:
+#     """
+#     Get the parameters from the GX results.
+#     """
+#     print(f"***RESULT*** {result}")
+#     if "expectation_config" in result and "meta" in result["expectation_config"]:
+#         parameters = copy.deepcopy(result["expectation_config"]["meta"])
+#     else:
+#         raise ValueError("No meta found in result.")
+#     print(f"***PARAMETERS*** {parameters}")
+#     keys_to_remove = ["table_name", "rule_name"]
+    
+#     for key in keys_to_remove:
+#         if key in parameters:
+#             del parameters[key]
+#     if "geometry_type" in parameters and parameters["geometry_type"] is None:
+#         del parameters["geometry_type"]
+#     print(f"***PARAMETERS-after removing*** {parameters}")
+#     return parameters
 
 
 def get_target_attr_for_rule(result: dict) -> str | None:
@@ -519,7 +566,7 @@ def get_afwijking_data(
         unique_identifier = [unique_identifier]
 
     for validation_result in run_results:
-        for expectation_result in validation_result["results"]:
+        for expectation_result in validation_result.results:
             extracted_data += get_single_expectation_afwijking_data(
                 expectation_result=expectation_result,
                 df=df,
