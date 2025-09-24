@@ -206,52 +206,6 @@ class TestGetParametersFromResults:
         assert get_parameters_from_results(result) == expected
 
 
-# def _wrap_meta(meta: dict) -> dict:
-#     """ Helper to build the input structure the function expects:
-#     {"expectation_config": {"meta": <meta>}} """
-#     return {"expectation_config": {"meta": deepcopy(meta)}}
-# class TestGetParametersFromResults:
-#     @pytest.mark.parametrize(
-#         "meta, expected",
-#         [
-#             (
-#                 # "table_name" and "rule_name" are stripped; "geometry_type" is removed if it's None
-#                 {
-#                     "value": 10,
-#                     "table_name": "table",
-#                     "rule_name": "ExpectColumnValuesToNotBeNull",
-#                     "geometry_type": None,
-#                 },
-#                 {"value": 10},
-#             ),
-#             (
-#                 # "geometry_type" with a concrete value is kept
-#                 {
-#                     "value": 10,
-#                     "geometry_type": "Polygon",
-#                     "rule_name": "ExpectColumnValuesToNotBeNull",
-#                 },
-#                 {"value": 10, "geometry_type": "Polygon"},
-#             ),
-#         ],
-#     )
-#     def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(self, meta, expected):
-#         result = _wrap_meta(meta)
-#         assert get_parameters_from_results(result) == expected
-
-
-#     def test_get_parameters_from_results_raises_when_meta_missing(self):
-#         """
-#         The function should raise when "expectation_config.meta" is missing.
-#         """
-#         # No expectation_config at all
-#         with pytest.raises(ValueError, match="No meta found in result"):
-#             get_parameters_from_results({})
-
-#         # expectation_config present but "meta" missing
-#         with pytest.raises(ValueError, match="No meta found in result"):
-#             get_parameters_from_results({"expectation_config": {}})
-
 class TestGetTargetAttrForRule:
     def test_get_attr_for_rule_with_column(self):
         result = _wrap_meta({"column": "col_a", "column_list": ["col_a", "col_b"]})
