@@ -154,6 +154,13 @@ class ValidationRunner:
         return gx_expectation_class(**gx_expectation_parameters)
 
     def _create_geo_expectation(self, expectation_suite_obj, validation_rule):
+        """
+        Create a spatial validation rule for Great Expectations on Spark/Sedona.
+
+        It reads `validation_rule` and builds a SQL filter that returns rows
+        violating the rule (the “unexpected” rows). It also sets a short, human-readable
+        description for reporting.
+        """
         rule_name = validation_rule.get("rule_name")
         params = validation_rule.get("parameters", {})
         geometry_column = params.get("column", "geometry")
@@ -182,7 +189,7 @@ class ValidationRunner:
 
         elif rule_name == "ExpectColumnValuesToBeOfGeometryType":
             if not expected_geometry_type:
-                raise ValueError("Missing 'geometry_type' in parameters for rule ExpectColumnValuesToHaveCorrectGeometrytype.")
+                raise ValueError("Missing 'geometry_type' in parameters for rule ExpectColumnValuesToBeOfGeometryType.")
 
             expected_geometry_type_formatted = f"ST_{expected_geometry_type}"
 
@@ -453,7 +460,6 @@ def run_validation(
         rules_dict=rules_dict,
         validation_settings_obj=validation_settings_obj,
     )
-    print(f"Checkpoint result: {checkpoint_result}")
 
     validation_result = list(checkpoint_result.run_results.values())[0]
 

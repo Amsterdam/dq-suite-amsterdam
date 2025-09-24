@@ -92,9 +92,6 @@ def add_regel_id_column(
             2, 20
         ),  # We start from the 2nd hash value to avoid negative values. This increases performance in PowerBI
     )
-    print("DF WITH ID")
-    print(df_with_id)
-    df_with_id.show(truncate=False)
     return df_with_id
 
 def round_numeric_params(params: dict) -> dict:
@@ -151,25 +148,6 @@ def get_parameters_from_results(result: dict) -> dict:
         parameters["value_set"] = list(parameters["value_set"])
 
     return parameters
-# def get_parameters_from_results(result: dict) -> list[dict]:
-#     """
-#     Get the parameters from the GX results.
-#     """
-#     print(f"***RESULT*** {result}")
-#     if "expectation_config" in result and "meta" in result["expectation_config"]:
-#         parameters = copy.deepcopy(result["expectation_config"]["meta"])
-#     else:
-#         raise ValueError("No meta found in result.")
-#     print(f"***PARAMETERS*** {parameters}")
-#     keys_to_remove = ["table_name", "rule_name"]
-    
-#     for key in keys_to_remove:
-#         if key in parameters:
-#             del parameters[key]
-#     if "geometry_type" in parameters and parameters["geometry_type"] is None:
-#         del parameters["geometry_type"]
-#     print(f"***PARAMETERS-after removing*** {parameters}")
-#     return parameters
 
 
 def get_target_attr_for_rule(result: dict) -> str | None:
@@ -421,7 +399,6 @@ def get_custom_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str, df: DataFrame
 ) -> dict:
     observed_str = expectation_result["result"].get("observed_value", "")
-    #print(f"Expectation result:{expectation_result}")
 
     # Catch the number with regex
     match = re.match(r"(\d+)", observed_str)
@@ -436,7 +413,6 @@ def get_custom_validation_results(
     )
 
     validation_result = "success" if unexpected_count == 0 else "failure"
-    print(f"expectation result: {expectation_result}")
     validation_parameters = get_parameters_from_results(result=expectation_result)
     rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
 
@@ -552,7 +528,6 @@ def get_afwijking_data(
     Get the afwijking data from the dq_rules_dict.
     """
     run_results = list(validation_output.run_results.values())
-    print(f"VALIDATIONSETTINGSOBJ-afwijking: {validation_settings_obj}")
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
         f"{validation_settings_obj.table_name}"
