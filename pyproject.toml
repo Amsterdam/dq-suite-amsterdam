@@ -26,6 +26,7 @@ dependencies = [
     "validators==0.34.0",
     "typing_extensions>=4.7.1",
     "ydata-profiling==4.16.1",
+    "apache-sedona~=1.8.0",
 ]
 
 

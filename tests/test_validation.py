@@ -8,7 +8,7 @@ from great_expectations.checkpoint import (
     MicrosoftTeamsNotificationAction,
     SlackNotificationAction,
 )
-from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
+from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet, UnexpectedRowsExpectation
 from pyspark.sql import SparkSession
 from pyspark.sql.types import IntegerType, StructField, StructType
 
@@ -184,21 +184,26 @@ class TestValidationRunner:
         self, validation_runner_obj
     ):
         validation_rules_list = [
-            Rule(
-                rule_name="ExpectColumnDistinctValuesToEqualSet",
-                severity="fatal",
-                parameters={"column": "the_column", "value_set": [1, 2, 3]},
-            )
-        ]
+        {
+            "rule_name": "ExpectColumnDistinctValuesToEqualSet",
+            "severity": "fatal",
+            "parameters": {"column": "the_column", "value_set": [1, 2, 3]}
+        },
+        {
+            "rule_name": "ExpectColumnValuesToHaveValidGeometry",
+            "severity": "fatal",
+            "parameters": {"column": "geometry"},
+            "rule_type": "geo"
+        }
+    ]
         validation_runner_obj.add_expectations_to_suite(
             validation_rules_list=validation_rules_list
         )
         suites_list = list(validation_runner_obj.data_context.suites.all())
         expectations_list = suites_list[0]["expectations"]
-        assert len(expectations_list) == 1
-        assert isinstance(
-            expectations_list[0], ExpectColumnDistinctValuesToEqualSet
-        )
+        assert len(expectations_list) == 2
+        assert isinstance(expectations_list[0], ExpectColumnDistinctValuesToEqualSet)
+        assert isinstance(expectations_list[1], UnexpectedRowsExpectation)
 
     def test_create_batch_definition(self, validation_runner_obj):
         # Initially, no batch definitions exist in the data context
@@ -273,6 +278,56 @@ class TestValidationRunner:
     def test_get_or_add_checkpoint(self, validation_runner_obj):
         # TODO: mock use of ValidationDefinition for Checkpoint
         pass
+    
+    def test_create_geo_expectation_valid_geometry_meta_and_desc(self, validation_runner_obj):
+        rule = {"rule_name": "ExpectColumnValuesToHaveValidGeometry",
+                "parameters": {"column": "geometry"}}
+        result = validation_runner_obj._create_geo_expectation(None, rule)
+        assert result.description == "All geometry data should be valid."
+        assert result.meta == {
+            "rule_name": "ExpectColumnValuesToHaveValidGeometry",
+            "column": "geometry",
+            "geometry_type": None,
+        }
+
+    def test_create_geo_expectation_not_empty_meta_and_desc(self, validation_runner_obj):
+        rule = {"rule_name": "ExpectGeometryColumnValuesToNotBeEmpty",
+                "parameters": {"column": "geom"}}
+        result = validation_runner_obj._create_geo_expectation(None, rule)
+        assert result.description == "Geometry column should not contain empty geometries."
+        assert result.meta == {
+            "rule_name": "ExpectGeometryColumnValuesToNotBeEmpty",
+            "column": "geom",
+            "geometry_type": None,
+        }
+
+    @pytest.mark.parametrize("geometry_type", ["point", "LineString", "POLYGON"])   # test different geometry types
+    def test_create_geo_expectation_specific_type(self, validation_runner_obj, geometry_type):
+        rule = {"rule_name": "ExpectColumnValuesToBeOfGeometryType",
+                "parameters": {"column": "geom", "geometry_type": geometry_type}}
+        result = validation_runner_obj._create_geo_expectation(None, rule)
+        assert result.description == (
+            f"Geometry column should contain only {geometry_type.upper()} geometries."
+        )
+        assert result.meta == {
+            "rule_name": "ExpectColumnValuesToBeOfGeometryType",
+            "column": "geom",
+            "geometry_type": geometry_type,
+        }
+
+    def test_create_geo_expectation_without_param_raises(self, validation_runner_obj):
+        rule = {"rule_name": "ExpectColumnValuesToBeOfGeometryType",
+                "parameters": {"column": "geom"}}
+        with pytest.raises(ValueError) as exc:
+            validation_runner_obj._create_geo_expectation(None, rule)
+        assert "geometry_type" in str(exc.value)
+
+    def test_create_geo_expectation_unsupported_rule_raises(self, validation_runner_obj):
+        rule = {"rule_name": "SomeUnknownGeoRule",
+                "parameters": {"column": "geom"}}
+        with pytest.raises(ValueError) as exc:
+            validation_runner_obj._create_geo_expectation(None, rule)
+        assert ("Unsupported" in str(exc.value)) and (rule["rule_name"] in str(exc.value))
 
 
 @pytest.mark.usefixtures("gx_checkpoint_result")
