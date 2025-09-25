@@ -24,6 +24,7 @@ from src.dq_suite.output_transformations import (
     get_validatie_data,
     list_of_dicts_to_df,
     get_highest_severity_from_validation_result,
+    get_custom_validation_results
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -505,6 +506,88 @@ class TestGetAfwijkingData:
                 validation_output="123",
             )  # wrong type: lacks `.run_results`
 
+@pytest.mark.usefixtures("spark")
+class TestGetCustomValidationResults:
+    def test_get_custom_validation_results_failure(self, spark):
+        # Arrange DataFrame with 5 rows
+        df = spark.createDataFrame(
+            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",),
+             ("POINT (3 3)",), ("POINT (4 4)",)],
+            ["geometry"]
+        )
+        dtt_now = datetime.now()
+        table_id = "geo_bron_001"
+
+        expectation_result = {
+            "expectation_config": {
+                "meta": {"rule_name": "ExpectColumnValuesToBeOfGeometryType"},
+                # Geo rules usually include column + geometry_type
+                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+            },
+            "result": {
+                # Function extracts the first number using regex → 2 unexpected rows
+                "observed_value": "2 invalid geometries found",
+            },
+        }
+
+        # Act
+        actual = get_custom_validation_results(
+            expectation_result=expectation_result,
+            run_time=dtt_now,
+            table_id=table_id,
+            df=df,
+        )
+
+        # Assert
+        assert actual == {
+            "aantalValideRecords": 3,                 
+            "aantalReferentieRecords": 5,
+            "percentageValideRecords": 0.6,
+            "dqDatum": dtt_now,
+            "dqResultaat": "failure",
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "bronTabelId": table_id,
+        }
+
+    def test_get_custom_validation_results_success(self, spark):
+        # Arrange DataFrame with 4 rows
+        df = spark.createDataFrame(
+            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",), ("POINT (3 3)",)],
+            ["geometry"]
+        )
+        dtt_now = datetime.now()
+        table_id = "geo_bron_002"
+
+        expectation_result = {
+            "expectation_config": {
+                "meta": {"rule_name": "ExpectColumnValuesToBeOfGeometryType"},
+                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+            },
+            "result": {
+                "observed_value": "0",  # no unexpected values
+            },
+        }
+
+        # Act
+        actual = get_custom_validation_results(
+            expectation_result=expectation_result,
+            run_time=dtt_now,
+            table_id=table_id,
+            df=df,
+        )
+
+        # Assert
+        assert actual == {
+            "aantalValideRecords": 4,
+            "aantalReferentieRecords": 4,
+            "percentageValideRecords": 1.0,
+            "dqDatum": dtt_now,
+            "dqResultaat": "success",
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "bronTabelId": table_id,
+        }
 
 def test_get_highest_severity_from_validation_result():
     validation_result = {

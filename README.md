@@ -50,6 +50,17 @@ run_validation(
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 
+**Geo Validation**
+
+Geo validation enables geometric checks using Sedona functions. It is fully integrated into the validation process, allowing both generic rules and geo rules to be applied together on the same table.
+
+1. To use Sedona, some configurations must be applied on your Databricks cluster. For more details, click [here](https://sedona.apache.org/latest/setup/databricks/)
+
+2. Follow the same installation/setup steps as in 'Getting started'. In addition, when defining rules in Getting started → Step 3, you can enable geo validation by adding the parameter "rule_type": "geo" inside your JSON. Exxample is [here](geo_dq_rules_example.json)
+
+3. Result of geo validation will be written into the same data_quality schema as generic validation. If a table includes both generic and geo rules, all results will be combined in the output tables.
+
+
 **Profiling**
 
 Profiling is the process of analyzing a dataset to understand its structure, patterns, and data quality characteristics (such as completeness, uniqueness, or value distributions). 
@@ -59,7 +70,7 @@ The profiling functionality in dq_suite generates profiling results and automati
 ```
 pip install dq-suite-amsterdam
 ```
-2. Get ready to validate your first table. To do so, define
+2. Get ready to profile your first table. To do so, define
 - `df` as a Panda dataframe containing the table that needs to be validated (e.g. via `pd.read_csv`)
 - `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
