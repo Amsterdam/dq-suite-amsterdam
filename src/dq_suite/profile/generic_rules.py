@@ -59,7 +59,7 @@ def create_dq_rules(
                 column_between_rule(variable, details["min"], details["max"])
             )
 
-        if "Categorical" in col_type:
+        if "Categorical" in col_type or "Text" in col_type:
             col_type = "StringType"
         if col_type == "Numeric":
             col_min = details["min"]
