@@ -90,12 +90,14 @@ def add_regel_id_column(
     )
     return df_with_id
 
+
 def round_numeric_params(params: dict) -> dict:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
         if k in params and params[k] is not None:
             params[k] = round(float(params[k]), 1)
     return params
+
 
 def get_parameters_from_results(result: dict) -> list[dict]:
     """
@@ -292,9 +294,11 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
             )
     return extracted_data
 
+
 def _is_number(x):
     # Return True only for real numbers (int/float). Explicitly exclude boolean values.
     return isinstance(x, (int, float)) and not isinstance(x, bool)
+
 
 def get_single_validation_result_dict(
     expectation_result: dict, run_time: datetime, table_id: str
@@ -318,12 +322,16 @@ def get_single_validation_result_dict(
             # valid_records if unexpected_count is numeric
             unexpected_count_value = result.get("unexpected_count")
             if _is_number(unexpected_count_value):
-                valid_records = max(total_count - int(unexpected_count_value), 0)
+                valid_records = max(
+                    total_count - int(unexpected_count_value), 0
+                )
 
         # percentage_of_valid_records if unexpected_percent is numeric
         unexpected_percent_value = result.get("unexpected_percent")
         if _is_number(unexpected_percent_value):
-            percentage_of_valid_records = int(100.0 - float(unexpected_percent_value)) / 100.0
+            percentage_of_valid_records = (
+                int(100.0 - float(unexpected_percent_value)) / 100.0
+            )
     else:
         # Table row-count expectations:
         # total_count comes from observed_value (if numeric); other two metrics do not apply.
@@ -331,9 +339,11 @@ def get_single_validation_result_dict(
         if _is_number(observed_value):
             total_count = int(observed_value)
 
-    validation_result = "success" if expectation_result["success"] else "failure"
+    validation_result = (
+        "success" if expectation_result["success"] else "failure"
+    )
 
-    validation_parameters = round_numeric_params( 
+    validation_parameters = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
 
@@ -387,37 +397,53 @@ def get_single_expectation_afwijking_data(
     table_id: str,
 ) -> list[dict]:
     extracted_data = []
-    expectation_type = expectation_result["expectation_type"]
+    expectation_type = humps.pascalize(expectation_result["expectation_type"])
     parameter_list = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
     attribute = get_target_attr_for_rule(result=expectation_result)
-    deviating_attribute_value = expectation_result["result"].get(
-        "partial_unexpected_list", []
-    )
-    unique_deviating_values = get_unique_deviating_values(
-        deviating_attribute_value
-    )
-    for value in unique_deviating_values:
-        filtered_df = filter_df_based_on_deviating_values(
-            deviating_value=value, attribute=attribute, df=df
-        )
-        grouped_ids = get_grouped_ids_per_deviating_value(
-            filtered_df=filtered_df, unique_identifier=unique_identifier
-        )
-        if isinstance(attribute, list):
-            value = str(value)
+    result_dict = expectation_result.get("result", {})
+    if expectation_type.startswith(
+        "ExpectTable"
+    ):  # Handle table-level expectations
+        deviating_attribute_value = result_dict.get("observed_value", [])
         extracted_data.append(
             {
-                "identifierVeldWaarde": grouped_ids,
-                "afwijkendeAttribuutWaarde": value,
+                "identifierVeldWaarde": None,
+                "afwijkendeAttribuutWaarde": deviating_attribute_value,
                 "dqDatum": run_time,
-                # TODO/check: rename dqDatum, discuss all field names
-                "regelNaam": humps.pascalize(expectation_type),
+                "regelNaam": expectation_type,
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
             }
         )
+    else:  # Handle column-level expectations
+        deviating_attribute_value = result_dict.get(
+            "partial_unexpected_list", []
+        )
+        unique_deviating_values = get_unique_deviating_values(
+            deviating_attribute_value
+        )
+        for value in unique_deviating_values:
+            filtered_df = filter_df_based_on_deviating_values(
+                deviating_value=value, attribute=attribute, df=df
+            )
+            grouped_ids = get_grouped_ids_per_deviating_value(
+                filtered_df=filtered_df, unique_identifier=unique_identifier
+            )
+            if isinstance(attribute, list):
+                value = str(value)
+
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": grouped_ids,
+                    "afwijkendeAttribuutWaarde": value,
+                    "dqDatum": run_time,
+                    "regelNaam": expectation_type,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": table_id,
+                }
+            )
 
     return extracted_data
 
@@ -603,13 +629,15 @@ def write_validation_result_tables(
         )
 
 
-def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str:
+def get_highest_severity_from_validation_result(
+    validation_result: dict, rules_dict: dict
+) -> str:
     """
     validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
 
     Returns:
-        The highest severity level ('fatal', 'error', 'warning', 'ok') 
+        The highest severity level ('fatal', 'error', 'warning', 'ok')
     """
 
     rules_by_name = {
@@ -620,7 +648,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     failed_severities = []
 
     severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
-    
+
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
@@ -632,5 +660,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     if not failed_severities:
         failed_severities.append("ok")
 
-    highest_severity = max(failed_severities, key=lambda sev: severity_priority.get(sev, 0))
+    highest_severity = max(
+        failed_severities, key=lambda sev: severity_priority.get(sev, 0)
+    )
     return highest_severity
