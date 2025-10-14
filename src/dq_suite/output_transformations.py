@@ -1,7 +1,6 @@
 import copy
 import datetime
 from typing import Any, Dict, List
-import humps
 
 import humps
 from great_expectations.checkpoint.checkpoint import (
@@ -581,7 +580,7 @@ def write_validation_result_tables(
             validation_table_name=validation_table_name,
             validation_settings_obj=validation_settings_obj,
         )
-        
+        # TODO: figure out the necessity of this assertion
         if validation_table_name == "validatie":
             assert not is_empty_dataframe(
                 df=df_validation_result
