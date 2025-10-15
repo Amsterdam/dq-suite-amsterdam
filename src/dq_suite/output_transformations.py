@@ -392,33 +392,52 @@ def get_single_expectation_afwijking_data(
         get_parameters_from_results(result=expectation_result)
     )
     attribute = get_target_attr_for_rule(result=expectation_result)
-    deviating_attribute_value = expectation_result["result"].get(
-        "partial_unexpected_list", []
-    )
-    unique_deviating_values = get_unique_deviating_values(
-        deviating_attribute_value
-    )
-    for value in unique_deviating_values:
-        filtered_df = filter_df_based_on_deviating_values(
-            deviating_value=value, attribute=attribute, df=df
-        )
-        grouped_ids = get_grouped_ids_per_deviating_value(
-            filtered_df=filtered_df, unique_identifier=unique_identifier
-        )
-        if isinstance(attribute, list):
-            value = str(value)
+    result_dict = expectation_result.get("result", {})
+    if "observed_value" in result_dict:  # Handle table-level expectations
+        deviating_attribute_value = result_dict.get("observed_value", [])
         extracted_data.append(
             {
-                "identifierVeldWaarde": grouped_ids,
-                "afwijkendeAttribuutWaarde": value,
+                "identifierVeldWaarde": None,
+                "afwijkendeAttribuutWaarde": deviating_attribute_value,
                 "dqDatum": run_time,
-                # TODO/check: rename dqDatum, discuss all field names
-                "regelNaam": humps.pascalize(expectation_type),
+                "regelNaam": expectation_type,
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
             }
         )
+    elif "partial_unexpected_list" in result_dict:  # Handle column-level expectations
+        deviating_attribute_value = result_dict.get(
+            "partial_unexpected_list", []
+        )
+        unique_deviating_values = get_unique_deviating_values(
+            deviating_attribute_value
+        )
+        for value in unique_deviating_values:
+            filtered_df = filter_df_based_on_deviating_values(
+                deviating_value=value, attribute=attribute, df=df
+            )
+            grouped_ids = get_grouped_ids_per_deviating_value(
+                filtered_df=filtered_df, unique_identifier=unique_identifier
+            )
+            if isinstance(attribute, list):
+                value = str(value)
 
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": grouped_ids,
+                    "afwijkendeAttribuutWaarde": value,
+                    "dqDatum": run_time,
+                    "regelNaam": expectation_type,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": table_id,
+                }
+            )
+    else:  # Unknown / unsupported expectation
+        print(
+            f"[INFO] Could not populate deviation for rule '{expectation_type}'. "
+            "The result_dict is missing both 'observed_value' and 'partial_unexpected_list' keys."
+        )
+        
     return extracted_data
 
 
