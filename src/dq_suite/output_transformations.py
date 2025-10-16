@@ -167,7 +167,7 @@ def filter_df_based_on_deviating_values(
 
 def get_grouped_ids_per_deviating_value(
     filtered_df: DataFrame,
-    unique_identifier: list[str],
+    unique_identifier: List[str],
 ) -> list[str]:
     """
     Get the grouped ids per deviating value.
@@ -382,7 +382,7 @@ def get_validatie_data(
 def get_single_expectation_afwijking_data(
     expectation_result: Any,
     df: DataFrame,
-    unique_identifier: list[str],
+    unique_identifier: List[str],
     run_time: datetime,
     table_id: str,
 ) -> list[dict]:
@@ -441,9 +441,7 @@ def get_afwijking_data(
     unique_identifier = validation_settings_obj.unique_identifier
 
     extracted_data = []
-    if not isinstance(
-        unique_identifier, list
-    ):  # TODO/check: is this always a list[str]?
+    if not isinstance(unique_identifier, list):  # TODO/check: is this always a list[str]?
         unique_identifier = [unique_identifier]
 
     for result in validation_results:
