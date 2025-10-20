@@ -16,13 +16,13 @@ from src.dq_suite.output_transformations import (
     get_brondataset_data,
     get_brontabel_data,
     get_grouped_ids_per_deviating_value,
+    get_highest_severity_from_validation_result,
     get_parameters_from_results,
     get_regel_data,
     get_target_attr_for_rule,
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_highest_severity_from_validation_result,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -369,7 +369,7 @@ class TestGetRegelData:
         expected_result = [
             {
                 "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {
                     "column": "the_column",
                     "value_set": [1, 2, 3],
@@ -380,7 +380,7 @@ class TestGetRegelData:
             },
             {
                 "regelNaam": "ExpectColumnValuesToBeBetween",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {
                     "column": "the_other_column",
                     "min_value": 6,
@@ -392,7 +392,7 @@ class TestGetRegelData:
             },
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {"min_value": 1, "max_value": 1000},
                 "bronTabelId": "the_dataset_the_other_table",
                 "attribuut": None,
@@ -466,42 +466,53 @@ def test_get_highest_severity_from_validation_result():
         "results": [
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
             },
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_be_unique"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_be_unique"
+                },
             },
             {
                 "success": True,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
-            }
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
+            },
         ]
     }
- 
+
     rules_dict = {
         "rules": [
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
                 "parameters": {"column": "name"},
-                "severity": "warning"
+                "severity": "warning",
             },
             {
                 "rule_name": "ExpectColumnValuesToBeUnique",
                 "parameters": {"column": "id"},
-                "severity": "fatal"
-            }
+                "severity": "fatal",
+            },
         ]
     }
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "fatal"
+
 
 def test_get_highest_severity_all_successful():
     validation_result = {
         "results": [
             {
                 "success": True,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
             }
         ]
     }
@@ -511,20 +522,25 @@ def test_get_highest_severity_all_successful():
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
                 "parameters": {"column": "name"},
-                "severity": "warning"
+                "severity": "warning",
             }
         ]
     }
 
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "ok"
+
 
 def test_get_highest_severity_no_matching_severity():
     validation_result = {
         "results": [
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_be_unique"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_be_unique"
+                },
             }
         ]
     }
@@ -534,12 +550,14 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
                 "parameters": {"column": "name"},
-                "severity": "warning"
+                "severity": "warning",
             }
         ]
     }
 
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "ok"
 
     # TODO: fix test. Also: this is not a proper unit test, needs more

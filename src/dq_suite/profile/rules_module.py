@@ -1,6 +1,6 @@
-from dq_suite.common import Rule
-from typing import Dict, Any
+from typing import Any
 
+from dq_suite.common import Rule
 
 column_compound_unique_rule = Rule(
     rule_name="ExpectCompoundColumnsToBeUnique",

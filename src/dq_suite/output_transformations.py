@@ -90,12 +90,14 @@ def add_regel_id_column(
     )
     return df_with_id
 
+
 def round_numeric_params(params: dict) -> dict:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
         if k in params and params[k] is not None:
             params[k] = round(float(params[k]), 1)
     return params
+
 
 def get_parameters_from_results(result: dict) -> list[dict]:
     """
@@ -292,9 +294,11 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
             )
     return extracted_data
 
+
 def _is_number(x):
     # Return True only for real numbers (int/float). Explicitly exclude boolean values.
     return isinstance(x, (int, float)) and not isinstance(x, bool)
+
 
 def get_single_validation_result_dict(
     expectation_result: dict, run_time: datetime, table_id: str
@@ -318,12 +322,16 @@ def get_single_validation_result_dict(
             # valid_records if unexpected_count is numeric
             unexpected_count_value = result.get("unexpected_count")
             if _is_number(unexpected_count_value):
-                valid_records = max(total_count - int(unexpected_count_value), 0)
+                valid_records = max(
+                    total_count - int(unexpected_count_value), 0
+                )
 
         # percentage_of_valid_records if unexpected_percent is numeric
         unexpected_percent_value = result.get("unexpected_percent")
         if _is_number(unexpected_percent_value):
-            percentage_of_valid_records = int(100.0 - float(unexpected_percent_value)) / 100.0
+            percentage_of_valid_records = (
+                int(100.0 - float(unexpected_percent_value)) / 100.0
+            )
     else:
         # Table row-count expectations:
         # total_count comes from observed_value (if numeric); other two metrics do not apply.
@@ -331,9 +339,11 @@ def get_single_validation_result_dict(
         if _is_number(observed_value):
             total_count = int(observed_value)
 
-    validation_result = "success" if expectation_result["success"] else "failure"
+    validation_result = (
+        "success" if expectation_result["success"] else "failure"
+    )
 
-    validation_parameters = round_numeric_params( 
+    validation_parameters = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
 
@@ -441,7 +451,9 @@ def get_afwijking_data(
     unique_identifier = validation_settings_obj.unique_identifier
 
     extracted_data = []
-    if not isinstance(unique_identifier, list):  # TODO/check: is this always a list[str]?
+    if not isinstance(
+        unique_identifier, list
+    ):  # TODO/check: is this always a list[str]?
         unique_identifier = [unique_identifier]
 
     for result in validation_results:
@@ -601,13 +613,15 @@ def write_validation_result_tables(
         )
 
 
-def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str:
+def get_highest_severity_from_validation_result(
+    validation_result: dict, rules_dict: dict
+) -> str:
     """
     validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
 
     Returns:
-        The highest severity level ('fatal', 'error', 'warning', 'ok') 
+        The highest severity level ('fatal', 'error', 'warning', 'ok')
     """
 
     rules_by_name = {
@@ -618,7 +632,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     failed_severities = []
 
     severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
-    
+
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
@@ -630,5 +644,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     if not failed_severities:
         failed_severities.append("ok")
 
-    highest_severity = max(failed_severities, key=lambda sev: severity_priority.get(sev, 0))
+    highest_severity = max(
+        failed_severities, key=lambda sev: severity_priority.get(sev, 0)
+    )
     return highest_severity

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, List
-
+from typing import List, Literal
 
 from delta.tables import *
 from pyspark.sql import DataFrame, SparkSession
@@ -17,7 +16,9 @@ class Rule:
 
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
-    severity: Literal["fatal", "error", "warning"] | None  # Indicates the impact level of a rule if it fails.
+    severity: Literal[
+        "fatal", "error", "warning"
+    ] | None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
@@ -32,8 +33,14 @@ class Rule:
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
 
-        if (self.severity is not None and self.severity not in ('fatal', 'error', 'warning')):
-            raise ValueError("'severity' must be one of ('fatal', 'error', 'warning') or None")
+        if self.severity is not None and self.severity not in (
+            "fatal",
+            "error",
+            "warning",
+        ):
+            raise ValueError(
+                "'severity' must be one of ('fatal', 'error', 'warning') or None"
+            )
 
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
@@ -63,8 +70,12 @@ class RulesDict:
     rules: RulesList
 
     def __post_init__(self):
-        if (not isinstance(self.unique_identifier, str)) & (not isinstance(self.unique_identifier, List)):
-            raise TypeError("'unique_identifier' should be of type str or list of str")
+        if (not isinstance(self.unique_identifier, str)) & (
+            not isinstance(self.unique_identifier, List)
+        ):
+            raise TypeError(
+                "'unique_identifier' should be of type str or list of str"
+            )
 
         if not isinstance(self.table_name, str):
             raise TypeError("'table_name' should be of type str")
@@ -303,9 +314,13 @@ class ValidationSettings:
             raise TypeError("'table_name' should be of type str")
         if not isinstance(self.validation_name, str):
             raise TypeError("'validation_name' should be of type str")
-        if (not isinstance(self.unique_identifier, str)) & (not isinstance(self.unique_identifier, List)):
+        if (not isinstance(self.unique_identifier, str)) & (
+            not isinstance(self.unique_identifier, List)
+        ):
             if self.unique_identifier is not None:
-                raise TypeError("'unique_identifier' should be of type str or list of str")
+                raise TypeError(
+                    "'unique_identifier' should be of type str or list of str"
+                )
         if not isinstance(self.batch_name, str):
             if self.batch_name is not None:
                 raise TypeError("'batch_name' should be of type str")

@@ -17,9 +17,11 @@ from src.dq_suite.common import (
 class TestRule:
     expected_rule_name = "the_rule"
     expected_parameters = {"q": 42}
-    expected_severity="fatal"
+    expected_severity = "fatal"
     rule_obj = Rule(
-        rule_name=expected_rule_name, parameters=expected_parameters, severity=expected_severity
+        rule_name=expected_rule_name,
+        parameters=expected_parameters,
+        severity=expected_severity,
     )
 
     def test_initialisation_with_wrong_typed_rule_name_raises_type_error(self):
@@ -43,7 +45,9 @@ class TestRule:
 
 
 class TestRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42}, severity="fatal")
+    rule_obj = Rule(
+        rule_name="the_rule", parameters={"q": 42}, severity="fatal"
+    )
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
@@ -125,7 +129,9 @@ class TestDatasetDict:
 
 
 class TestDataQualityRulesDict:
-    rule_obj = Rule(rule_name="the_rule", parameters={"q": 42}, severity="fatal")
+    rule_obj = Rule(
+        rule_name="the_rule", parameters={"q": 42}, severity="fatal"
+    )
     expected_unique_identifier = "id"
     expected_table_name = "the_table"
     expected_rules_list = [rule_obj]
