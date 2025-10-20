@@ -1,4 +1,5 @@
 import pytest
+
 from dq_suite.profile.generic_rules import create_dq_rules
 
 
