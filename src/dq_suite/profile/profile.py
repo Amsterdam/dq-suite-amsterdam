@@ -1,7 +1,9 @@
 import json
-from pyspark.sql import SparkSession, DataFrame
-from typing import Tuple, Dict, Union
+from typing import Dict, Tuple, Union
+
+from pyspark.sql import DataFrame, SparkSession
 from ydata_profiling import ProfileReport
+
 from .generic_rules import create_dq_rules, save_rules_to_file
 
 

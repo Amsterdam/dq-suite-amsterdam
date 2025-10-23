@@ -321,6 +321,7 @@ class TestValidateRule:
                 "parameters": {"some_key": "some_value"},
             }
         )
+
     def test_validate_rule_with_invalid_severity_raises_value_error(
         self,
     ):
@@ -329,7 +330,7 @@ class TestValidateRule:
                 rule={
                     "rule_name": "TheRule",
                     "parameters": {"some_key": "some_value"},
-                    "severity": "critical"
+                    "severity": "critical",
                 }
             )
 
@@ -340,7 +341,7 @@ class TestValidateRule:
             rule={
                 "rule_name": "TheRule",
                 "parameters": {"some_key": "some_value"},
-                "severity": "fatal", 
+                "severity": "fatal",
             }
         )
 

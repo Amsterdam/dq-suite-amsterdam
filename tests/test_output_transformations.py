@@ -17,13 +17,13 @@ from src.dq_suite.output_transformations import (
     get_brondataset_data,
     get_brontabel_data,
     get_grouped_ids_per_deviating_value,
+    get_highest_severity_from_validation_result,
     get_parameters_from_results,
     get_regel_data,
     get_target_attr_for_rule,
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_highest_severity_from_validation_result,
     get_single_expectation_afwijking_data,
 )
 
@@ -496,7 +496,7 @@ def test_get_highest_severity_from_validation_result():
             {
                 "rule_name": "ExpectColumnValuesToBeUnique",
                 "parameters": {"column": "id"},
-                "severity": "fatal",
+                "severity": "fatal"
             },
         ]
     }
