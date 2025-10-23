@@ -433,11 +433,10 @@ def get_single_expectation_afwijking_data(
                 }
             )
     else:  # Unknown / unsupported expectation
-        print(
-            f"[INFO] Could not populate deviation for rule '{expectation_type}'. "
-            "The result_dict is missing both 'observed_value' and 'partial_unexpected_list' keys."
+        raise ValueError(
+        f"Unexpected format in expectation_result for rule '{expectation_type}'. "
+        "Expected 'observed_value' or 'partial_unexpected_list' key."
         )
-        
     return extracted_data
 
 
@@ -632,7 +631,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     """
 
     rules_by_name = {
-        rule["rule_name"]: rule["severity"]
+        rule["rule_name"]: rule.get("severity", "warning")
         for rule in rules_dict.get("rules", [])
     }
 

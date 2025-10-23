@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
+import pandas as pd
 from chispa import assert_df_equality
 from pyspark.sql import SparkSession
 
@@ -23,6 +24,7 @@ from src.dq_suite.output_transformations import (
     get_validatie_data,
     list_of_dicts_to_df,
     get_highest_severity_from_validation_result,
+    get_single_expectation_afwijking_data,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -369,7 +371,7 @@ class TestGetRegelData:
         expected_result = [
             {
                 "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {
                     "column": "the_column",
                     "value_set": [1, 2, 3],
@@ -380,7 +382,7 @@ class TestGetRegelData:
             },
             {
                 "regelNaam": "ExpectColumnValuesToBeBetween",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {
                     "column": "the_other_column",
                     "min_value": 6,
@@ -392,7 +394,7 @@ class TestGetRegelData:
             },
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
-                "severity" : "fatal",
+                "severity": "fatal",
                 "regelParameters": {"min_value": 1, "max_value": 1000},
                 "bronTabelId": "the_dataset_the_other_table",
                 "attribuut": None,
@@ -466,42 +468,52 @@ def test_get_highest_severity_from_validation_result():
         "results": [
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
             },
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_be_unique"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_be_unique"
+                },
             },
             {
                 "success": True,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
-            }
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
+            },
         ]
     }
- 
+
     rules_dict = {
         "rules": [
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
-                "parameters": {"column": "name"},
-                "severity": "warning"
+                "parameters": {"column": "name"}
             },
             {
                 "rule_name": "ExpectColumnValuesToBeUnique",
                 "parameters": {"column": "id"},
-                "severity": "fatal"
-            }
+                "severity": "fatal",
+            },
         ]
     }
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "fatal"
+
 
 def test_get_highest_severity_all_successful():
     validation_result = {
         "results": [
             {
                 "success": True,
-                "expectation_config": {"type": "expect_column_values_to_not_be_null"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_not_be_null"
+                },
             }
         ]
     }
@@ -511,20 +523,25 @@ def test_get_highest_severity_all_successful():
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
                 "parameters": {"column": "name"},
-                "severity": "warning"
+                "severity": "warning",
             }
         ]
     }
 
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "ok"
+
 
 def test_get_highest_severity_no_matching_severity():
     validation_result = {
         "results": [
             {
                 "success": False,
-                "expectation_config": {"type": "expect_column_values_to_be_unique"}
+                "expectation_config": {
+                    "type": "expect_column_values_to_be_unique"
+                },
             }
         ]
     }
@@ -534,13 +551,36 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
                 "parameters": {"column": "name"},
-                "severity": "warning"
+                "severity": "warning",
             }
         ]
     }
 
-    result = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    result = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
     assert result == "ok"
+
+
+@pytest.fixture 
+def sample_df(): 
+    return pd.DataFrame({ "id": [1, 2, 3], "column_a": ["A", "B", "C"] }) 
+
+@pytest.fixture 
+def base_expectation_result(): 
+    return { "expectation_type": "ExpectTableRowCountToEqual", "kwargs": {}, "result": {} }
+
+
+def test_table_level_expectation(base_expectation_result, sample_df): 
+    base_expectation_result["result"] = {"observed_value": 123} 
+    result = get_single_expectation_afwijking_data( expectation_result=base_expectation_result, df=sample_df, unique_identifier=["id"], run_time=datetime(2025, 10, 15), table_id="table_001" ) 
+    assert len(result) == 1 
+    row = result[0] 
+    assert row["afwijkendeAttribuutWaarde"] == 123 
+    assert row["identifierVeldWaarde"] is None
+    assert row["regelNaam"] == "ExpectTableRowCountToEqual" 
+
+
 
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.
