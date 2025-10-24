@@ -607,7 +607,7 @@ def test_table_level_expectation(base_expectation_result, sample_spark_df):
 def test_column_level_expectation(sample_spark_df):
     """Test handling of column-level expectations (partial_unexpected_list)."""
     expectation_result = {
-        "expectation_type": "expect_column_values_to_be_between",
+        "expectation_type": "ExpectColumnValuesToBeBetween",
         "kwargs": {
             "column": "age",
             "min_value": 0,
