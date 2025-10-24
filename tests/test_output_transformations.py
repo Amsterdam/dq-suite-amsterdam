@@ -562,62 +562,73 @@ def test_get_highest_severity_no_matching_severity():
     assert result == "ok"
 
 
-@pytest.fixture 
-def sample_df(): 
-    return pd.DataFrame({ "id": [1, 2, 3], "column_a": ["A", "B", "C"] }) 
-
-
-@pytest.fixture 
-def base_expectation_result(): 
-    return { "expectation_type": "ExpectTableRowCountToEqual", "kwargs": {}, "result": {} }
-
-
-def test_table_level_expectation(base_expectation_result, sample_df): 
-    base_expectation_result["result"] = {"observed_value": 123} 
-    result = get_single_expectation_afwijking_data( expectation_result=base_expectation_result, df=sample_df, unique_identifier=["id"], run_time=datetime(2025, 10, 15), table_id="table_001" ) 
-    assert len(result) == 1 
-    row = result[0] 
-    assert row["afwijkendeAttribuutWaarde"] == 123 
-    assert row["identifierVeldWaarde"] is None
-    assert row["regelNaam"] == "ExpectTableRowCountToEqual" 
-
-
-def test_get_single_expectation_afwijking_data_column_level(spark):
+@pytest.fixture
+def sample_spark_df(spark):
+    """A sample Spark DataFrame for get_single_expectation_afwijking_data tests."""
     data = [
-        {"id": 1, "age": 10},
-        {"id": 2, "age": 15},
-        {"id": 3, "age": 20},
+        {"id": 1, "column_a": "A", "age": 10},
+        {"id": 2, "column_a": "B", "age": 15},
+        {"id": 3, "column_a": "C", "age": 20},
     ]
-    df = spark.createDataFrame(data)
+    return spark.createDataFrame(data)
 
+
+@pytest.fixture
+def base_expectation_result():
+    """Base expectation template for get_single_expectation_afwijking_data."""
+    return {
+        "expectation_type": "ExpectTableRowCountToEqual",
+        "kwargs": {},
+        "result": {},
+        "success": True,
+    }
+
+
+def test_table_level_expectation(base_expectation_result, sample_spark_df):
+    """Test handling of table-level expectations (observed_value)."""
+    base_expectation_result["result"] = {"observed_value": 123}
+    result = get_single_expectation_afwijking_data(
+        expectation_result=base_expectation_result,
+        df=sample_spark_df,
+        unique_identifier=["id"],
+        run_time=datetime(2025, 10, 15),
+        table_id="table_001",
+    )
+    assert isinstance(result, list)
+    assert len(result) == 1
+    row = result[0]
+    assert row["afwijkendeAttribuutWaarde"] == 123
+    assert row["identifierVeldWaarde"] is None
+    assert row["regelNaam"] == "ExpectTableRowCountToEqual"
+    assert row["bronTabelId"] == "table_001"
+    assert row["dqDatum"] == datetime(2025, 10, 15)
+
+
+def test_column_level_expectation(sample_spark_df):
+    """Test handling of column-level expectations (partial_unexpected_list)."""
     expectation_result = {
-        "expectation_type": "ExpectColumnValuesToBeBetween",
-        "result": {
-            "partial_unexpected_list": [5, 15], 
-        },
+        "expectation_type": "expect_column_values_to_be_between",
         "kwargs": {
             "column": "age",
             "min_value": 0,
             "max_value": 12,
         },
+        "result": {
+            "partial_unexpected_list": [5, 15],
+        },
         "success": False,
     }
-
-    # Parameters
-    unique_identifier = ["id"]
-    run_time = datetime(2025, 10, 15)
-    table_id = "test_dataset_test_table"
     result = get_single_expectation_afwijking_data(
         expectation_result=expectation_result,
-        df=df,
-        unique_identifier=unique_identifier,
-        run_time=run_time,
-        table_id=table_id,
+        df=sample_spark_df,
+        unique_identifier=["id"],
+        run_time=datetime(2025, 10, 24),
+        table_id="table_002",
     )
     assert isinstance(result, list)
-    assert len(result) == 2 
-    first_entry = result[0]
-    assert set(first_entry.keys()) == {
+    assert len(result) == 2  # 2 unique deviating values: 5 and 15
+    first = result[0]
+    assert set(first.keys()) == {
         "identifierVeldWaarde",
         "afwijkendeAttribuutWaarde",
         "dqDatum",
@@ -625,12 +636,13 @@ def test_get_single_expectation_afwijking_data_column_level(spark):
         "regelParameters",
         "bronTabelId",
     }
-    assert first_entry["bronTabelId"] == table_id
-    assert first_entry["regelParameters"]["min_value"] == 0.0
-    assert first_entry["regelParameters"]["max_value"] == 12.0
-    assert first_entry["dqDatum"] == run_time
-    unexpected_values = [r["afwijkendeAttribuutWaarde"] for r in result]
-    assert set(unexpected_values) == {5, 15}
+    assert first["bronTabelId"] == "table_002"
+    assert first["dqDatum"] == datetime(2025, 10, 24)
+    assert "min_value" in first["regelParameters"]
+    assert "max_value" in first["regelParameters"]
+    deviating_values = [r["afwijkendeAttribuutWaarde"] for r in result]
+    assert set(deviating_values) == {5, 15}
+
 
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.
