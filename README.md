@@ -47,6 +47,12 @@ run_validation(
     table_name=table_name,
 )
 ```
+Note: run_validation now returns a tuple as (validation_result, highest_severity_level):
+
+validation_result → Boolean flag indicating overall success (True if all checks pass, False otherwise).
+
+highest_severity_level → String indicating the highest severity among failed checks (one of 'fatal', 'error', 'warning', or 'ok').
+
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 

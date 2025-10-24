@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.12.7] - 23-10-2025
+ 
+### Added
+- Added Table-level expectation result fields to be populated in the Afwijking table
+
+### Changed
+- Extended `get_single_expectation_afwijking_data` function logic
+- Updated get_highest_severity_from_validation_result
+
+### Fixed
+- Refactored I/O
 
 ## [0.12.6] - 20-10-2025
  
