@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-import pandas as pd
 from chispa import assert_df_equality
 from pyspark.sql import SparkSession
 
