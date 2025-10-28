@@ -19,11 +19,11 @@ from src.dq_suite.output_transformations import (
     get_highest_severity_from_validation_result,
     get_parameters_from_results,
     get_regel_data,
+    get_single_expectation_afwijking_data,
     get_target_attr_for_rule,
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_single_expectation_afwijking_data,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -490,7 +490,7 @@ def test_get_highest_severity_from_validation_result():
         "rules": [
             {
                 "rule_name": "ExpectColumnValuesToNotBeNull",
-                "parameters": {"column": "name"}
+                "parameters": {"column": "name"},
             },
             {
                 "rule_name": "ExpectColumnValuesToBeUnique",
@@ -641,7 +641,6 @@ def test_column_level_expectation(sample_spark_df):
     assert "max_value" in first["regelParameters"]
     deviating_values = [r["afwijkendeAttribuutWaarde"] for r in result]
     assert set(deviating_values) == {5, 15}
-
 
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.
