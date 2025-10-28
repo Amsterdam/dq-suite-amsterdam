@@ -21,6 +21,7 @@ class Rule:
     ] | None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
+    rule_type: str | None = None  # only for geo rules
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -32,6 +33,11 @@ class Rule:
         if not isinstance(self.norm, int):
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
+            
+        if self.rule_type is not None and not isinstance(self.rule_type, str):
+            raise TypeError("'rule_type' should be of type str")
+        if self.rule_type not in (None, "geo"):
+            raise ValueError("'rule_type' must be either None or 'geo'")
 
         if self.severity is not None and self.severity not in (
             "fatal",
@@ -51,6 +57,8 @@ class Rule:
             return self.norm
         elif key == "severity":
             return self.severity
+        elif key == "rule_type":  
+            return self.rule_type
         raise KeyError(key)
 
 
@@ -300,6 +308,7 @@ class ValidationSettings:
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
+    
 
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):

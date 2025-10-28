@@ -5,7 +5,7 @@
     },
     "tables": [
         {
-            "unique_identifier": "id",
+            "unique_identifier": "the_id",
             "table_name": "the_table",
             "rules": [
                 {
