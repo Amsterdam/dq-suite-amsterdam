@@ -65,8 +65,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
   regelParameters STRING,
   norm INT,
   bronTabelId STRING,
-  attribuut STRING,
-  severity STRING)
+  attribuut STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (

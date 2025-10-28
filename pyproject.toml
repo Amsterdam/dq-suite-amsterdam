@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dq-suite-amsterdam"
 
-version = "0.12.07"
+version = "0.12.7"
 
 authors = [
   { name="Arthur Kordes", email="a.kordes@amsterdam.nl" },
