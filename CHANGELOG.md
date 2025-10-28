@@ -5,14 +5,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [0.12.03] - 08-09-2025
+## [0.12.6] - 20-10-2025
+ 
+### Added
+
+### Changed
+- Modify data type check on `unique_identifier` field when creating a `RulesDict` object, to allow for `List[str]` in addition to `str`. 
+
+## [0.12.3] - 08-09-2025
  
 ### Added
 
 ### Changed
 - Normalize parameters for consistent regelId, and process `observed_value` for `ExpectTableRowCountToEqual` and `ExpectTableRowCountToBeBetween` rules.
 =======
-## [0.12.00] - 05-09-2025
+## [0.12.0] - 05-09-2025
  
 ### Added
 - Added  `profile_and_create_rules` function and placed in `profile` folder

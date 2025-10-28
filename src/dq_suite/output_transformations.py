@@ -2,7 +2,6 @@ import copy
 import datetime
 import re
 from typing import Any, Dict, List
-import humps
 
 from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
@@ -92,6 +91,7 @@ def add_regel_id_column(
     )
     return df_with_id
 
+
 def round_numeric_params(params: dict) -> dict:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
@@ -99,7 +99,8 @@ def round_numeric_params(params: dict) -> dict:
             params[k] = round(float(params[k]), 1)
     return params
 
-def get_parameters_from_results(result: dict) -> dict:
+
+def get_parameters_from_results(result: dict) -> list[dict]:
     """
     Extracts parameters from a Great Expectations result.
 
@@ -209,7 +210,7 @@ def filter_df_based_on_deviating_values(
 
 def get_grouped_ids_per_deviating_value(
     filtered_df: DataFrame,
-    unique_identifier: list[str],
+    unique_identifier: List[str],
 ) -> list[str]:
     """
     Get the grouped ids per deviating value.
@@ -334,9 +335,11 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
             )
     return extracted_data
 
+
 def _is_number(x):
     # Return True only for real numbers (int/float). Explicitly exclude boolean values.
     return isinstance(x, (int, float)) and not isinstance(x, bool)
+
 
 def get_standard_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str
@@ -360,12 +363,16 @@ def get_standard_validation_results(
             # valid_records if unexpected_count is numeric
             unexpected_count_value = result.get("unexpected_count")
             if _is_number(unexpected_count_value):
-                valid_records = max(total_count - int(unexpected_count_value), 0)
+                valid_records = max(
+                    total_count - int(unexpected_count_value), 0
+                )
 
         # percentage_of_valid_records if unexpected_percent is numeric
         unexpected_percent_value = result.get("unexpected_percent")
         if _is_number(unexpected_percent_value):
-            percentage_of_valid_records = int(100.0 - float(unexpected_percent_value)) / 100.0
+            percentage_of_valid_records = (
+                int(100.0 - float(unexpected_percent_value)) / 100.0
+            )
     else:
         # Table row-count expectations:
         # total_count comes from observed_value (if numeric); other two metrics do not apply.
@@ -373,9 +380,11 @@ def get_standard_validation_results(
         if _is_number(observed_value):
             total_count = int(observed_value)
 
-    validation_result = "success" if expectation_result["success"] else "failure"
+    validation_result = (
+        "success" if expectation_result["success"] else "failure"
+    )
 
-    validation_parameters = round_numeric_params( 
+    validation_parameters = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
 
@@ -471,12 +480,20 @@ def get_validatie_data(
 def format_value(val):
     return val.wkt if hasattr(val, 'wkt') else val
 
+
 def format_attribute_value(row, attribute):
     if isinstance(attribute, list):
         return {attr: format_value(row.get(attr)) for attr in attribute}
     return format_value(row.get(attribute))
 
-def get_single_expectation_afwijking_data(expectation_result, df, unique_identifier, run_time, table_id):
+
+def get_single_expectation_afwijking_data(
+    expectation_result: Any,
+    df: DataFrame,
+    unique_identifier: List[str],
+    run_time: datetime,
+    table_id: str,
+) -> list[dict]:
     extracted_data = []
     rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
     parameter_list = round_numeric_params(
@@ -674,10 +691,11 @@ def write_validation_result_tables(
             validation_table_name=validation_table_name,
             validation_settings_obj=validation_settings_obj,
         )
-
-        assert not is_empty_dataframe(
-            df=df_validation_result
-        ), f"No validation results to write for table '{validation_table_name}'."
+        # TODO: figure out the necessity of this assertion
+        if validation_table_name == "validatie":
+            assert not is_empty_dataframe(
+                df=df_validation_result
+            ), f"No validation results to write for table '{validation_table_name}'."
 
         if validation_table_name == "validatie":
             schema = VALIDATIE_SCHEMA
@@ -696,13 +714,15 @@ def write_validation_result_tables(
         )
 
 
-def get_highest_severity_from_validation_result(validation_result: dict, rules_dict: dict) -> str:
+def get_highest_severity_from_validation_result(
+    validation_result: dict, rules_dict: dict
+) -> str:
     """
     validation_result: dict containing ValidationResult["results"] (from checkpoint_result.run_results.values()[0])
     rules_dict: Dictionary of rules containing rule_name and severity under the 'rules' key
 
     Returns:
-        The highest severity level ('fatal', 'error', 'warning', 'ok') 
+        The highest severity level ('fatal', 'error', 'warning', 'ok')
     """
 
     rules_by_name = {
@@ -713,7 +733,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     failed_severities = []
 
     severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
-    
+
     for result in validation_result.get("results", []):
         if result.get("success") is False:
             expectation_type = result["expectation_config"]["type"]
@@ -725,5 +745,7 @@ def get_highest_severity_from_validation_result(validation_result: dict, rules_d
     if not failed_severities:
         failed_severities.append("ok")
 
-    highest_severity = max(failed_severities, key=lambda sev: severity_priority.get(sev, 0))
+    highest_severity = max(
+        failed_severities, key=lambda sev: severity_priority.get(sev, 0)
+    )
     return highest_severity

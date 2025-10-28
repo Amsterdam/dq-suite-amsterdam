@@ -24,9 +24,9 @@ from pyspark.sql import DataFrame, SparkSession
 from .common import DatasetDict, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
+    get_highest_severity_from_validation_result,
     write_validation_metadata_tables,
     write_validation_result_tables,
-    get_highest_severity_from_validation_result
 )
 from .validation_input import (
     filter_validation_dict_by_table_name,
@@ -466,7 +466,9 @@ def run_validation(
     if debug_mode:  # Don't write to UC in debug mode
         return checkpoint_result.success, checkpoint_result
 
-    highest_severity = get_highest_severity_from_validation_result(validation_result, rules_dict)
+    highest_severity = get_highest_severity_from_validation_result(
+        validation_result, rules_dict
+    )
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:

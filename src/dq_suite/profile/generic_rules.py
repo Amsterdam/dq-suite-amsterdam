@@ -1,17 +1,17 @@
-from typing import Dict, Any
 import json
-from dq_suite.common import RulesDict, Rule, DatasetDict
+from typing import Dict
 
+from dq_suite.common import DatasetDict, RulesDict
 from dq_suite.profile.rules_module import (
-    row_count_rule,
-    column_match_rule,
-    column_unique_rule,
-    column_not_null_rule,
     column_between_rule,
-    column_type_rule,
-    datetime_regex_rule,
     column_compound_unique_rule,
+    column_match_rule,
+    column_not_null_rule,
+    column_type_rule,
+    column_unique_rule,
     column_values_in_set_rule,
+    datetime_regex_rule,
+    row_count_rule,
 )
 
 
@@ -30,7 +30,6 @@ def create_dq_rules(
         row_count_rule(n),
     ]
 
-    datetime_columns = []
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
@@ -59,7 +58,7 @@ def create_dq_rules(
                 column_between_rule(variable, details["min"], details["max"])
             )
 
-        if "Categorical" in col_type:
+        if "Categorical" in col_type or "Text" in col_type:
             col_type = "StringType"
         if col_type == "Numeric":
             col_min = details["min"]
