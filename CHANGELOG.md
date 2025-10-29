@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.12.8] - 29-10-2025
+ 
+### Added
+- Added updated expectation type in the Afwijking table
+
 ## [0.12.7] - 23-10-2025
  
 ### Added

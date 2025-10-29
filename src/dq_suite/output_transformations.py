@@ -398,6 +398,7 @@ def get_single_expectation_afwijking_data(
 ) -> list[dict]:
     extracted_data = []
     expectation_type = expectation_result["expectation_type"]
+    expectation_type = humps.pascalize(expectation_type)
     parameter_list = round_numeric_params(
         get_parameters_from_results(result=expectation_result)
     )
