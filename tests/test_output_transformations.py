@@ -579,7 +579,7 @@ def base_expectation_result():
         "expectation_type": "ExpectTableRowCountToEqual",
         "kwargs": {},
         "result": {},
-        "success": True,
+        "success": False,
     }
 
 

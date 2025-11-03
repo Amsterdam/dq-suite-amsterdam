@@ -404,18 +404,19 @@ def get_single_expectation_afwijking_data(
     )
     attribute = get_target_attr_for_rule(result=expectation_result)
     result_dict = expectation_result.get("result", {})
-    if "observed_value" in result_dict:  # Handle table-level expectations
-        deviating_attribute_value = result_dict.get("observed_value", [])
-        extracted_data.append(
-            {
-                "identifierVeldWaarde": None,
-                "afwijkendeAttribuutWaarde": deviating_attribute_value,
-                "dqDatum": run_time,
-                "regelNaam": expectation_type,
-                "regelParameters": parameter_list,
-                "bronTabelId": table_id,
-            }
-        )
+    if "observed_value" in result_dict: # Handle table-level expectations
+        if expectation_result.get("success") == False:
+            deviating_attribute_value = result_dict.get("observed_value", [])
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": None,
+                    "afwijkendeAttribuutWaarde": deviating_attribute_value,
+                    "dqDatum": run_time,
+                    "regelNaam": expectation_type,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": table_id,
+                }
+            )
     elif (
         "partial_unexpected_list" in result_dict
     ):  # Handle column-level expectations
