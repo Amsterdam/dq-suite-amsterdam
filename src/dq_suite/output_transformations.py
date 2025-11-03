@@ -404,9 +404,9 @@ def get_single_expectation_afwijking_data(
     )
     attribute = get_target_attr_for_rule(result=expectation_result)
     result_dict = expectation_result.get("result", {})
-    if "observed_value" in result_dict: # Handle table-level expectations
-        if expectation_result.get("success") == False:
-            deviating_attribute_value = result_dict.get("observed_value", [])
+    deviating_attribute_value = result_dict.get("observed_value")
+    if deviating_attribute_value is not None: # Handle table-level expectations
+        if not expectation_result.get("success"):
             extracted_data.append(
                 {
                     "identifierVeldWaarde": None,
