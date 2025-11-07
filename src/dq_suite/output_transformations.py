@@ -7,7 +7,6 @@ from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
     CheckpointResult,
 )
-
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
@@ -670,7 +669,6 @@ def create_validation_result_dataframe(
     validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
     validation_output = checkpoint_result
-     
     run_time = checkpoint_result.run_id.run_time
 
     if validation_table_name == "validatie":

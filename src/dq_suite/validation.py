@@ -357,7 +357,6 @@ def validate(
     validation_runner_obj.add_expectations_to_suite(
         validation_rules_list=rules_dict["rules"]
     )
-    
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
