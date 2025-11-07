@@ -557,7 +557,7 @@ def get_single_expectation_afwijking_data(
     else:  # Unknown / unsupported expectation
         raise ValueError(
             f"Unexpected format in expectation_result for rule '{rule_name}'. "
-            "Expected 'observed_value' or 'partial_unexpected_list' key."
+            "Expected 'unexpected_rows' or 'observed_value' or 'partial_unexpected_list' key."
         )
     return extracted_data
 
