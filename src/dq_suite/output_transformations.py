@@ -456,7 +456,6 @@ def get_validatie_data(
     """
     Get the validatie data from the dq_rules_dict.
     """
-
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
         f"{validation_settings_obj.table_name}"
@@ -475,7 +474,6 @@ def get_validatie_data(
                     df=df,
                 )
             )
-
     return extracted_data
 
 def format_value(val):
