@@ -2,7 +2,6 @@ import copy
 import datetime
 import re
 from typing import Any, Dict, List
-import humps
 
 from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
@@ -307,13 +306,15 @@ def get_bronattribuut_data(
 
 def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
-    
+
     # Round min/max values (if present) to a single decimal
     # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
     parameters = round_numeric_params(parameters)
 
+    if "column" not in parameters:
+        parameters["column"] = None
     return {
-        "regelNaam": humps.pascalize(rule["rule_name"]),
+        "regelNaam": rule["rule_name"],
         "regelParameters": parameters,
         "norm": rule.get("norm", None),
         "bronTabelId": table_id,
@@ -345,7 +346,7 @@ def _is_number(x):
 def get_standard_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
-    expectation_type: str = expectation_result.get("expectation_type", "")
+    expectation_type: str = expectation_result.get("expectation_config", {}).get("type", "")
     result: dict = expectation_result.get("result", {}) or {}
     is_row_count_exp = expectation_type.startswith("expect_table_row_count_to_")
 
@@ -380,7 +381,7 @@ def get_standard_validation_results(
         observed_value = result.get("observed_value")
         if _is_number(observed_value):
             total_count = int(observed_value)
-
+            
     validation_result = (
         "success" if expectation_result["success"] else "failure"
     )
@@ -501,9 +502,8 @@ def get_single_expectation_afwijking_data(
         get_parameters_from_results(expectation_result)
     )
     attribute = get_target_attr_for_rule(expectation_result)
-
+    result_dict = expectation_result.get("result", {})
     unexpected_rows = expectation_result.get("result", {}).get("details", {}).get("unexpected_rows")
-
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
@@ -516,9 +516,16 @@ def get_single_expectation_afwijking_data(
                 "regelParameters": parameter_list,
                 "bronTabelId": table_id,
             })
-    
+   
     elif "observed_value" in result_dict:  # Handle table-level expectations
         deviating_attribute_value = result_dict.get("observed_value", [])
+        # Skip adding if there's no deviation
+        if (
+            (deviating_attribute_value in [None, [], {}]
+            or (isinstance(deviating_attribute_value, str)
+                and deviating_attribute_value.strip().startswith("0 unexpected rows"))) or expectation_result["success"]==True
+        ):
+            return extracted_data  # do nothing, no afwijking
         extracted_data.append(
             {
                 "identifierVeldWaarde": None,
@@ -529,9 +536,7 @@ def get_single_expectation_afwijking_data(
                 "bronTabelId": table_id,
             }
         )
-    elif (
-        "partial_unexpected_list" in result_dict
-    ):  # Handle column-level expectations
+    elif "partial_unexpected_list" in result_dict:  # Handle column-level expectations
         deviating_attribute_value = result_dict.get(
             "partial_unexpected_list", []
         )
@@ -560,7 +565,7 @@ def get_single_expectation_afwijking_data(
             )
     else:  # Unknown / unsupported expectation
         raise ValueError(
-            f"Unexpected format in expectation_result for rule '{expectation_type}'. "
+            f"Unexpected format in expectation_result for rule '{rule_name}'. "
             "Expected 'observed_value' or 'partial_unexpected_list' key."
         )
     return extracted_data
@@ -768,9 +773,8 @@ def get_highest_severity_from_validation_result(
     severity_priority = {"fatal": 3, "error": 2, "warning": 1, "ok": 0}
 
     for result in validation_result.get("results", []):
-        if result.get("success") is False:
-            expectation_type = result["expectation_config"]["type"]
-            rule_name = humps.pascalize(expectation_type)
+        if not result.get("success"):
+            rule_name = result["expectation_config"]["meta"]["rule_name"]
             severity = rules_by_name.get(rule_name)
             if severity:
                 failed_severities.append(severity)

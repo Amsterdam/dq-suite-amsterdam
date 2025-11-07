@@ -165,54 +165,48 @@ class ValidationRunner:
         params = validation_rule.get("parameters", {})
         geometry_column = params.get("column", "geometry")
         expected_geometry_type = params.get("geometry_type")
-        
-        # Define your custom SQL query.
-        if rule_name == "ExpectColumnValuesToHaveValidGeometry":
-            custom_rule_query = f"""
-                SELECT
-                    *
-                FROM
-                    {{batch}}
-                WHERE
-                    NOT ST_IsValid({geometry_column})"""
-            custom_rule_description = "All geometry data should be valid."
-        
-        elif rule_name == "ExpectGeometryColumnValuesToNotBeEmpty":
-            custom_rule_query = f"""
-                SELECT
-                    *
-                FROM
-                    {{batch}}
-                WHERE
-                    ST_IsEmpty({geometry_column})"""
-            custom_rule_description = "Geometry column should not contain empty geometries."
 
-        elif rule_name == "ExpectColumnValuesToBeOfGeometryType":
+        # Default template
+        base_query_template = """
+            SELECT * FROM {{batch}}
+            WHERE {where_condition}
+        """
+
+        geo_rules = {
+            "ExpectColumnValuesToHaveValidGeometry": (
+                f"NOT ST_IsValid({geometry_column})",
+                "All geometry data should be valid."
+            ),
+            "ExpectGeometryColumnValuesToNotBeEmpty": (
+                f"ST_IsEmpty({geometry_column})",
+                "Geometry column should not contain empty geometries."
+            ),
+            "ExpectColumnValuesToBeOfGeometryType": (
+                None,  # special case, handled below
+                None
+            )
+        }
+
+        if rule_name not in geo_rules:
+            raise ValueError(f"Unsupported geo rule_name: {rule_name}")
+
+        where_condition, description = geo_rules[rule_name]
+
+        if rule_name == "ExpectColumnValuesToBeOfGeometryType":
             if not expected_geometry_type:
-                raise ValueError("Missing 'geometry_type' in parameters for rule ExpectColumnValuesToBeOfGeometryType.")
+                raise ValueError("Missing 'geometry_type' in parameters for ExpectColumnValuesToBeOfGeometryType.")
+            where_condition = f"ST_GeometryType({geometry_column}) != 'ST_{expected_geometry_type}'"
+            description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
 
-            expected_geometry_type_formatted = f"ST_{expected_geometry_type}"
+        custom_query = base_query_template.format(where_condition=where_condition)
 
-            custom_rule_query = f"""
-                SELECT
-                    *
-                FROM
-                    {{batch}}
-                WHERE
-                    ST_GeometryType({geometry_column}) != '{expected_geometry_type_formatted}'"""
-            custom_rule_description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
-
-        else:
-            raise ValueError(f"Unsupported rule_name: {rule_name}")
-
-            # Create an Expectation using the UnexpectedRowsExpectation class and your parameters.
         return UnexpectedRowsExpectation(
-            unexpected_rows_query=custom_rule_query,
-            description=custom_rule_description,
+            unexpected_rows_query=custom_query,
+            description=description,
             meta={
                 "rule_name": rule_name,
                 "column": geometry_column,
-                "geometry_type": expected_geometry_type
+                "geometry_type": expected_geometry_type,
             },
         )
 
@@ -413,11 +407,6 @@ def run_validation(
     debug_mode: default (False) returns a boolean flag, alternatively (True)
         a tuple containing boolean flag and CheckpointResult object is returned
     """
-    if not hasattr(df, "table_name"):
-        # TODO/check: we can have df.table_name !=
-        #  table_name: is this wrong?
-        df.table_name = table_name
-
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
 

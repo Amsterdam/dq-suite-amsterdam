@@ -46,8 +46,8 @@ class Rule:
         ):
             raise ValueError(
                 "'severity' must be one of ('fatal', 'error', 'warning') or None"
-            )
-
+            ) 
+                
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name

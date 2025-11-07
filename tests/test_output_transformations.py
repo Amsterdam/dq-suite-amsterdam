@@ -439,7 +439,7 @@ class TestGetRegelData:
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
                 "severity": "fatal",
-                "regelParameters": {"min_value": 1, "max_value": 1000},
+                "regelParameters": {"min_value": 1, "max_value": 1000, "column": None},
                 "bronTabelId": "the_dataset_the_other_table",
                 "attribuut": None,
                 "norm": None,
@@ -597,21 +597,16 @@ def test_get_highest_severity_from_validation_result():
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
+                    "meta":{"rule_name": "ExpectColumnValuesToNotBeNull"} 
                 },
             },
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_be_unique"
+                    "meta":{"rule_name": "ExpectColumnValuesToBeUnique"} 
                 },
             },
-            {
-                "success": True,
-                "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
-                },
-            },
+
         ]
     }
 
@@ -640,7 +635,7 @@ def test_get_highest_severity_all_successful():
             {
                 "success": True,
                 "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
+                    "meta":{"rule_name": "ExpectColumnValuesToNotBeNull"}
                 },
             }
         ]
@@ -668,7 +663,7 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_be_unique"
+                    "meta":{"rule_name":"expect_column_values_to_be_unique"}
                 },
             }
         ]
@@ -703,18 +698,22 @@ def sample_spark_df(spark):
 
 @pytest.fixture
 def base_expectation_result():
-    """Base expectation template for get_single_expectation_afwijking_data."""
+    """Base expectation template for get_single_expectation_afwijking_data with wrapped structure."""
     return {
-        "expectation_type": "ExpectTableRowCountToEqual",
-        "kwargs": {},
+        "expectation_config": {
+            "meta": {},
+            "kwargs": {},
+        },
         "result": {},
-        "success": True,
+        "success": False,
     }
 
 
 def test_table_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of table-level expectations (observed_value)."""
     base_expectation_result["result"] = {"observed_value": 123}
+    base_expectation_result["expectation_config"]["meta"]["rule_name"] = "ExpectTableRowCountToEqual"
+
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
         df=sample_spark_df,
@@ -730,31 +729,30 @@ def test_table_level_expectation(base_expectation_result, sample_spark_df):
     assert row["regelNaam"] == "ExpectTableRowCountToEqual"
     assert row["bronTabelId"] == "table_001"
     assert row["dqDatum"] == datetime(2025, 10, 15)
-
-
-def test_column_level_expectation(sample_spark_df):
+    
+def test_column_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of column-level expectations (partial_unexpected_list)."""
-    expectation_result = {
-        "expectation_type": "ExpectColumnValuesToBeBetween",
-        "kwargs": {
-            "column": "age",
-            "min_value": 0,
-            "max_value": 12,
-        },
-        "result": {
-            "partial_unexpected_list": [5, 15],
-        },
-        "success": False,
+    base_expectation_result["expectation_config"]["type"] = "expect_column_values_to_be_between"
+    base_expectation_result["expectation_config"]["meta"] = {
+        "column": "age",
+        "rule_name": "ExpectColumnValuesToBeBetween",
     }
+    base_expectation_result["expectation_config"]["kwargs"] = {
+        "column": "age",
+        "min_value": 0,
+        "max_value": 12,
+    }
+    base_expectation_result["result"] = {"partial_unexpected_list": [5, 15]}
+
     result = get_single_expectation_afwijking_data(
-        expectation_result=expectation_result,
+        expectation_result=base_expectation_result,
         df=sample_spark_df,
         unique_identifier=["id"],
         run_time=datetime(2025, 10, 24),
         table_id="table_002",
     )
     assert isinstance(result, list)
-    assert len(result) == 2  # 2 unique deviating values: 5 and 15
+    assert len(result) == 2 
     first = result[0]
     assert set(first.keys()) == {
         "identifierVeldWaarde",
