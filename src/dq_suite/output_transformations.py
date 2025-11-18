@@ -91,7 +91,7 @@ def add_regel_id_column(
     return df_with_id
 
 
-def round_numeric_params(params: dict) -> dict:
+def round_numeric_params(params: dict) -> list[dict]:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
         if k in params and params[k] is not None:
@@ -100,7 +100,9 @@ def round_numeric_params(params: dict) -> dict:
 
 
 def get_parameters_from_results(result: dict) -> dict:
-    """Extract meaningful parameters from a Great Expectations result for rule hashing."""
+    """
+    Extract meaningful parameters from a Great Expectations result for rule hashing.
+    """
     if "expectation_config" not in result or result["expectation_config"] is None:
         raise ValueError("No expectation_config in result.")
     exp_cfg = result.get("expectation_config")
