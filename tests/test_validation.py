@@ -320,22 +320,22 @@ class TestValidationRunner:
         }
 
     def test_create_geo_expectation_without_param_raises(self, validation_runner_obj):
-        rule = GeoRule(
-            rule_name="ExpectColumnValuesToBeOfGeometryType",
-            parameters={"column": "geom", "geometry_type": geometry_type}
-        )
         with pytest.raises(ValueError) as exc:
+            rule = GeoRule(
+            rule_name="ExpectColumnValuesToBeOfGeometryType",
+            parameters={"column": "geom"}
+            )
             validation_runner_obj._create_geo_expectation(None, rule)
         assert "geometry_type" in str(exc.value)
 
     def test_create_geo_expectation_unsupported_rule_raises(self, validation_runner_obj):
-        rule = GeoRule(
-            rule_name="SomeUnknownGeoRule",
-            parameters={"column": "geom"}
-        )
         with pytest.raises(ValueError) as exc:
+            rule = GeoRule(
+                rule_name="SomeUnknownGeoRule",
+                parameters={"column": "geom"}
+            )
             validation_runner_obj._create_geo_expectation(None, rule)
-        assert ("Unsupported" in str(exc.value)) and (rule["rule_name"] in str(exc.value))
+        assert ("Unsupported" in str(exc.value)) and ("SomeUnknownGeoRule" in str(exc.value))
 
 
 @pytest.mark.usefixtures("gx_checkpoint_result")
