@@ -111,7 +111,6 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     # 1) From meta (if any)
     if "meta" in exp_cfg and exp_cfg["meta"] is not None:
         parameters.update(copy.deepcopy(exp_cfg["meta"]))
-        print("parameters in meta: ", parameters) ##delete
     # 2) From kwargs (if any) — keep only rule-specific args
     if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
         kw = copy.deepcopy(exp_cfg["kwargs"])
@@ -119,7 +118,6 @@ def get_parameters_from_results(result: dict) -> list[dict]:
         for drop_key in ("batch_id", "column", "unexpected_rows_query"):
             kw.pop(drop_key, None)
         parameters.update(kw)
-        print("parameters in kwargs: ", parameters) ##delete
     if not parameters:
         raise ValueError("No meta or kwargs found to build parameters.")
 
@@ -127,15 +125,12 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     for k in ("table_name", "rule_name"):
         if k in parameters:
             parameters.pop(k, None)
-    print("parameters after removing helpers: ", parameters) ##delete
     # Remove geometry_type if explicitly None
     if parameters.get("geometry_type") is None:
         parameters.pop("geometry_type", None)
-    print("parameters after removing geometry_type: ", parameters) ##delete
     # 4) Normalize list-like values for determinism
     if isinstance(parameters.get("value_set"), (list, tuple)):
         parameters["value_set"] = list(parameters["value_set"])
-    print("parameters after normalizing ", parameters) ##delete
     return parameters
 
 
