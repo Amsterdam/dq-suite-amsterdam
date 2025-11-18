@@ -91,7 +91,7 @@ def add_regel_id_column(
     return df_with_id
 
 
-def round_numeric_params(params: dict) -> list[dict]:
+def round_numeric_params(params: dict) -> dict:
     params = copy.deepcopy(params)
     for k in ("min_value", "max_value", "value"):
         if k in params and params[k] is not None:
@@ -99,7 +99,7 @@ def round_numeric_params(params: dict) -> list[dict]:
     return params
 
 
-def get_parameters_from_results(result: dict) -> dict:
+def get_parameters_from_results(result: dict) -> list[dict]:
     """
     Extract meaningful parameters from a Great Expectations result for rule hashing.
     """
@@ -111,7 +111,7 @@ def get_parameters_from_results(result: dict) -> dict:
     # 1) From meta (if any)
     if "meta" in exp_cfg and exp_cfg["meta"] is not None:
         parameters.update(copy.deepcopy(exp_cfg["meta"]))
-
+        print("parameters in meta: ", parameters) ##delete
     # 2) From kwargs (if any) — keep only rule-specific args
     if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
         kw = copy.deepcopy(exp_cfg["kwargs"])
@@ -119,7 +119,7 @@ def get_parameters_from_results(result: dict) -> dict:
         for drop_key in ("batch_id", "column", "unexpected_rows_query"):
             kw.pop(drop_key, None)
         parameters.update(kw)
-
+        print("parameters in kwargs: ", parameters) ##delete
     if not parameters:
         raise ValueError("No meta or kwargs found to build parameters.")
 
@@ -127,15 +127,15 @@ def get_parameters_from_results(result: dict) -> dict:
     for k in ("table_name", "rule_name"):
         if k in parameters:
             parameters.pop(k, None)
-
+    print("parameters after removing helpers: ", parameters) ##delete
     # Remove geometry_type if explicitly None
     if parameters.get("geometry_type") is None:
         parameters.pop("geometry_type", None)
-
+    print("parameters after removing geometry_type: ", parameters) ##delete
     # 4) Normalize list-like values for determinism
     if isinstance(parameters.get("value_set"), (list, tuple)):
         parameters["value_set"] = list(parameters["value_set"])
-
+    print("parameters after normalizing ", parameters) ##delete
     return parameters
 
 
