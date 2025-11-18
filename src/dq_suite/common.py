@@ -18,10 +18,10 @@ class Rule:
     parameters: Dict[str, Any]  # Collection of parameters required for
     severity: Literal[
         "fatal", "error", "warning"
-    ] | None  # Indicates the impact level of a rule if it fails.
+    ] | None = None # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
-    rule_type: str | None = None  # only for geo rules
+
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -33,11 +33,6 @@ class Rule:
         if not isinstance(self.norm, int):
             if self.norm is not None:
                 raise TypeError("'norm' should be of type int")
-            
-        if self.rule_type is not None and not isinstance(self.rule_type, str):
-            raise TypeError("'rule_type' should be of type str")
-        if self.rule_type not in (None, "geo"):
-            raise ValueError("'rule_type' must be either None or 'geo'")
 
         if self.severity is not None and self.severity not in (
             "fatal",
@@ -57,12 +52,42 @@ class Rule:
             return self.norm
         elif key == "severity":
             return self.severity
-        elif key == "rule_type":  
-            return self.rule_type
         raise KeyError(key)
 
 
-RulesList = list[Rule]  # a list of DQ rules
+@dataclass
+class GeoRule(Rule):
+    """A specialized rule for geospatial validation."""
+    rule_type: Literal["geo"] = "geo"
+    geo_query_template: str | None = None
+    description: str | None = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not isinstance(self.rule_type, str):
+            raise TypeError("'rule_type' should be of type str")
+        if self.rule_type != "geo":
+            raise ValueError("'rule_type' must be 'geo'")
+        
+        # Set geo_query_template and description based on rule_name
+        geometry_column = self.parameters.get("column", "geometry")
+        expected_geometry_type = self.parameters.get("geometry_type")
+
+        if self.rule_name == "ExpectColumnValuesToHaveValidGeometry":
+            self.geo_query_template = f"NOT ST_IsValid({geometry_column})"
+            self.description = "All geometry data should be valid."
+        elif self.rule_name == "ExpectGeometryColumnValuesToNotBeEmpty":
+            self.geo_query_template = f"ST_IsEmpty({geometry_column})"
+            self.description = "Geometry column should not contain empty geometries."
+        elif self.rule_name == "ExpectColumnValuesToBeOfGeometryType":
+            if not expected_geometry_type:
+                raise ValueError("Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType.")
+            self.geo_query_template = f"ST_GeometryType({geometry_column}) != 'ST_{expected_geometry_type}'"
+            self.description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
+        else:
+            raise ValueError(f"Unsupported geo rule_name: {self.rule_name}")
+
+RulesList = list[Rule, GeoRule]  # a list of DQ rules
 
 
 @dataclass()

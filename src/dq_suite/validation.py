@@ -21,7 +21,7 @@ from great_expectations.exceptions import DataContextError
 from great_expectations.expectations import core as gx_core, UnexpectedRowsExpectation
 from pyspark.sql import DataFrame, SparkSession
 
-from .common import DatasetDict, Rule, RulesDict, ValidationSettings
+from .common import DatasetDict, Rule, GeoRule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     get_highest_severity_from_validation_result,
@@ -140,7 +140,6 @@ class ValidationRunner:
         """
         gx_expectation_name = validation_rule["rule_name"]
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
-
         gx_expectation_parameters: dict = copy.deepcopy(
             validation_rule["parameters"]
         )
@@ -153,61 +152,24 @@ class ValidationRunner:
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
-
-    def _create_geo_expectation(self, expectation_suite_obj, validation_rule):
+    def _create_geo_expectation(self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule):
         """
-        Create a spatial validation rule for Great Expectations on Spark/Sedona.
-
-        It reads `validation_rule` and builds a SQL filter that returns rows
-        violating the rule (the “unexpected” rows). It also sets a short, human-readable
-        description for reporting.
+        Create a spatial validation rule for Great Expectations on Spark/Sedona
+        directly from a GeoRule object.
         """
-        rule_name = validation_rule.get("rule_name")
-        params = validation_rule.get("parameters", {})
-        geometry_column = params.get("column", "geometry")
-        expected_geometry_type = params.get("geometry_type")
-
-        # Default template
         base_query_template = """
             SELECT * FROM {{batch}}
             WHERE {where_condition}
         """
-
-        geo_rules = {
-            "ExpectColumnValuesToHaveValidGeometry": (
-                f"NOT ST_IsValid({geometry_column})",
-                "All geometry data should be valid."
-            ),
-            "ExpectGeometryColumnValuesToNotBeEmpty": (
-                f"ST_IsEmpty({geometry_column})",
-                "Geometry column should not contain empty geometries."
-            ),
-            "ExpectColumnValuesToBeOfGeometryType": (
-                None,  # special case, handled below
-                None
-            )
-        }
-
-        if rule_name not in geo_rules:
-            raise ValueError(f"Unsupported geo rule_name: {rule_name}")
-
-        where_condition, description = geo_rules[rule_name]
-
-        if rule_name == "ExpectColumnValuesToBeOfGeometryType":
-            if not expected_geometry_type:
-                raise ValueError("Missing 'geometry_type' in parameters for ExpectColumnValuesToBeOfGeometryType.")
-            where_condition = f"ST_GeometryType({geometry_column}) != 'ST_{expected_geometry_type}'"
-            description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
-
-        custom_query = base_query_template.format(where_condition=where_condition)
+        custom_query = base_query_template.format(where_condition=geo_rule.geo_query_template)
 
         return UnexpectedRowsExpectation(
             unexpected_rows_query=custom_query,
-            description=description,
+            description=geo_rule.description,
             meta={
-                "rule_name": rule_name,
-                "column": geometry_column,
-                "geometry_type": expected_geometry_type,
+                "rule_name": geo_rule.rule_name,
+                "column": geo_rule.parameters.get("column"),
+                "geometry_type": geo_rule.parameters.get("geometry_type"),
             },
         )
 
@@ -217,7 +179,7 @@ class ValidationRunner:
         # it does not exist
 
         for validation_rule in validation_rules_list:
-            if validation_rule.get("rule_type") == "geo":
+            if isinstance(validation_rule, GeoRule):
                 gx_expectation_obj = self._create_geo_expectation(
                     expectation_suite_obj, validation_rule
                 )
@@ -444,9 +406,24 @@ def run_validation(
         notify_on=notify_on,
     )
 
+    # 3) Convert rules are in JSON to Rule / GeoRule objects
+    rules_list = []
+    for r in rules_dict["rules"]:
+        if r.get("rule_type") == "geo":
+            rules_list.append(GeoRule(**r))
+        else:
+            rules_list.append(Rule(**r))
+
+    # 4) Cretae RulesDict 
+    rules_dict_obj = RulesDict(
+        unique_identifier=rules_dict["unique_identifier"],
+        table_name=rules_dict["table_name"],
+        rules=rules_list
+    )
+
     checkpoint_result = validate(
         df=df,
-        rules_dict=rules_dict,
+        rules_dict=rules_dict_obj,
         validation_settings_obj=validation_settings_obj,
     )
 

@@ -99,19 +99,8 @@ def round_numeric_params(params: dict) -> dict:
     return params
 
 
-def get_parameters_from_results(result: dict) -> list[dict]:
-    """
-    Extracts parameters from a Great Expectations result.
-
-    Behavior:
-    - Look inside result["expectation_config"].
-    - If present, copy fields from .meta.
-    - Also copy fields from .kwargs, but drop 'batch_id' and 'column'.
-    - Remove meta-only helper keys like 'table_name' and 'rule_name'.
-    - Normalize certain values (e.g., convert value_set tuples to lists).
-    - Return a single flat dict of parameters suitable for regelId hashing.
-    """
-
+def get_parameters_from_results(result: dict) -> dict:
+    """Extract meaningful parameters from a Great Expectations result for rule hashing."""
     if "expectation_config" not in result or result["expectation_config"] is None:
         raise ValueError("No expectation_config in result.")
     exp_cfg = result.get("expectation_config")
@@ -342,7 +331,7 @@ def _is_number(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
-def get_standard_validation_results(
+def get_non_geo_validation_result(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
     expectation_type: str = expectation_result.get("expectation_config", {}).get("type", "")
@@ -380,7 +369,7 @@ def get_standard_validation_results(
         observed_value = result.get("observed_value")
         if _is_number(observed_value):
             total_count = int(observed_value)
-            
+
     validation_result = (
         "success" if expectation_result["success"] else "failure"
     )
@@ -414,11 +403,7 @@ def get_custom_validation_results(
 
     total_count = df.count()
 
-    percentage_of_valid_records = (
-        (total_count - unexpected_count) / total_count
-        if total_count and total_count > 0
-        else None
-    )
+    percentage_of_valid_records = (total_count - unexpected_count) / total_count
 
     validation_result = "success" if unexpected_count == 0 else "failure"
     validation_parameters = get_parameters_from_results(result=expectation_result)
@@ -443,9 +428,10 @@ def get_single_validation_result_dict(
     if expectation_type == "unexpected_rows_expectation":
         validation_results = get_custom_validation_results(expectation_result, run_time, table_id, df)
     else:
-        validation_results = get_standard_validation_results(expectation_result, run_time, table_id)
+        validation_results = get_non_geo_validation_result(expectation_result, run_time, table_id)
 
     return validation_results
+
 
 def get_validatie_data(
     validation_settings_obj: ValidationSettings,
@@ -476,7 +462,12 @@ def get_validatie_data(
             )
     return extracted_data
 
-def format_value(val):
+def format_value(val: Any) -> Any:
+    """
+    Format a value for output.
+    - If val has a 'wkt' attribute (e.g., a geometry object), return val.wkt.
+    - Otherwise, return val as-is.
+    """
     return val.wkt if hasattr(val, 'wkt') else val
 
 
@@ -514,17 +505,24 @@ def get_single_expectation_afwijking_data(
                 "bronTabelId": table_id,
             })
     elif "observed_value" in result_dict:  # Handle table-level expectations
-        if not expectation_result.get("success"):
-            extracted_data.append(
-                {
-                    "identifierVeldWaarde": None,
-                    "afwijkendeAttribuutWaarde": result_dict.get("observed_value", []),
-                    "dqDatum": run_time,
-                    "regelNaam": rule_name,
-                    "regelParameters": parameter_list,
-                    "bronTabelId": table_id,
-                }
-            )
+        deviating_attribute_value = result_dict.get("observed_value", [])
+        # Skip adding if there's no deviation
+        if (
+            (deviating_attribute_value in [None, [], {}]
+            or (isinstance(deviating_attribute_value, str)
+                and deviating_attribute_value.strip().startswith("0 unexpected rows"))) or expectation_result["success"]==True
+        ):
+            return extracted_data  # do nothing, no afwijking
+        extracted_data.append(
+            {
+                "identifierVeldWaarde": None,
+                "afwijkendeAttribuutWaarde": deviating_attribute_value,
+                "dqDatum": run_time,
+                "regelNaam": rule_name,
+                "regelParameters": parameter_list,
+                "bronTabelId": table_id,
+            }
+        )
     elif "partial_unexpected_list" in result_dict:  # Handle column-level expectations
         deviating_attribute_value = result_dict.get(
             "partial_unexpected_list", []
@@ -658,7 +656,7 @@ def create_validation_result_dataframe(
     validation_table_name: str,
     validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
-    validation_output = checkpoint_result
+    validation_output = checkpoint_result 
     run_time = checkpoint_result.run_id.run_time
 
     if validation_table_name == "validatie":
