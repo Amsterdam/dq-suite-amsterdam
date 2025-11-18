@@ -12,7 +12,7 @@ from great_expectations.expectations import ExpectColumnDistinctValuesToEqualSet
 from pyspark.sql import SparkSession
 from pyspark.sql.types import IntegerType, StructField, StructType
 
-from src.dq_suite.common import Rule, ValidationSettings
+from src.dq_suite.common import Rule, GeoRule, ValidationSettings
 from src.dq_suite.output_transformations import (
     create_metadata_dataframe,
     create_validation_result_dataframe,
@@ -189,13 +189,11 @@ class TestValidationRunner:
             "severity": "fatal",
             "parameters": {"column": "the_column", "value_set": [1, 2, 3]}
         },
-        {
-            "rule_name": "ExpectColumnValuesToHaveValidGeometry",
-            "severity": "fatal",
-            "parameters": {"column": "geometry"},
-            "rule_type": "geo"
-        }
-    ]
+            GeoRule(
+            rule_name="ExpectColumnValuesToHaveValidGeometry",
+            parameters={"column": "geometry"}
+            )
+        ]
         validation_runner_obj.add_expectations_to_suite(
             validation_rules_list=validation_rules_list
         )
@@ -280,8 +278,10 @@ class TestValidationRunner:
         pass
     
     def test_create_geo_expectation_valid_geometry_meta_and_desc(self, validation_runner_obj):
-        rule = {"rule_name": "ExpectColumnValuesToHaveValidGeometry",
-                "parameters": {"column": "geometry"}}
+        rule = GeoRule(
+            rule_name="ExpectColumnValuesToHaveValidGeometry",
+            parameters={"column": "geometry"}
+        )
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == "All geometry data should be valid."
         assert result.meta == {
@@ -291,8 +291,10 @@ class TestValidationRunner:
         }
 
     def test_create_geo_expectation_not_empty_meta_and_desc(self, validation_runner_obj):
-        rule = {"rule_name": "ExpectGeometryColumnValuesToNotBeEmpty",
-                "parameters": {"column": "geom"}}
+        rule = GeoRule(
+            rule_name="ExpectGeometryColumnValuesToNotBeEmpty",
+            parameters={"column": "geom"}
+        )
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == "Geometry column should not contain empty geometries."
         assert result.meta == {
@@ -303,8 +305,10 @@ class TestValidationRunner:
 
     @pytest.mark.parametrize("geometry_type", ["point", "LineString", "POLYGON"])   # test different geometry types
     def test_create_geo_expectation_specific_type(self, validation_runner_obj, geometry_type):
-        rule = {"rule_name": "ExpectColumnValuesToBeOfGeometryType",
-                "parameters": {"column": "geom", "geometry_type": geometry_type}}
+        rule = GeoRule(
+            rule_name="ExpectColumnValuesToBeOfGeometryType",
+            parameters={"column": "geom", "geometry_type": geometry_type}
+        )
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == (
             f"Geometry column should contain only {geometry_type.upper()} geometries."
@@ -316,15 +320,19 @@ class TestValidationRunner:
         }
 
     def test_create_geo_expectation_without_param_raises(self, validation_runner_obj):
-        rule = {"rule_name": "ExpectColumnValuesToBeOfGeometryType",
-                "parameters": {"column": "geom"}}
+        rule = GeoRule(
+            rule_name="ExpectColumnValuesToBeOfGeometryType",
+            parameters={"column": "geom", "geometry_type": geometry_type}
+        )
         with pytest.raises(ValueError) as exc:
             validation_runner_obj._create_geo_expectation(None, rule)
         assert "geometry_type" in str(exc.value)
 
     def test_create_geo_expectation_unsupported_rule_raises(self, validation_runner_obj):
-        rule = {"rule_name": "SomeUnknownGeoRule",
-                "parameters": {"column": "geom"}}
+        rule = GeoRule(
+            rule_name="SomeUnknownGeoRule",
+            parameters={"column": "geom"}
+        )
         with pytest.raises(ValueError) as exc:
             validation_runner_obj._create_geo_expectation(None, rule)
         assert ("Unsupported" in str(exc.value)) and (rule["rule_name"] in str(exc.value))
