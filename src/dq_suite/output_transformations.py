@@ -102,36 +102,56 @@ def round_numeric_params(params: dict) -> dict:
 def get_parameters_from_results(result: dict) -> list[dict]:
     """
     Extract meaningful parameters from a Great Expectations result for rule hashing.
+    This function processes both the `meta` and `kwargs` sections of the expectation config,
+    removes non-semantic keys, and normalizes list-like values.
     """
-    if "expectation_config" not in result or result["expectation_config"] is None:
-        raise ValueError("No expectation_config in result.")
-    exp_cfg = result.get("expectation_config")
-    parameters: dict = {}
-
-    # 1) From meta (if any)
-    if "meta" in exp_cfg and exp_cfg["meta"] is not None:
-        parameters.update(copy.deepcopy(exp_cfg["meta"]))
-    # 2) From kwargs (if any) — keep only rule-specific args
-    if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
-        kw = copy.deepcopy(exp_cfg["kwargs"])
-        # Drop runtime / structural args that shouldn't affect the rule identity
-        for drop_key in ("batch_id", "column", "unexpected_rows_query"):
-            kw.pop(drop_key, None)
-        parameters.update(kw)
+    exp_cfg = extract_expectation_config(result)
+    parameters = merge_parameters(exp_cfg)
+    
     if not parameters:
         raise ValueError("No meta or kwargs found to build parameters.")
 
-    # 3) Remove meta helper keys not part of rule semantics
-    for k in ("table_name", "rule_name"):
-        if k in parameters:
-            parameters.pop(k, None)
-    # Remove geometry_type if explicitly None
-    if parameters.get("geometry_type") is None:
-        parameters.pop("geometry_type", None)
-    # 4) Normalize list-like values for determinism
-    if isinstance(parameters.get("value_set"), (list, tuple)):
-        parameters["value_set"] = list(parameters["value_set"])
+    parameters = clean_helper_keys(parameters)
+    parameters = remove_null_geometry_type(parameters)
+    parameters = normalize_list_values(parameters)
     return parameters
+
+
+def extract_expectation_config(result: dict) -> dict:
+    if "expectation_config" not in result or result["expectation_config"] is None:
+        raise ValueError("No expectation_config in result.")
+    return result["expectation_config"]
+
+
+def merge_parameters(exp_cfg: dict) -> dict:
+    parameters = {}
+    
+    if "meta" in exp_cfg and exp_cfg["meta"] is not None:
+        parameters.update(copy.deepcopy(exp_cfg["meta"]))
+    if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
+        kw = copy.deepcopy(exp_cfg["kwargs"])
+        for drop_key in ("batch_id", "column", "unexpected_rows_query"):
+            kw.pop(drop_key, None)
+        parameters.update(kw)
+    return parameters
+
+
+def clean_helper_keys(params: dict) -> dict:
+    for key in ("table_name", "rule_name"):
+        params.pop(key, None)
+    return params
+
+
+def remove_null_geometry_type(params: dict) -> dict:
+    if params.get("geometry_type") is None:
+        params.pop("geometry_type", None)
+    return params
+
+
+def normalize_list_values(params: dict) -> dict:
+    if isinstance(params.get("value_set"), (list, tuple)):
+        params["value_set"] = list(params["value_set"])
+    return params
 
 
 def get_target_attr_for_rule(result: dict) -> str | None:
