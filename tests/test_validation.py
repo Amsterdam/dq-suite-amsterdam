@@ -285,7 +285,7 @@ class TestValidationRunner:
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == "All geometry data should be valid."
         assert result.meta == {
-            "rule_name": "ExpectColumnValuesToHaveValidGeometry",
+            "rule": "ExpectColumnValuesToHaveValidGeometry",
             "column": "geometry",
             "geometry_type": None,
         }
@@ -298,7 +298,7 @@ class TestValidationRunner:
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == "Geometry column should not contain empty geometries."
         assert result.meta == {
-            "rule_name": "ExpectGeometryColumnValuesToNotBeEmpty",
+            "rule": "ExpectGeometryColumnValuesToNotBeEmpty",
             "column": "geom",
             "geometry_type": None,
         }
@@ -314,7 +314,7 @@ class TestValidationRunner:
             f"Geometry column should contain only {geometry_type.upper()} geometries."
         )
         assert result.meta == {
-            "rule_name": "ExpectColumnValuesToBeOfGeometryType",
+            "rule": "ExpectColumnValuesToBeOfGeometryType",
             "column": "geom",
             "geometry_type": geometry_type,
         }

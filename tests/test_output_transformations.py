@@ -155,15 +155,15 @@ class TestGetParametersFromResults:
         (
             {
                 "value": 10,
-                "table_name": "table",
-                "rule_name": "ExpectColumnValuesToNotBeNull",
+                "table": "table",
+                "rule": "ExpectColumnValuesToNotBeNull",
             },
             {"value": 10},
         ),
         (
             {
                 "geometry_type": "Polygon",
-                "rule_name": "ExpectColumnValuesToBeOfGeometryType",
+                "rule": "ExpectColumnValuesToBeOfGeometryType",
             },
             {"geometry_type": "Polygon"},
         ),
@@ -197,7 +197,7 @@ class TestGetParametersFromResults:
     def test_meta_and_kwargs_merge_kwargs_wins(self):
         result = {
             "expectation_config": {
-                "meta": {"value_set": [9, 9], "table_name": "will_be_removed"},
+                "meta": {"value_set": [9, 9], "table": "will_be_removed"},
                 "kwargs": {
                     "value_set": (1, 2, 3),  # tuple should normalize to list
                     "column": "drop_me",
@@ -222,7 +222,7 @@ class TestGetTargetAttrForRule:
         assert get_target_attr_for_rule({}) is None
 
     def test_get_attr_for_rule_when_meta_present_but_no_columns_returns_none(self):
-        result = _wrap_meta({"table_name": "table"})
+        result = _wrap_meta({"table": "table"})
         assert get_target_attr_for_rule(result) is None
 
 
@@ -522,7 +522,7 @@ class TestGetCustomValidationResults:
 
         expectation_result = {
             "expectation_config": {
-                "meta": {"rule_name": "ExpectColumnValuesToBeOfGeometryType"},
+                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
                 # Geo rules usually include column + geometry_type
                 "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
             },
@@ -563,7 +563,7 @@ class TestGetCustomValidationResults:
 
         expectation_result = {
             "expectation_config": {
-                "meta": {"rule_name": "ExpectColumnValuesToBeOfGeometryType"},
+                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
                 "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
             },
             "result": {
@@ -597,13 +597,13 @@ def test_get_highest_severity_from_validation_result():
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule_name": "ExpectColumnValuesToNotBeNull"} 
+                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"} 
                 },
             },
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule_name": "ExpectColumnValuesToBeUnique"} 
+                    "meta":{"rule": "ExpectColumnValuesToBeUnique"} 
                 },
             },
 
@@ -635,7 +635,7 @@ def test_get_highest_severity_all_successful():
             {
                 "success": True,
                 "expectation_config": {
-                    "meta":{"rule_name": "ExpectColumnValuesToNotBeNull"}
+                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"}
                 },
             }
         ]
@@ -663,7 +663,7 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule_name":"expect_column_values_to_be_unique"}
+                    "meta":{"rule":"expect_column_values_to_be_unique"}
                 },
             }
         ]
@@ -712,7 +712,7 @@ def base_expectation_result():
 def test_table_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of table-level expectations (observed_value)."""
     base_expectation_result["result"] = {"observed_value": 123}
-    base_expectation_result["expectation_config"]["meta"]["rule_name"] = "ExpectTableRowCountToEqual"
+    base_expectation_result["expectation_config"]["meta"]["rule"] = "ExpectTableRowCountToEqual"
 
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
@@ -735,7 +735,7 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
     base_expectation_result["expectation_config"]["type"] = "expect_column_values_to_be_between"
     base_expectation_result["expectation_config"]["meta"] = {
         "column": "age",
-        "rule_name": "ExpectColumnValuesToBeBetween",
+        "rule": "ExpectColumnValuesToBeBetween",
     }
     base_expectation_result["expectation_config"]["kwargs"] = {
         "column": "age",

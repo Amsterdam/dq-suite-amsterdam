@@ -146,9 +146,9 @@ class ValidationRunner:
         column_name = gx_expectation_parameters.get("column", None)
 
         gx_expectation_parameters["meta"] = {
-            "table_name": table_name,
+            "table": table_name,
             "column": column_name,
-            "rule_name": gx_expectation_name,
+            "rule": gx_expectation_name,
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
@@ -167,7 +167,7 @@ class ValidationRunner:
             unexpected_rows_query=custom_query,
             description=geo_rule.description,
             meta={
-                "rule_name": geo_rule.rule_name,
+                "rule": geo_rule.rule_name,
                 "column": geo_rule.parameters.get("column"),
                 "geometry_type": geo_rule.parameters.get("geometry_type"),
             },

@@ -137,7 +137,7 @@ def merge_parameters(exp_cfg: dict) -> dict:
 
 
 def clean_helper_keys(params: dict) -> dict:
-    for key in ("table_name", "rule_name"):
+    for key in ("table", "rule"):
         params.pop(key, None)
     return params
 
@@ -395,7 +395,7 @@ def get_non_geo_validation_result(
         get_parameters_from_results(result=expectation_result)
     )
 
-    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
+    rule_name = expectation_result["expectation_config"]["meta"]["rule"]
     return {
         "aantalValideRecords": valid_records,
         "aantalReferentieRecords": total_count,
@@ -424,7 +424,7 @@ def get_custom_validation_results(
 
     validation_result = "success" if unexpected_count == 0 else "failure"
     validation_parameters = get_parameters_from_results(result=expectation_result)
-    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
+    rule_name = expectation_result["expectation_config"]["meta"]["rule"]
 
     return {
         "aantalValideRecords": total_count - unexpected_count,
@@ -502,7 +502,7 @@ def get_single_expectation_afwijking_data(
     table_id: str,
 ) -> list[dict]:
     extracted_data = []
-    rule_name = expectation_result["expectation_config"]["meta"]["rule_name"]
+    rule_name = expectation_result["expectation_config"]["meta"]["rule"]
     parameter_list = round_numeric_params(
         get_parameters_from_results(expectation_result)
     )
@@ -777,7 +777,7 @@ def get_highest_severity_from_validation_result(
 
     for result in validation_result.get("results", []):
         if not result.get("success"):
-            rule_name = result["expectation_config"]["meta"]["rule_name"]
+            rule_name = result["expectation_config"]["meta"]["rule"]
             severity = rules_by_name.get(rule_name)
             if severity:
                 failed_severities.append(severity)

@@ -13,8 +13,8 @@
         },
         "meta": {
           "column": "tpep_pickup_datetime",
-          "rule_name": "ExpectColumnValuesToNotBeNull",
-          "table_name": "nyc_taxi"
+          "rule": "ExpectColumnValuesToNotBeNull",
+          "table": "nyc_taxi"
         },
         "id": "ea825e6f-c63d-40f2-8128-c0883de16fdc"
       },
