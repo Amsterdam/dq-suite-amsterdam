@@ -64,28 +64,43 @@ class GeoRule(Rule):
 
     def __post_init__(self):
         super().__post_init__()
-        if not isinstance(self.rule_type, str):
-            raise TypeError("'rule_type' should be of type str")
         if self.rule_type != "geo":
             raise ValueError("'rule_type' must be 'geo'")
-        
-        # Set geo_query_template and description based on rule_name
-        geometry_column = self.parameters.get("column", "geometry")
-        expected_geometry_type = self.parameters.get("geometry_type")
 
-        if self.rule_name == "ExpectColumnValuesToHaveValidGeometry":
-            self.geo_query_template = f"NOT ST_IsValid({geometry_column})"
-            self.description = "All geometry data should be valid."
-        elif self.rule_name == "ExpectGeometryColumnValuesToNotBeEmpty":
-            self.geo_query_template = f"ST_IsEmpty({geometry_column})"
-            self.description = "Geometry column should not contain empty geometries."
-        elif self.rule_name == "ExpectColumnValuesToBeOfGeometryType":
-            if not expected_geometry_type:
-                raise ValueError("Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType.")
-            self.geo_query_template = f"ST_GeometryType({geometry_column}) != 'ST_{expected_geometry_type}'"
-            self.description = f"Geometry column should contain only {expected_geometry_type.upper()} geometries."
-        else:
+        handlers = {
+            "ExpectColumnValuesToHaveValidGeometry": self._handle_valid_geometry,
+            "ExpectGeometryColumnValuesToNotBeEmpty": self._handle_not_empty_geometry,
+            "ExpectColumnValuesToBeOfGeometryType": self._handle_geometry_type,
+        }
+
+        if self.rule_name not in handlers:
             raise ValueError(f"Unsupported geo rule_name: {self.rule_name}")
+
+        handlers[self.rule_name]()
+
+    def _handle_valid_geometry(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        self.geo_query_template = f"NOT ST_IsValid({geometry_column})"
+        self.description = "All geometry data should be valid."
+
+    def _handle_not_empty_geometry(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        self.geo_query_template = f"ST_IsEmpty({geometry_column})"
+        self.description = "Geometry column should not contain empty geometries."
+
+    def _handle_geometry_type(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        expected_type = self.parameters.get("geometry_type")
+
+        if not expected_type:
+            raise ValueError("Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType.")
+
+        self.geo_query_template = (
+            f"ST_GeometryType({geometry_column}) != 'ST_{expected_type}'"
+        )
+        self.description = (
+            f"Geometry column should contain only {expected_type.upper()} geometries."
+        )
 
 RulesList = list[Rule, GeoRule]  # a list of DQ rules
 
