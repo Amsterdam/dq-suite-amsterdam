@@ -102,7 +102,7 @@ class GeoRule(Rule):
             f"Geometry column should contain only {expected_type.upper()} geometries."
         )
 
-RulesList = list[Rule, GeoRule]  # a list of DQ rules
+RulesList = list[Rule | GeoRule]  # a list of DQ rules
 
 
 @dataclass()
