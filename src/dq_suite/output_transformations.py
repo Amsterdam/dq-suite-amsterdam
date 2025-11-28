@@ -348,7 +348,7 @@ def _is_number(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
-def get_non_geo_validation_result(
+def get_non_geo_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
     expectation_type: str = expectation_result.get("expectation_config", {}).get("type", "")
@@ -445,7 +445,7 @@ def get_single_validation_result_dict(
     if expectation_type == "unexpected_rows_expectation":
         validation_results = get_custom_validation_results(expectation_result, run_time, table_id, df)
     else:
-        validation_results = get_non_geo_validation_result(expectation_result, run_time, table_id)
+        validation_results = get_non_geo_validation_results(expectation_result, run_time, table_id)
 
     return validation_results
 
