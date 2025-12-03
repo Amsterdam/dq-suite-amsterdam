@@ -6,6 +6,8 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
 
+from pyspark.databricks.sql import functions as dbf
+
 
 @dataclass()
 class Rule:
@@ -18,7 +20,7 @@ class Rule:
     parameters: Dict[str, Any]  # Collection of parameters required for
     severity: Literal[
         "fatal", "error", "warning"
-    ] | None  # Indicates the impact level of a rule if it fails.
+    ] | None = None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
@@ -54,7 +56,54 @@ class Rule:
         raise KeyError(key)
 
 
-RulesList = list[Rule]  # a list of DQ rules
+@dataclass
+class GeoRule(Rule):
+    """A specialized rule for geospatial validation."""
+    rule_type: Literal["geo"] = "geo"
+    geo_query_template: str | None = None
+    description: str | None = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.rule_type != "geo":
+            raise ValueError("'rule_type' must be 'geo'")
+
+        handlers = {
+            "ExpectColumnValuesToHaveValidGeometry": self._handle_valid_geometry,
+            "ExpectGeometryColumnValuesToNotBeEmpty": self._handle_not_empty_geometry,
+            "ExpectColumnValuesToBeOfGeometryType": self._handle_geometry_type,
+        }
+
+        if self.rule_name not in handlers:
+            raise ValueError(f"Unsupported geo rule_name: {self.rule_name}")
+
+        handlers[self.rule_name]()
+
+    def _handle_valid_geometry(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        self.geo_query_template = f"NOT st_isvalid({geometry_column})"
+        self.description = "All geometry data should be valid."
+
+    def _handle_not_empty_geometry(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        self.geo_query_template = f"st_isempty({geometry_column})"
+        self.description = "Geometry column should not contain empty geometries."
+
+    def _handle_geometry_type(self):
+        geometry_column = self.parameters.get("column", "geometry")
+        expected_type = self.parameters.get("geometry_type")
+
+        if not expected_type:
+            raise ValueError("Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType.")
+
+        self.geo_query_template = (
+            f"st_geometrytype({geometry_column}) != 'ST_{expected_type}'"
+        )
+        self.description = (
+            f"Geometry column should contain only {expected_type} geometries."
+        )
+
+RulesList = list[Rule | GeoRule]  # a list of DQ rules
 
 
 @dataclass()
@@ -300,7 +349,7 @@ class ValidationSettings:
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
-
+    
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
             raise TypeError("'spark_session' should be of type SparkSession")
