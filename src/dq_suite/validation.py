@@ -164,9 +164,7 @@ class ValidationRunner:
             FROM {{batch}}
             WHERE {where_condition}
         """
-        print(geo_rule.geo_query_template)
         custom_query = base_query_template.format(where_condition=geo_rule.geo_query_template)
-        print("custom query: ", custom_query)
         return UnexpectedRowsExpectation(
             unexpected_rows_query=custom_query,
             description=geo_rule.description,
