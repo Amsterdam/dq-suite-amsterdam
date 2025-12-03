@@ -6,8 +6,6 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
 
-from pyspark.databricks.sql import functions as dbf
-
 
 @dataclass()
 class Rule:

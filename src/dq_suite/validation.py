@@ -159,7 +159,6 @@ class ValidationRunner:
         """
         base_query_template = """
             SELECT *,
-               
                 st_astext(geometry) AS geometry
             FROM {{batch}}
             WHERE {where_condition}
