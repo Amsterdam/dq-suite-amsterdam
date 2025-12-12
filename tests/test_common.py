@@ -8,6 +8,7 @@ from src.dq_suite.common import (
     DataQualityRulesDict,
     DatasetDict,
     Rule,
+    GeoRule,
     RulesDict,
     ValidationSettings,
     get_full_table_name,
@@ -42,6 +43,31 @@ class TestRule:
     def test_get_value_from_rule_by_non_existing_key_raises_key_error(self):
         with pytest.raises(KeyError):
             assert self.rule_obj["wrong_key"]
+
+
+class TestGeoRule:
+
+    def test_geo_rule_is_dataclass(self):
+        rule = GeoRule(
+            rule_name="ExpectColumnValuesToHaveValidGeometry",
+            parameters={}
+        )
+        assert is_dataclass(rule)
+
+    def test_geo_rule_rule_type_is_geo(self):
+        rule = GeoRule(
+            rule_name="ExpectColumnValuesToHaveValidGeometry",
+            parameters={}
+        )
+        assert rule.rule_type == "geo"
+
+    def test_geo_rule_wrong_rule_type_raises_value_error(self):
+        with pytest.raises(ValueError):
+            GeoRule(
+                rule_name="ExpectColumnValuesToHaveValidGeometry",
+                parameters={},
+                rule_type="not_geo"
+            )
 
 
 class TestRulesDict:
