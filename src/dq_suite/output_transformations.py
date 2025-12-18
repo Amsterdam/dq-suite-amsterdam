@@ -515,24 +515,17 @@ def get_single_expectation_afwijking_data(
                 "bronTabelId": table_id,
             })
     elif "observed_value" in result_dict:  # Handle table-level expectations
-        deviating_attribute_value = result_dict.get("observed_value", [])
-        # Skip adding if there's no deviation
-        if (
-            (deviating_attribute_value in [None, [], {}]
-            or (isinstance(deviating_attribute_value, str)
-                and deviating_attribute_value.strip().startswith("0 unexpected rows"))) or expectation_result["success"]==True
-        ):
-            return extracted_data  # do nothing, no afwijking
-        extracted_data.append(
-            {
-                "identifierVeldWaarde": None,
-                "afwijkendeAttribuutWaarde": deviating_attribute_value,
-                "dqDatum": run_time,
-                "regelNaam": rule_name,
-                "regelParameters": parameter_list,
-                "bronTabelId": table_id,
-            }
-        )
+        if not expectation_result.get("success"):
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": None,
+                    "afwijkendeAttribuutWaarde": result_dict.get("observed_value", []),
+                    "dqDatum": run_time,
+                    "regelNaam": rule_name,
+                    "regelParameters": parameter_list,
+                    "bronTabelId": table_id,
+                }
+            )
     elif "partial_unexpected_list" in result_dict:  # Handle column-level expectations
         deviating_attribute_value = result_dict.get(
             "partial_unexpected_list", []
