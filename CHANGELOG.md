@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.0] - 18-12-2025
+
+### Added
+- Added Geometry validation logic in dq-suite-amsterdam
+- Added support for spatial (geo) validation rules via the `GeoRule` class in `common.py`, allowing checks such as:
+  - `ExpectColumnValuesToHaveValidGeometry`
+  - `ExpectGeometryColumnValuesToNotBeEmpty`
+  - `ExpectColumnValuesToBeOfGeometryType`
+
+### Changed
+- Refactored `get_single_expectation_afwijking_data` function for cleaner and more maintainable logic.
+- Improved readability and structure by organizing expectation result handling into clear conditional blocks.
+- Updated error message to include all supported expectation result keys (`unexpected_rows`, `observed_value`, and `partial_unexpected_list`).
+
 ## [0.12.9] - 03-11-2025
  
 ### Added
