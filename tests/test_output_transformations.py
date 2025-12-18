@@ -742,7 +742,6 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
         "max_value": 12,
     }
     base_expectation_result["result"] = {"partial_unexpected_list": [5, 15]}
-
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
         df=sample_spark_df,

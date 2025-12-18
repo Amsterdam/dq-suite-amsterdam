@@ -310,7 +310,7 @@ class TestValidationRunner:
         )
         result = validation_runner_obj._create_geo_expectation(None, rule)
         assert result.description == (
-            f"Geometry column should contain only {geometry_type.upper()} geometries."
+            f"Geometry column should contain only {geometry_type} geometries."
         )
         assert result.meta == {
             "rule": "ExpectColumnValuesToBeOfGeometryType",
