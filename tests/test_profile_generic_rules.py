@@ -1,10 +1,19 @@
 import pytest
 import pandas as pd
-from pyspark.sql.types import Geometry
 
 from dq_suite.profile.generic_rules import create_dq_rules
 
 
+# Dummy Geometry class
+class Geometry:
+    def __init__(self, wkb, srid):
+        self.wkb = wkb
+        self.srid = srid
+
+    def __repr__(self):
+        return f"Geometry({self.wkb!r}, {self.srid})"
+    
+    
 @pytest.fixture
 def df():
     return pd.DataFrame({

@@ -72,6 +72,7 @@ def create_dq_rules(
             else:
                 col_type = "DoubleType"
         if df[variable].dropna().apply(lambda x: type(x).__name__ == "Geometry").any():
+            print("varaible:", df[variable])
             geo_rules = [
             column_values_not_empty_geometry_rule(variable),
             column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),
