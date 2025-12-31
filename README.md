@@ -58,13 +58,19 @@ See the documentation of `dq_suite.validation.run_validation` for what other par
 
 **Geo Validation**
 
-Geo validation enables geometric checks using ST geospatial databricks functions. It is fully integrated into the validation process, allowing both generic rules and geo rules to be applied together on the same table.
+Geo validation enables geometric checks using Databricks ST geospatial functions. It is fully integrated into the existing validation flow, allowing generic and geo rules to be applied together on the same table.
 
-1. To use ST functions, Databricks Runtime 17.1 and above must be applied on your Databricks cluster. For more details, https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-st-geospatial-functions
+Geo validation can be used to validate, among others:
 
-2. When defining rules in Getting started → Step 3, you can enable geo validation by adding the parameter "rule_type": "geo" inside your JSON. Exxample is [here](geo_dq_rules_example.json)
+- Whether geometry values are present and non-empty
+- Whether geometries are structurally valid (e.g. no invalid polygons)
+- Whether geometry values are of a specific geometry type (e.g. POINT, POLYGON)
 
-3. Result of geo validation will be written into the same data_quality schema as generic validation. If a table includes both generic and geo rules, all results will be combined in the output tables.
+1. Databricks Runtime 17.1 and above must be applied on your Databricks cluster, as ST geospatial functions are only fully supported from this version onwards. For more details, https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-st-geospatial-functions
+
+2. When defining rules in Getting started → Step 3, you can enable geo validation by adding the parameter "rule_type": "geo" inside your JSON. Example is [here](geo_dq_rules_example.json)
+
+3. Results of geo validation will be written into the same data_quality schema as generic validation. If a table includes both generic and geo rules, all results will be combined in the output tables.
 
 
 **Profiling**

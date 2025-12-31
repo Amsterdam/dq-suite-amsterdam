@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.13.0] - 18-12-2025
 
 ### Added
-- Added Geometry validation logic in dq-suite-amsterdam.
+- Added Geometry validation logic in dq-suite-amsterdam to validate geometry presence, type, and structural correctness.
 - Added support for spatial (geo) validation rules via the `GeoRule` class in `common.py`, allowing checks such as:
   - `ExpectColumnValuesToHaveValidGeometry`
   - `ExpectGeometryColumnValuesToNotBeEmpty`
