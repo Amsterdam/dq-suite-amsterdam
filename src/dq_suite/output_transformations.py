@@ -120,6 +120,8 @@ def get_target_attr_for_rule(result: dict) -> str | None:
         return result["kwargs"].get("column")
     elif "column_list" in result["kwargs"]:
         return result["kwargs"].get("column_list")
+    elif "column_A" in result["kwargs"] and "column_B" in result["kwargs"]:
+        return  [result["kwargs"].get("column_A"),result["kwargs"].get("column_B")]
     else:
         # Some rules do not specify columns, but are scoped on table level
         return None
@@ -156,14 +158,21 @@ def filter_df_based_on_deviating_values(
     if deviating_value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
+        # Case 1: deviating_value = [(column_name, value), ...]
+        if isinstance(deviating_value, list):
         # In case of compound keys, "attribute" is a list and "deviating_value" is a dict
         # like tuple. The indices will match, and we take [1] for deviating_value,
         # because the "key" is stored in [0].
-        number_of_attrs = len(attribute)
-        for i in range(number_of_attrs):
-            df = df.filter(col(attribute[i]) == deviating_value[i][1])
+            number_of_attrs = len(attribute)
+            for i in range(number_of_attrs):
+                df = df.filter(col(attribute[i]) == deviating_value[i][1])
+            return df
+        # Case 2: deviating_value = ("X", "Y") aligned with attribute list
+        for col_name, value in zip(attribute, deviating_value):
+            df = df.filter(col(col_name) == lit(value))
         return df
-    else:
+    else: 
+        # Single attribute
         return df.filter(col(attribute) == lit(deviating_value))
 
 
@@ -176,7 +185,7 @@ def get_grouped_ids_per_deviating_value(
     """
     # TODO: add documentation. This function is very complex.
     ids = (
-        filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+        filtered_df.select(unique_identifier).distinct().rdd.flatMap(lambda x: x).collect()
     )
     number_of_unique_ids = len(unique_identifier)
     return [
