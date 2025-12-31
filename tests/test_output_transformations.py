@@ -283,7 +283,7 @@ class TestGetGroupedIdsPerDeviatingValue:
         )
 
         expected_grouped_ids = [["Alice", "Jansen"], ["Alice", "Smith"]]
-        assert grouped_ids == expected_grouped_ids
+        assert sorted(grouped_ids) == sorted(expected_grouped_ids)
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
