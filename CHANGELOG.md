@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added unit tests for geometry validation rules.
 
 ### Changed
+- Updated dependency: ydata-profiling: 4.16.x → 4.18.0
 - Refactored `get_single_expectation_afwijking_data` function for cleaner and more maintainable logic.
 - Improved readability and structure by organizing expectation result handling into clear conditional blocks.
 - Updated error message to include all supported expectation result keys (`unexpected_rows`, `observed_value`, and `partial_unexpected_list`).
