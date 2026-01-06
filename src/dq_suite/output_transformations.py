@@ -9,7 +9,6 @@ from great_expectations.checkpoint.checkpoint import (
 )
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
-from pyspark.sql import functions as F
 from pyspark.sql.types import StructType
 
 from .common import (
