@@ -175,6 +175,11 @@ class TestGetTargetAttrForRule:
         expected_output = ["age", "name"]
         assert get_target_attr_for_rule(result) == expected_output
 
+    def test_get_target_attr_column_pair(self):
+        result = {"kwargs": {"column_A": "countrycode", "column_B": "contryname"}}
+        expected_output = ["countrycode", "contryname"]
+        assert get_target_attr_for_rule(result) == expected_output
+
     def test_get_target_attr_for_rule_no_kwargs_key_raises_key_error(self):
         result = {}
         with pytest.raises(KeyError):
@@ -265,6 +270,28 @@ class TestFilterDfBasedOnDeviatingValues:
         expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
         assert_df_equality(result_df, expected_df)
 
+    def test_filter_df_based_on_deviating_values_column_pair_tuple(self, spark):
+        data = [
+            ("1", "Nederland", 10),
+            ("2", "Belgie", 20),
+            ("1", "Nederland", 30),
+        ]
+        schema = ["countrycode", "contryname", "age"]
+        df = spark.createDataFrame(data, schema)
+
+        result_df = filter_df_based_on_deviating_values(
+            ("1", "Nederland"),
+            ["countrycode", "contryname"],
+            df,
+        )
+
+        expected_df = spark.createDataFrame(
+            [("1", "Nederland", 10), ("1", "Nederland", 30)],
+            schema,
+        )
+
+        assert_df_equality(result_df, expected_df)
+
 
 @pytest.mark.usefixtures("spark")
 class TestGetGroupedIdsPerDeviatingValue:
@@ -283,7 +310,7 @@ class TestGetGroupedIdsPerDeviatingValue:
         )
 
         expected_grouped_ids = [["Alice", "Jansen"], ["Alice", "Smith"]]
-        assert grouped_ids == expected_grouped_ids
+        assert sorted(grouped_ids) == sorted(expected_grouped_ids)
 
 
 @pytest.mark.usefixtures("read_test_rules_as_dict")
