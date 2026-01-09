@@ -140,6 +140,7 @@ class ValidationRunner:
         """
         gx_expectation_name = validation_rule["rule_name"]
         gx_expectation_class = getattr(gx_core, gx_expectation_name)
+
         gx_expectation_parameters: dict = copy.deepcopy(
             validation_rule["parameters"]
         )
@@ -174,11 +175,9 @@ class ValidationRunner:
             },
         )
 
-
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
         expectation_suite_obj = self._get_or_add_expectation_suite()  # Add if
         # it does not exist
-        
         for validation_rule in validation_rules_list:
             if isinstance(validation_rule, GeoRule):
                 gx_expectation_obj = self._create_geo_expectation(
@@ -189,7 +188,6 @@ class ValidationRunner:
                     validation_rule=validation_rule, table_name=self.table_name
                 )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
-
 
     def create_batch_definition(self):  # pragma: no cover - only GX functions
         self.data_source = self.data_context.data_sources.add_or_update_spark(
@@ -390,7 +388,7 @@ def run_validation(
             f"'{table_name}' in JSON file at '"
             f"{json_path}'."
         )
-   
+        
     # 2) ... perform the validation on the dataframe...
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
