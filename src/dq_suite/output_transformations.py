@@ -110,10 +110,11 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     
     if not parameters:
         raise ValueError("No meta or kwargs found to build parameters.")
-
-    parameters = clean_helper_keys(parameters)
+    
+    # Prepare parameters for regelId hashing.
+    parameters = remove_helper_keys(parameters)
     parameters = remove_null_geometry_type(parameters)
-    parameters = normalize_list_values(parameters)
+    parameters = normalize_value_set(parameters)
     return parameters
 
 
@@ -136,19 +137,22 @@ def merge_parameters(exp_cfg: dict) -> dict:
     return parameters
 
 
-def clean_helper_keys(params: dict) -> dict:
+def remove_helper_keys(params: dict) -> dict:
+    # Remove meta-only helper keys: 'table' and 'rule'
     for key in ("table", "rule"):
         params.pop(key, None)
     return params
 
 
 def remove_null_geometry_type(params: dict) -> dict:
+    # Remove the 'geometry_type' key from parameters if its value is None.
     if params.get("geometry_type") is None:
         params.pop("geometry_type", None)
     return params
 
 
-def normalize_list_values(params: dict) -> dict:
+def normalize_value_set(params: dict) -> dict:
+    #Convert 'value_set' in parameters to a standard Python list if it is a tuple or other iterable, ensuring that 'value_set' is always a list.
     if isinstance(params.get("value_set"), (list, tuple)):
         params["value_set"] = list(params["value_set"])
     return params
@@ -326,7 +330,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
     # GX does this in the background, so we need to match the behaviour to keep integrity between regelId in the tables.
     if "column" not in parameters:
         parameters["column"] = None
-    parameters = normalize_validation_parameters(round_numeric_params(parameters))   
+    parameters = normalize_validation_parameters(parameters)
     return {
         "regelNaam": rule["rule_name"],
         "regelParameters": parameters,
@@ -400,9 +404,9 @@ def get_non_geo_validation_results(
         "success" if expectation_result["success"] else "failure"
     )
 
-    validation_parameters = normalize_validation_parameters(round_numeric_params(
+    validation_parameters = normalize_validation_parameters(
         get_parameters_from_results(result=expectation_result)
-    ))
+    )
 
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
     return {
@@ -495,9 +499,9 @@ def get_single_expectation_afwijking_data(
 ) -> list[dict]:
     extracted_data = []
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
-    parameter_list =  normalize_validation_parameters(round_numeric_params(
+    afwijking_parameters =  normalize_validation_parameters(
         get_parameters_from_results(expectation_result)
-    ))
+    )
     attribute = get_target_attr_for_rule(expectation_result)
     result_dict = expectation_result.get("result", {})
     unexpected_rows = expectation_result.get("result", {}).get("details", {}).get("unexpected_rows")
@@ -510,7 +514,7 @@ def get_single_expectation_afwijking_data(
                 "afwijkendeAttribuutWaarde": afwijkende_value,
                 "dqDatum": run_time,
                 "regelNaam": rule_name,
-                "regelParameters": parameter_list,
+                "regelParameters": afwijking_parameters,
                 "bronTabelId": table_id,
             })
     elif "observed_value" in result_dict:  # Handle table-level expectations
@@ -521,7 +525,7 @@ def get_single_expectation_afwijking_data(
                     "afwijkendeAttribuutWaarde": result_dict.get("observed_value", []),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
-                    "regelParameters": parameter_list,
+                    "regelParameters": afwijking_parameters,
                     "bronTabelId": table_id,
                 }
             )
@@ -548,7 +552,7 @@ def get_single_expectation_afwijking_data(
                     "afwijkendeAttribuutWaarde": value,
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
-                    "regelParameters": parameter_list,
+                    "regelParameters": afwijking_parameters,
                     "bronTabelId": table_id,
                 }
             )

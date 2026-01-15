@@ -56,7 +56,11 @@ class Rule:
 
 @dataclass
 class GeoRule(Rule):
-    """A specialized rule for geospatial validation."""
+    """
+    A specialized rule for geospatial validation.
+    This rule leverages Databricks spatial functions—st_isvalid(), st_isempty(), 
+    and st_geometrytype()——which are provided by Databricks SQL.
+    """
     rule_type: Literal["geo"] = "geo"
     geo_query_template: str | None = None
     description: str | None = None

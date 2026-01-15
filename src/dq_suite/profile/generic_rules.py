@@ -19,6 +19,20 @@ from dq_suite.profile.rules_module import (
 )
 
 
+def has_geometry_column(df: DataFrame, column_name: str) -> bool:
+    """
+    Check if the given DataFrame column contains at least one Geometry object.
+
+    Args:
+        df (DataFrame): Spark/Pandas DataFrame to check.
+        column_name (str): Name of the column to inspect.
+
+    Returns:
+        bool: True if at least one value in the column is of type 'Geometry', else False.
+    """
+    return df[column_name].dropna().apply(lambda x: type(x).__name__ == "Geometry").any()
+
+
 def create_dq_rules(
     dataset_name: str, table_name: str, profiling_json: Dict, df : DataFrame
 ) -> RulesDict:
@@ -70,8 +84,8 @@ def create_dq_rules(
             if isinstance(col_min, int) and isinstance(col_max, int):
                 col_type = "IntegerType"
             else:
-                col_type = "DoubleType"
-        if df[variable].dropna().apply(lambda x: type(x).__name__ == "Geometry").any():
+                col_type = "DoubleType"       
+        if has_geometry_column(df, variable):
             geo_rules = [
             column_values_not_empty_geometry_rule(variable),
             column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),

@@ -153,7 +153,7 @@ class ValidationRunner:
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
-    def _create_geo_expectation(self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule):
+    def _create_geo_expectation(self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule) -> UnexpectedRowsExpectation:
         """
         Create a spatial validation rule for Great Expectations on Spark/Sedona
         directly from a GeoRule object.
