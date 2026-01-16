@@ -38,7 +38,7 @@ def profile_and_create_rules(
     report_html = report.to_notebook_iframe()
 
     if generate_rules:
-        dq_rules = create_dq_rules(dataset_name, table_name, profiling_json)
+        dq_rules = create_dq_rules(dataset_name, table_name, profiling_json, df)
         save_rules_to_file(dq_rules, rule_path)
 
     return report_html

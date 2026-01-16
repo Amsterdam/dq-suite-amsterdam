@@ -18,10 +18,10 @@ from great_expectations.data_context.types.base import (
 from great_expectations.datasource.fluent import SparkDatasource
 from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
-from great_expectations.expectations import core as gx_core
+from great_expectations.expectations import core as gx_core, UnexpectedRowsExpectation
 from pyspark.sql import DataFrame, SparkSession
 
-from .common import DatasetDict, Rule, RulesDict, ValidationSettings
+from .common import DatasetDict, Rule, GeoRule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     get_highest_severity_from_validation_result,
@@ -147,20 +147,46 @@ class ValidationRunner:
         column_name = gx_expectation_parameters.get("column", None)
 
         gx_expectation_parameters["meta"] = {
-            "table_name": table_name,
-            "column_name": column_name,
-            "expectation_name": gx_expectation_name,
+            "table": table_name,
+            "column": column_name,
+            "rule": gx_expectation_name,
         }
         return gx_expectation_class(**gx_expectation_parameters)
+
+    def _create_geo_expectation(self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule) -> UnexpectedRowsExpectation:
+        """
+        Create a spatial validation rule for Great Expectations on Spark/Sedona
+        directly from a GeoRule object.
+        """
+        base_query_template = """
+            SELECT *,
+                st_astext(geometry) AS geometry
+            FROM {{batch}}
+            WHERE {where_condition}
+        """
+        custom_query = base_query_template.format(where_condition=geo_rule.geo_query_template)
+        return UnexpectedRowsExpectation(
+            unexpected_rows_query=custom_query,
+            description=geo_rule.description,
+            meta={
+                "rule": geo_rule.rule_name,
+                "column": geo_rule.parameters.get("column"),
+                "geometry_type": geo_rule.parameters.get("geometry_type"),
+            },
+        )
 
     def add_expectations_to_suite(self, validation_rules_list: List[Rule]):
         expectation_suite_obj = self._get_or_add_expectation_suite()  # Add if
         # it does not exist
-
         for validation_rule in validation_rules_list:
-            gx_expectation_obj = self._get_gx_expectation_object(
-                validation_rule=validation_rule, table_name=self.table_name
-            )
+            if isinstance(validation_rule, GeoRule):
+                gx_expectation_obj = self._create_geo_expectation(
+                    expectation_suite_obj, validation_rule
+                )
+            else:
+                gx_expectation_obj = self._get_gx_expectation_object(
+                    validation_rule=validation_rule, table_name=self.table_name
+                )
             expectation_suite_obj.add_expectation(gx_expectation_obj)
 
     def create_batch_definition(self):  # pragma: no cover - only GX functions
@@ -342,11 +368,6 @@ def run_validation(
     debug_mode: default (False) returns a boolean flag, alternatively (True)
         a tuple containing boolean flag and CheckpointResult object is returned
     """
-    if not hasattr(df, "table_name"):
-        # TODO/check: we can have df.table_name !=
-        #  table_name: is this wrong?
-        df.table_name = table_name
-
     # 1) extract the data quality rules to be applied...
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
 
@@ -367,7 +388,7 @@ def run_validation(
             f"'{table_name}' in JSON file at '"
             f"{json_path}'."
         )
-
+        
     # 2) ... perform the validation on the dataframe...
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -384,9 +405,24 @@ def run_validation(
         notify_on=notify_on,
     )
 
+    # 3) Convert rules are in JSON to Rule / GeoRule objects
+    rules_list = []
+    for r in rules_dict["rules"]:
+        if r.get("rule_type") == "geo":
+            rules_list.append(GeoRule(**r))
+        else:
+            rules_list.append(Rule(**r))
+
+    # 4) Cretae RulesDict 
+    rules_dict_obj = RulesDict(
+        unique_identifier=rules_dict["unique_identifier"],
+        table_name=rules_dict["table_name"],
+        rules=rules_list
+    )
+
     checkpoint_result = validate(
         df=df,
-        rules_dict=rules_dict,
+        rules_dict=rules_dict_obj,
         validation_settings_obj=validation_settings_obj,
     )
 

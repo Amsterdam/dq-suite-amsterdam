@@ -1,7 +1,8 @@
 import json
 from datetime import datetime
 from unittest.mock import Mock
-
+from copy import deepcopy
+from types import SimpleNamespace
 import pytest
 from chispa import assert_df_equality
 from pyspark.sql import SparkSession
@@ -24,6 +25,7 @@ from src.dq_suite.output_transformations import (
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
+    get_custom_validation_results
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -136,49 +138,91 @@ class TestConstructRegelId:
         assert_df_equality(actual_df, expected_df)
 
 
+def _wrap_meta(meta: dict) -> dict:
+    """ Helper to build the input structure the function expects:
+    {"expectation_config": {"meta": <meta>}} """
+    return {"expectation_config": {"meta": deepcopy(meta)}}
+
+def _wrap_kwargs(kwargs: dict) -> dict:
+    """ Helper that puts kwargs under expectation_config.kwargs """
+    return {"expectation_config": {"kwargs": deepcopy(kwargs)}}
+
 class TestGetParametersFromResults:
-    def test_get_parameters_from_results_with_and_without_batch_id(self):
+    @pytest.mark.parametrize(
+    "meta, expected",
+    [
+        (
+            {
+                "value": 10,
+                "table": "table",
+                "rule": "ExpectColumnValuesToNotBeNull",
+            },
+            {"value": 10},
+        ),
+        (
+            {
+                "geometry_type": "Polygon",
+                "rule": "ExpectColumnValuesToBeOfGeometryType",
+            },
+            {"geometry_type": "Polygon"},
+        ),
+    ],
+)
+
+    def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(self, meta, expected):
+        result = _wrap_meta(meta)
+        assert get_parameters_from_results(result) == expected
+
+    def test_get_parameters_from_results_raises_when_expectation_config_missing(self):
+        with pytest.raises(ValueError, match="No expectation_config in result."):
+            get_parameters_from_results({})
+
+    def test_get_parameters_from_results_raises_when_no_meta_and_no_kwargs(self):
+        with pytest.raises(ValueError, match="No meta or kwargs found to build parameters."):
+            get_parameters_from_results({"expectation_config": {}})
+
+    def test_kwargs_only_includes_rule_args_and_drops_runtime_keys(self):
+        result = _wrap_kwargs({
+            "column": "the_column",
+            "batch_id": "abc123",
+            "unexpected_rows_query": "SELECT * FROM t",
+            "value_set": [1, 2, 3],
+            "min_value": 0,
+            "max_value": 10,
+        })
+        expected = {"value_set": [1, 2, 3], "min_value": 0, "max_value": 10}
+        assert get_parameters_from_results(result) == expected
+
+    def test_meta_and_kwargs_merge_kwargs_wins(self):
         result = {
-            "kwargs": {
-                "param1": 10,
-                "param2": "example",
-                "batch_id": 123,
+            "expectation_config": {
+                "meta": {"value_set": [9, 9], "table": "will_be_removed"},
+                "kwargs": {
+                    "value_set": (1, 2, 3),  # tuple should normalize to list
+                    "column": "drop_me",
+                    "batch_id": "drop_me",
+                },
             }
         }
-        result2 = {"kwargs": {"param1": 10, "param2": "example"}}
-        expected_output = {"param1": 10, "param2": "example"}
-
-        assert get_parameters_from_results(result) == expected_output
-        assert get_parameters_from_results(result2) == expected_output
-
-    def get_parameters_from_results(self):
-        result = {"kwargs": {}}
-
-        expected_output = [{}]
-        assert get_parameters_from_results(result) == expected_output
-
-    def get_parameters_from_results_raises_key_error(self):
-        result = {}
-
-        with pytest.raises(KeyError):
-            get_parameters_from_results(result)
+        expected = {"value_set": [1, 2, 3]}
+        assert get_parameters_from_results(result) == expected
 
 
 class TestGetTargetAttrForRule:
-    def test_get_target_attr_for_rule_with_column(self):
-        result = {"kwargs": {"column": "age", "column_list": ["age", "name"]}}
-        expected_output = "age"
-        assert get_target_attr_for_rule(result) == expected_output
+    def test_get_attr_for_rule_with_column(self):
+        result = _wrap_meta({"column": "col_a", "column_list": ["col_a", "col_b"]})
+        assert get_target_attr_for_rule(result) == "col_a"
 
-    def test_get_target_attr_for_rule_without_column(self):
-        result = {"kwargs": {"column_list": ["age", "name"]}}
-        expected_output = ["age", "name"]
-        assert get_target_attr_for_rule(result) == expected_output
+    def test_get_attr_for_rule_with_column_list(self):
+        result = _wrap_meta({"column_list": ["col_a", "col_b"]})
+        assert get_target_attr_for_rule(result) == ["col_a", "col_b"]
 
-    def test_get_target_attr_for_rule_no_kwargs_key_raises_key_error(self):
-        result = {}
-        with pytest.raises(KeyError):
-            get_target_attr_for_rule(result)
+    def test_get_attr_for_rule_when_meta_missing_returns_none(self):
+        assert get_target_attr_for_rule({}) is None
+
+    def test_get_attr_for_rule_when_meta_present_but_no_columns_returns_none(self):
+        result = _wrap_meta({"table": "table"})
+        assert get_target_attr_for_rule(result) is None
 
 
 class TestGetUniqueDeviatingValues:
@@ -394,7 +438,7 @@ class TestGetRegelData:
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
                 "severity": "fatal",
-                "regelParameters": {"min_value": 1, "max_value": 1000},
+                "regelParameters": {"min_value": 1, "max_value": 1000, "column": None},
                 "bronTabelId": "the_dataset_the_other_table",
                 "attribuut": None,
                 "norm": None,
@@ -402,54 +446,56 @@ class TestGetRegelData:
         ]
         assert test_output == expected_result
 
-
+@pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetValidatieData:
-    def test_get_validatie_data_raises_type_error(
-        self, validation_settings_obj
-    ):
-        with pytest.raises(TypeError):
+    def test_get_validatie_data_raises_attribute_error(self, spark, validation_settings_obj):
+        df = spark.createDataFrame([], schema="x string")
+        with pytest.raises(AttributeError):
             get_validatie_data(
                 validation_settings_obj=validation_settings_obj,
                 run_time=datetime.now(),
-                validation_output="123",
+                validation_output="123",  # wrong type: lacks `.run_results`
+                df=df,
             )
 
     def test_get_validatie_data_returns_correct_list(
-        self, read_test_result_as_dict, validation_settings_obj
+        self, spark, read_test_result_as_dict, validation_settings_obj
     ):
         dtt_now = datetime.now()
+        df = spark.createDataFrame([], schema="x string")
+        validation_output = SimpleNamespace(
+            run_results=read_test_result_as_dict["run_results"]
+        )
         test_output = get_validatie_data(
             validation_settings_obj=validation_settings_obj,
             run_time=dtt_now,
-            validation_output=read_test_result_as_dict,
+            validation_output=validation_output,
+            df=df,
         )
         test_sample = test_output[0]
-
         expected_result = {
-            "aantalValideRecords": 23537,
-            "aantalReferentieRecords": 23538,
-            "dqResultaat": "success",
-            "percentageValideRecords": 0.99,
-            "regelNaam": "ExpectColumnDistinctValuesToEqualSet",
-            "regelParameters": {
-                "column": "the_column",
-                "value_set": [1, 2, 3],
-            },
-            "bronTabelId": "the_dataset_name_the_table_name",
-            "dqDatum": dtt_now,
+        "aantalValideRecords": 1000,
+        "aantalReferentieRecords": 1000,
+        "dqResultaat": "success",
+        "percentageValideRecords": 1.0,
+        "regelNaam": "ExpectColumnValuesToNotBeNull",
+        "regelParameters": {
+            "column": "tpep_pickup_datetime"
+        },
+        "bronTabelId": "the_dataset_name_the_table_name",
+        "dqDatum": dtt_now,
         }
         for key in test_sample.keys():
             assert test_sample[key] == expected_result[key]
 
-
 @pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetAfwijkingData:
-    def test_get_afwijking_data_raises_type_error(
+    def test_get_afwijking_data_raises_attribute_error(
         self, spark, validation_settings_obj
     ):
-        with pytest.raises(TypeError):
+        with pytest.raises(AttributeError):
             mock_data = [("str1", "str2")]
             mock_df = spark.createDataFrame(
                 mock_data, ["the_string", "the_other_string"]
@@ -459,8 +505,90 @@ class TestGetAfwijkingData:
                 validation_settings_obj=validation_settings_obj,
                 run_time=datetime.now(),
                 validation_output="123",
-            )
+            )  # wrong type: lacks `.run_results`
 
+@pytest.mark.usefixtures("spark")
+class TestGetCustomValidationResults:
+    def test_get_custom_validation_results_failure(self, spark):
+        # Arrange DataFrame with 5 rows
+        df = spark.createDataFrame(
+            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",),
+             ("POINT (3 3)",), ("POINT (4 4)",)],
+            ["geometry"]
+        )
+        dtt_now = datetime.now()
+        table_id = "geo_bron_001"
+
+        expectation_result = {
+            "expectation_config": {
+                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
+                # Geo rules usually include column + geometry_type
+                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+            },
+            "result": {
+                # Function extracts the first number using regex → 2 unexpected rows
+                "observed_value": "2 invalid geometries found",
+            },
+        }
+
+        # Act
+        actual = get_custom_validation_results(
+            expectation_result=expectation_result,
+            run_time=dtt_now,
+            table_id=table_id,
+            df=df,
+        )
+
+        # Assert
+        assert actual == {
+            "aantalValideRecords": 3,                 
+            "aantalReferentieRecords": 5,
+            "percentageValideRecords": 0.6,
+            "dqDatum": dtt_now,
+            "dqResultaat": "failure",
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "bronTabelId": table_id,
+        }
+
+    def test_get_custom_validation_results_success(self, spark):
+        # Arrange DataFrame with 4 rows
+        df = spark.createDataFrame(
+            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",), ("POINT (3 3)",)],
+            ["geometry"]
+        )
+        dtt_now = datetime.now()
+        table_id = "geo_bron_002"
+
+        expectation_result = {
+            "expectation_config": {
+                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
+                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+            },
+            "result": {
+                "observed_value": "0",  # no unexpected values
+            },
+        }
+
+        # Act
+        actual = get_custom_validation_results(
+            expectation_result=expectation_result,
+            run_time=dtt_now,
+            table_id=table_id,
+            df=df,
+        )
+
+        # Assert
+        assert actual == {
+            "aantalValideRecords": 4,
+            "aantalReferentieRecords": 4,
+            "percentageValideRecords": 1.0,
+            "dqDatum": dtt_now,
+            "dqResultaat": "success",
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "bronTabelId": table_id,
+        }
 
 def test_get_highest_severity_from_validation_result():
     validation_result = {
@@ -468,21 +596,16 @@ def test_get_highest_severity_from_validation_result():
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
+                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"} 
                 },
             },
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_be_unique"
+                    "meta":{"rule": "ExpectColumnValuesToBeUnique"} 
                 },
             },
-            {
-                "success": True,
-                "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
-                },
-            },
+
         ]
     }
 
@@ -511,7 +634,7 @@ def test_get_highest_severity_all_successful():
             {
                 "success": True,
                 "expectation_config": {
-                    "type": "expect_column_values_to_not_be_null"
+                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"}
                 },
             }
         ]
@@ -539,7 +662,7 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "success": False,
                 "expectation_config": {
-                    "type": "expect_column_values_to_be_unique"
+                    "meta":{"rule":"expect_column_values_to_be_unique"}
                 },
             }
         ]
@@ -574,10 +697,12 @@ def sample_spark_df(spark):
 
 @pytest.fixture
 def base_expectation_result():
-    """Base expectation template for get_single_expectation_afwijking_data."""
+    """Base expectation template for get_single_expectation_afwijking_data with wrapped structure."""
     return {
-        "expectation_type": "ExpectTableRowCountToEqual",
-        "kwargs": {},
+        "expectation_config": {
+            "meta": {},
+            "kwargs": {},
+        },
         "result": {},
         "success": False,
     }
@@ -586,6 +711,7 @@ def base_expectation_result():
 def test_table_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of table-level expectations (observed_value)."""
     base_expectation_result["result"] = {"observed_value": 123}
+    base_expectation_result["expectation_config"]["meta"]["rule"] = "ExpectTableRowCountToEqual"
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
         df=sample_spark_df,
@@ -601,31 +727,30 @@ def test_table_level_expectation(base_expectation_result, sample_spark_df):
     assert row["regelNaam"] == "ExpectTableRowCountToEqual"
     assert row["bronTabelId"] == "table_001"
     assert row["dqDatum"] == datetime(2025, 10, 15)
+    
 
-
-def test_column_level_expectation(sample_spark_df):
+def test_column_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of column-level expectations (partial_unexpected_list)."""
-    expectation_result = {
-        "expectation_type": "ExpectColumnValuesToBeBetween",
-        "kwargs": {
-            "column": "age",
-            "min_value": 0,
-            "max_value": 12,
-        },
-        "result": {
-            "partial_unexpected_list": [5, 15],
-        },
-        "success": False,
+    base_expectation_result["expectation_config"]["type"] = "expect_column_values_to_be_between"
+    base_expectation_result["expectation_config"]["meta"] = {
+        "column": "age",
+        "rule": "ExpectColumnValuesToBeBetween",
     }
+    base_expectation_result["expectation_config"]["kwargs"] = {
+        "column": "age",
+        "min_value": 0,
+        "max_value": 12,
+    }
+    base_expectation_result["result"] = {"partial_unexpected_list": [5, 15]}
     result = get_single_expectation_afwijking_data(
-        expectation_result=expectation_result,
+        expectation_result=base_expectation_result,
         df=sample_spark_df,
         unique_identifier=["id"],
         run_time=datetime(2025, 10, 24),
         table_id="table_002",
     )
     assert isinstance(result, list)
-    assert len(result) == 2  # 2 unique deviating values: 5 and 15
+    assert len(result) == 2 
     first = result[0]
     assert set(first.keys()) == {
         "identifierVeldWaarde",

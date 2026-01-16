@@ -1,6 +1,6 @@
 from typing import Any
 
-from dq_suite.common import Rule
+from dq_suite.common import Rule, GeoRule
 
 column_compound_unique_rule = Rule(
     rule_name="ExpectCompoundColumnsToBeUnique",
@@ -90,5 +90,39 @@ def column_values_in_set_rule(column_name: str, value_set: list) -> Rule:
         parameters={
             "column": column_name,
             "value_set": value_set,
+        },
+    )
+
+
+def column_values_have_valid_geometry_rule(column_name: str) -> Rule:
+    return GeoRule(
+        rule_name="ExpectColumnValuesToHaveValidGeometry",
+        rule_type="geo",
+        severity="warning",
+        parameters={
+            "column": column_name,
+        },
+    )
+
+
+def column_values_not_empty_geometry_rule(column_name: str) -> Rule:
+    return GeoRule(
+        rule_name="ExpectGeometryColumnValuesToNotBeEmpty",
+        rule_type="geo",
+        severity="warning",
+        parameters={
+            "column": column_name,
+        },
+    )
+
+
+def column_geometry_type_rule(column_name: str, geometry_type: str) -> Rule:
+    return GeoRule(
+        rule_name="ExpectColumnValuesToBeOfGeometryType",
+        rule_type="geo",
+        severity="warning",
+        parameters={
+            "column": column_name,
+            "geometry_type": geometry_type,
         },
     )

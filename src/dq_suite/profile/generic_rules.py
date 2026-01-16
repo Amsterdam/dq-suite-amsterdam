@@ -1,5 +1,6 @@
 import json
 from typing import Dict
+from pyspark.sql import DataFrame
 
 from dq_suite.common import DatasetDict, RulesDict
 from dq_suite.profile.rules_module import (
@@ -12,11 +13,28 @@ from dq_suite.profile.rules_module import (
     column_values_in_set_rule,
     datetime_regex_rule,
     row_count_rule,
+    column_values_have_valid_geometry_rule,
+    column_values_not_empty_geometry_rule,
+    column_geometry_type_rule,
 )
 
 
+def has_geometry_column(df: DataFrame, column_name: str) -> bool:
+    """
+    Check if the given DataFrame column contains at least one Geometry object.
+
+    Args:
+        df (DataFrame): Spark/Pandas DataFrame to check.
+        column_name (str): Name of the column to inspect.
+
+    Returns:
+        bool: True if at least one value in the column is of type 'Geometry', else False.
+    """
+    return df[column_name].dropna().apply(lambda x: type(x).__name__ == "Geometry").any()
+
+
 def create_dq_rules(
-    dataset_name: str, table_name: str, profiling_json: Dict
+    dataset_name: str, table_name: str, profiling_json: Dict, df : DataFrame
 ) -> RulesDict:
     """
     Create data quality rules based on the profiling report.
@@ -66,7 +84,20 @@ def create_dq_rules(
             if isinstance(col_min, int) and isinstance(col_max, int):
                 col_type = "IntegerType"
             else:
-                col_type = "DoubleType"
+                col_type = "DoubleType"       
+        if has_geometry_column(df, variable):
+            geo_rules = [
+            column_values_not_empty_geometry_rule(variable),
+            column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),
+            column_values_have_valid_geometry_rule(variable),
+            ]
+            # Drop geo_query_template and description fields
+            for r in geo_rules:
+                r_dict = r.__dict__
+                r_dict.pop("geo_query_template", None)
+                r_dict.pop("description", None)
+
+            rules.extend(geo_rules)
         rules.append(column_type_rule(variable, col_type))
 
     dq_rules = RulesDict(

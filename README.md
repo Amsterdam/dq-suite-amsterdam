@@ -56,6 +56,23 @@ highest_severity_level → String indicating the highest severity among failed c
 See the documentation of `dq_suite.validation.run_validation` for what other parameters can be passed.
 
 
+**Geo Validation**
+
+Geo validation enables geometric checks using Databricks ST geospatial functions. It is fully integrated into the existing validation flow, allowing generic and geo rules to be applied together on the same table.
+
+Geo validation can be used to validate, among others:
+
+- Whether geometry values are present and non-empty
+- Whether geometries are structurally valid (e.g. no invalid polygons)
+- Whether geometry values are of a specific geometry type (e.g. POINT, POLYGON)
+
+1. Databricks Runtime 17.1 and above must be applied on your Databricks cluster, as ST geospatial functions are only fully supported from this version onwards. For more details, https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-st-geospatial-functions
+
+2. When defining rules in Getting started → Step 3, you can enable geo validation by adding the parameter "rule_type": "geo" inside your JSON. Example is [here](geo_dq_rules_example.json)
+
+3. Results of geo validation will be written into the same data_quality schema as generic validation. If a table includes both generic and geo rules, all results will be combined in the output tables.
+
+
 **Profiling**
 
 Profiling is the process of analyzing a dataset to understand its structure, patterns, and data quality characteristics (such as completeness, uniqueness, or value distributions). 
@@ -65,7 +82,7 @@ The profiling functionality in dq_suite generates profiling results and automati
 ```
 pip install dq-suite-amsterdam
 ```
-2. Get ready to validate your first table. To do so, define
+2. Get ready to profile your first table. To do so, define
 - `df` as a Panda dataframe containing the table that needs to be validated (e.g. via `pd.read_csv`)
 - `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)

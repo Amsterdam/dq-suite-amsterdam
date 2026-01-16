@@ -1,0 +1,39 @@
+{
+    "dataset": {
+        "name": "BAG Woonplaatsen Test",
+        "layer": "Goud"
+    },
+    "tables": [
+        {
+            "table_name": "woonplaatsen",
+            "unique_identifier": "feature_id",
+            "rules": [
+                {
+                    "rule_name": "ExpectColumnValuesToHaveValidGeometry",
+                    "rule_type": "geo",
+                    "severity": "warning",
+                    "parameters": {
+                        "column": "geometry"
+                    }
+                },
+                {
+                    "rule_name": "ExpectGeometryColumnValuesToNotBeEmpty",
+                    "rule_type": "geo",
+                    "severity": "warning",
+                    "parameters": {
+                        "column": "geometry"
+                    }
+                },
+                {
+                    "rule_name": "ExpectColumnValuesToBeOfGeometryType",
+                    "rule_type": "geo",
+                    "severity": "warning",
+                    "parameters": {
+                        "column": "geometry",
+                        "geometry_type": "MultiPolygon"
+                    }
+                }
+            ]
+        }
+    ]
+}

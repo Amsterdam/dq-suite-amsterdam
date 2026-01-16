@@ -8,6 +8,9 @@ from dq_suite.profile.rules_module import (
     column_values_in_set_rule,
     datetime_regex_rule,
     row_count_rule,
+    column_values_have_valid_geometry_rule,
+    column_values_not_empty_geometry_rule,
+    column_geometry_type_rule,
 )
 
 
@@ -79,3 +82,27 @@ def test_column_values_in_set_rule():
     assert "column" in rule.parameters
     assert "value_set" in rule.parameters
     assert rule.parameters["value_set"] == ["Ja", "Nee"]
+
+
+def test_column_values_have_valid_geometry_rule():
+    rule = column_values_have_valid_geometry_rule("geom")
+    assert rule.rule_name == "ExpectColumnValuesToHaveValidGeometry"
+    assert rule.rule_type == "geo"
+    assert rule.parameters == {"column": "geom"}
+
+
+def test_column_values_not_empty_geometry_rule():
+    rule = column_values_not_empty_geometry_rule("geom")
+    assert rule.rule_name == "ExpectGeometryColumnValuesToNotBeEmpty"
+    assert rule.rule_type == "geo"
+    assert rule.parameters == {"column": "geom"}
+
+
+def test_column_geometry_type_rule():
+    rule = column_geometry_type_rule("geom", "POINT")
+    assert rule.rule_name == "ExpectColumnValuesToBeOfGeometryType"
+    assert rule.rule_type == "geo"
+    assert rule.parameters == {
+        "column": "geom",
+        "geometry_type": "POINT",
+    }
