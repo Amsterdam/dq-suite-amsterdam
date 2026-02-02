@@ -654,8 +654,8 @@ def write_validation_metadata_tables(
             table_name=metadata_table_name,
             spark_session=validation_settings_obj.spark_session,
         )
-
-
+   
+        
 def create_validation_result_dataframe(
     df: DataFrame,
     checkpoint_result: CheckpointResult,
