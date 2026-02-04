@@ -3,7 +3,6 @@ from pyspark.sql.types import StructType
 SCHEMA = (
     StructType()
     .add("profilingAttribuutId", "string")
-    .add("profilingTabelId", "string")
     .add("bronAttribuutId", "string")
     .add("vulgraad", "double")
     .add("minWaarde", "string")

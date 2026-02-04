@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Union
 
 from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession, Row
-from pyspark.sql.functions import col, xxhash64
+from pyspark.sql.functions import col, lit, xxhash64
 
 from dq_suite.schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
 from dq_suite.schemas.profilingattribuut import (
@@ -55,7 +55,6 @@ def create_profiling_attributes(
         attributes.append(
             {
                 "profilingAttribuutId": None,
-                "profilingTabelId": profiling_tabel_id,
                 "bronAttribuutId": bronAttribuutId,
                 "vulgraad": stats.get("p_missing"),
                 "minWaarde": str(stats.get("min")),
@@ -101,7 +100,7 @@ def write_profiling_metadata_to_unity(
     )
     attribuut_df = attribuut_df.withColumn(
         "profilingAttribuutId",
-        xxhash64(col("profilingTabelId"), col("bronAttribuutId")).substr(2, 20),
+        xxhash64(lit(profiling_tabel_id), col("bronAttribuutId")).substr(2, 20),
     )
 
     write_to_unity_catalog(
