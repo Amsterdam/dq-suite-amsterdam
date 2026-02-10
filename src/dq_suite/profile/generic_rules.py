@@ -49,12 +49,7 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     Returns:
         bool: True if at least one value in the column is of type 'Geometry', else False.
     """
-    return (
-        df[column_name]
-        .dropna()
-        .apply(lambda x: type(x).__name__ == "Geometry")
-        .any()
-    )
+    return df[column_name].dropna().apply(lambda x: type(x).__name__ == "Geometry").any()
 
 
 def create_dq_rules(
@@ -112,9 +107,7 @@ def create_dq_rules(
             col_type = list(all_geo_types)[0]
             geo_rules = [
                 column_values_not_empty_geometry_rule(variable),
-                column_geometry_type_rule(
-                    variable, "GEOMETRY TYPE TO BE FILLED IN"
-                ),
+                column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),
                 column_values_have_valid_geometry_rule(variable),
             ]
             # Drop geo_query_template and description fields

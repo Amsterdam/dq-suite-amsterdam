@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 from unittest.mock import patch
 from datetime import datetime
 
@@ -15,6 +16,12 @@ from dq_suite.profile.report_transformations import (
 @pytest.fixture
 def spark():
     return SparkSession.builder.master("local").appName("chispa").getOrCreate()
+
+
+@pytest.fixture
+def dummy_df():
+    # Minimal dummy DataFrame
+    return pd.DataFrame({"col1": [1, 2, 3]})
 
 
 def test_extract_top_value():
@@ -46,7 +53,7 @@ def test_create_profiling_table():
     assert isinstance(result["dqDatum"], datetime)
 
 
-def test_create_profiling_attributes():
+def test_create_profiling_attributes(dummy_df):
     profiling_json = {
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "variables": {
@@ -60,7 +67,7 @@ def test_create_profiling_attributes():
             }
         },
     }
-    result = create_profiling_attributes(profiling_json, "dataset1", "profiling_table_1")
+    result = create_profiling_attributes(profiling_json, "dataset1", "profiling_table_1", dummy_df)
     assert len(result) == 1
     attr = result[0]
     assert attr["bronAttribuutId"] == "dataset1_test_table_col1"
@@ -69,7 +76,7 @@ def test_create_profiling_attributes():
 
 
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
-def test_write_profiling_metadata_to_unity(mock_write, spark):
+def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
     profiling_json = {
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
@@ -85,7 +92,7 @@ def test_write_profiling_metadata_to_unity(mock_write, spark):
         },
     }
 
-    write_profiling_metadata_to_unity(profiling_json, "dataset1", "catalog1", spark)
+    write_profiling_metadata_to_unity(profiling_json, "dataset1", "catalog1", spark, dummy_df)
 
     # Check that write_to_unity_catalog is called twice (table + attributes)
     assert mock_write.call_count == 2
