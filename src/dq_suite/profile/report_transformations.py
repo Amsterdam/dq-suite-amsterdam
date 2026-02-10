@@ -10,6 +10,8 @@ from dq_suite.schemas.profilingattribuut import (
     SCHEMA as PROFILINGATTRIBUUT_SCHEMA,
 )
 from dq_suite.common import write_to_unity_catalog
+from .generic_rules import has_geometry_column, extract_all_geo_types
+from dq_suite.profile.type_list import geo_type_list
 
 
 def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
@@ -44,14 +46,22 @@ def create_profiling_table(profiling_json: dict, dataset_name: str) -> Dict:
 
 
 def create_profiling_attributes(
-    profiling_json: dict, dataset_name: str, profiling_tabel_id: str
+    profiling_json: dict,
+    dataset_name: str,
+    profiling_tabel_id: str,
+    df: DataFrame,
 ) -> Dict:
     analysis = profiling_json["analysis"]
     attributes = []
     end_ts = datetime.fromisoformat(analysis["date_end"])
+    all_geo_types = extract_all_geo_types(profiling_json)
     for col, stats in profiling_json["variables"].items():
         bronAttribuutId = f"{dataset_name}_{analysis['title']}_{col}"
         top_value = extract_top_value(stats)
+        data_type = stats.get("type")
+        if has_geometry_column(df, col):
+            data_type = list(all_geo_types)[0]
+
         attributes.append(
             {
                 "profilingAttribuutId": None,
@@ -63,7 +73,7 @@ def create_profiling_attributes(
                 "topVoorkomenWaardes": (
                     str(top_value) if top_value is not None else None
                 ),
-                "dataType": stats.get("type"),
+                "dataType": data_type,
                 "dqDatum": end_ts,
             }
         )
@@ -75,6 +85,7 @@ def write_profiling_metadata_to_unity(
     dataset_name: str,
     catalog_name: str,
     spark_session: SparkSession,
+    df: DataFrame,
 ) -> None:
     tabel_df = spark_session.createDataFrame(
         [Row(**create_profiling_table(profiling_json, dataset_name))],
@@ -93,7 +104,7 @@ def write_profiling_metadata_to_unity(
 
     profiling_tabel_id = tabel_df.collect()[0]["profilingTabelId"]
     attribuut_rows = create_profiling_attributes(
-        profiling_json, dataset_name, profiling_tabel_id
+        profiling_json, dataset_name, profiling_tabel_id, df
     )
     attribuut_df = spark_session.createDataFrame(
         [Row(**row) for row in attribuut_rows], schema=PROFILINGATTRIBUUT_SCHEMA

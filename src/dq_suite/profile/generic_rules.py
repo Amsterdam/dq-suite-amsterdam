@@ -1,8 +1,9 @@
 import json
-from typing import Dict
+from typing import Dict, Set
 from pyspark.sql import DataFrame
 
 from dq_suite.common import DatasetDict, RulesDict
+from dq_suite.profile.type_list import geo_type_list
 from dq_suite.profile.rules_module import (
     column_between_rule,
     column_compound_unique_rule,
@@ -19,6 +20,24 @@ from dq_suite.profile.rules_module import (
 )
 
 
+def extract_all_geo_types(
+    profiling_json: Dict, all_geo_types: Set[str] = None
+) -> Set[str]:
+    """
+    Loop through all variables in profiling_json, extract geo types,
+    update the given set (or create a new one) and return it.
+    """
+    if all_geo_types is None:
+        all_geo_types = set()
+
+    for variable, details in profiling_json.get("variables", {}).items():
+        values = details.get("value_counts_without_nan", {})
+        geo_types = {v for v in values.keys() if v in geo_type_list}
+        all_geo_types.update(geo_types)
+
+    return all_geo_types
+
+
 def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     """
     Check if the given DataFrame column contains at least one Geometry object.
@@ -30,11 +49,16 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     Returns:
         bool: True if at least one value in the column is of type 'Geometry', else False.
     """
-    return df[column_name].dropna().apply(lambda x: type(x).__name__ == "Geometry").any()
+    return (
+        df[column_name]
+        .dropna()
+        .apply(lambda x: type(x).__name__ == "Geometry")
+        .any()
+    )
 
 
 def create_dq_rules(
-    dataset_name: str, table_name: str, profiling_json: Dict, df : DataFrame
+    dataset_name: str, table_name: str, profiling_json: Dict, df: DataFrame
 ) -> RulesDict:
     """
     Create data quality rules based on the profiling report.
@@ -47,11 +71,10 @@ def create_dq_rules(
         column_match_rule(columns),
         row_count_rule(n),
     ]
-
+    all_geo_types = extract_all_geo_types(profiling_json)
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
-
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
             col_type = "TimestampType"
@@ -84,12 +107,15 @@ def create_dq_rules(
             if isinstance(col_min, int) and isinstance(col_max, int):
                 col_type = "IntegerType"
             else:
-                col_type = "DoubleType"       
+                col_type = "DoubleType"
         if has_geometry_column(df, variable):
+            col_type = list(all_geo_types)[0]
             geo_rules = [
-            column_values_not_empty_geometry_rule(variable),
-            column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),
-            column_values_have_valid_geometry_rule(variable),
+                column_values_not_empty_geometry_rule(variable),
+                column_geometry_type_rule(
+                    variable, "GEOMETRY TYPE TO BE FILLED IN"
+                ),
+                column_values_have_valid_geometry_rule(variable),
             ]
             # Drop geo_query_template and description fields
             for r in geo_rules:

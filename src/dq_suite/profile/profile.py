@@ -48,5 +48,6 @@ def profile_and_create_rules(
         dataset_name=dataset_name,
         catalog_name=catalog_name,
         spark_session=spark_session,
+        df=df,
     )
     return report_html
