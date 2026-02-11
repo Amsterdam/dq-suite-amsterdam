@@ -185,7 +185,7 @@ def test_geometry_rules_are_created(df_with_geometry):
     )
     assert any(
         rule.rule_name == "ExpectColumnValuesToBeOfGeometryType"
-        and rule.parameters.get("geometry_type") == "GEOMETRY TYPE TO BE FILLED IN"
+        and rule.parameters.get("geometry_type") == "Geometry"
         for rule in geometry_rules
     )
     assert any(

@@ -34,7 +34,7 @@ def profile_and_create_rules(
             "spearman": {"calculate": False},
         },
     )
-
+   
     # Convert profiling report to JSON
     profiling_json = json.loads(report.to_json())
     report_html = report.to_notebook_iframe()

@@ -10,8 +10,7 @@ from dq_suite.schemas.profilingattribuut import (
     SCHEMA as PROFILINGATTRIBUUT_SCHEMA,
 )
 from dq_suite.common import write_to_unity_catalog
-from .generic_rules import has_geometry_column, extract_all_geo_types
-from dq_suite.profile.type_list import geo_type_list
+from .generic_rules import has_geometry_column
 
 
 def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
@@ -54,13 +53,12 @@ def create_profiling_attributes(
     analysis = profiling_json["analysis"]
     attributes = []
     end_ts = datetime.fromisoformat(analysis["date_end"])
-    all_geo_types = extract_all_geo_types(profiling_json)
     for col, stats in profiling_json["variables"].items():
         bronAttribuutId = f"{dataset_name}_{analysis['title']}_{col}"
         top_value = extract_top_value(stats)
         data_type = stats.get("type")
         if has_geometry_column(df, col):
-            data_type = list(all_geo_types)[0]
+            data_type = type(df[col].dropna().iloc[0]).__name__ 
 
         attributes.append(
             {
