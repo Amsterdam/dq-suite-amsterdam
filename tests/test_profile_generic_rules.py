@@ -33,7 +33,6 @@ def df_with_geometry():
             Geometry(b"\x01\x06\x00\x00\x00\x01\x00\x00\x00", 4326),
         ],
         "id": [1, 2],
-        "geometry_norm": "MultiPolygon"
     })
 
 
@@ -147,11 +146,6 @@ def test_geometry_rules_are_created(df_with_geometry):
     profiling_input = {
         "table": {"n": 10},
         "variables": {
-            "geometry_norm": {
-            "type": "String",
-            "p_missing": 0.0,
-            "value_counts_without_nan": {"MultiPolygon": 2},  
-            },
             "geometry": {
                 "type": "Unsupported",
                 "p_missing": 0.0,

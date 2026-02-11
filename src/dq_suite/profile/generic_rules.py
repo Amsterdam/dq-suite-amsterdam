@@ -24,7 +24,7 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     Check if the given DataFrame column contains at least one Geometry object.
 
     Args:
-        df (DataFrame): Pandas DataFrame to check.
+        df (DataFrame): Spark/Pandas DataFrame to check.
         column_name (str): Name of the column to inspect.
 
     Returns:
@@ -47,9 +47,11 @@ def create_dq_rules(
         column_match_rule(columns),
         row_count_rule(n),
     ]
+
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
+        
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
             col_type = "TimestampType"
