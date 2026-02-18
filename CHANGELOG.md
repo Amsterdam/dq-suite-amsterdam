@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.1] - 11-02-2026
+
+### Added
+- Added profiling metadata extraction and writing functionality to Unity Catalog.
+- Implemented create_profiling_table and create_profiling_attributes functions to generate table-level and attribute-level profiling data.
+- Added extract_top_value utility to determine the most frequent values for profiling attributes.
+- Implemented write_profiling_metadata_to_unity to store profiling results in Unity Catalog tables profilingtabel and profilingattribuut.
+- Automatic detection of geometry columns in profiling attributes to determine their data type.
+
 ## [0.13.0] - 18-12-2025
 
 ### Added

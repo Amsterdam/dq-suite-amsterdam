@@ -51,7 +51,7 @@ def create_dq_rules(
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
-
+        
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
             col_type = "TimestampType"
@@ -86,9 +86,10 @@ def create_dq_rules(
             else:
                 col_type = "DoubleType"       
         if has_geometry_column(df, variable):
+            col_type = type(df[variable].dropna().iloc[0]).__name__ 
             geo_rules = [
             column_values_not_empty_geometry_rule(variable),
-            column_geometry_type_rule(variable, "GEOMETRY TYPE TO BE FILLED IN"),
+            column_geometry_type_rule(variable, col_type),
             column_values_have_valid_geometry_rule(variable),
             ]
             # Drop geo_query_template and description fields

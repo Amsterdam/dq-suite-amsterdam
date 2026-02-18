@@ -113,3 +113,46 @@ TBLPROPERTIES (
   'delta.feature.deletionVectors' = 'supported',
   'delta.minReaderVersion' = '3',
   'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingtabel ( 
+  `profilingTabelId` STRING,
+  `bronTabelId` STRING,
+  `aantalRecords` BIGINT,
+  `aantalNullRecords` BIGINT,
+  `aantalNietUniekeRecords` BIGINT,
+  `aantalAttributen` BIGINT,
+  `dqDatum` TIMESTAMP)
+USING delta
+COMMENT 'Created by the file upload UI'
+TBLPROPERTIES (
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+ CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingattribuut (
+  `profilingAttribuutId` STRING,
+  `profilingTabelId` STRING,
+  `bronAttribuutId` STRING,
+  `dataType` STRING,
+  `vulgraad` DOUBLE,
+  `aantalUniekeWaardes` BIGINT,
+  `minWaarde` STRING,
+  `maxWaarde` STRING,
+  `topVoorkomenWaardes` STRING,
+  `dqDatum` TIMESTAMP)
+USING delta
+COMMENT 'Created by the file upload UI'
+TBLPROPERTIES (
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7')

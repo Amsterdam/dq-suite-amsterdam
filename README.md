@@ -105,10 +105,12 @@ profile_and_create_rules(
 
 **Result of profiling**
 
-Profiling result will be created in HTML view.
-The rule.json file will be created at the specified path.(if you set `generate_rules=True`)
-You can edit this file to refine the rules according to your data validation needs.
+Profiling results are created in an HTML view.
+The rule.json file is created at the specified path(if `generate_rules=True`)
+This file can be edited to refine the rules according to your data validation needs.
 The JSON rule file can then be used as input for dq_suite validation.
+Profiling tables are created at the table level and include attributes of each table.
+Geographic rules, as described in the Geo Validation section, are automatically generated for geometry columns.
 
 For further documentation, see:
 - [other functionalities](docs/Readme-other.md)
