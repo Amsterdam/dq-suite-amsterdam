@@ -87,6 +87,7 @@ class ValidationRunner:
             validation_settings_obj._expectation_suite_name
         )
         self.checkpoint_name = validation_settings_obj._checkpoint_name
+        self._result_format = validation_settings_obj._result_format
         self.run_name = validation_settings_obj._run_name
         self.validation_definition_name = (
             validation_settings_obj._validation_definition_name
@@ -277,12 +278,15 @@ class ValidationRunner:
             checkpoint = self.data_context.checkpoints.get(
                 name=self.checkpoint_name
             )  # If checkpoint_name exists in data_context
+            checkpoint.result_format = self._result_format
+            checkpoint.save()
         except DataContextError:
             self._create_action_list()
             checkpoint = Checkpoint(
                 name=self.checkpoint_name,
                 validation_definitions=[self.validation_definition],
                 actions=self.action_list,
+                result_format=self._result_format,
             )  # Note: a checkpoint combines validations with actions
 
             # Add checkpoint to data context for future use
@@ -293,6 +297,9 @@ class ValidationRunner:
         self, batch_parameters: Dict[str, DataFrame]
     ) -> CheckpointResult:  # pragma: no cover - only GX functions
         checkpoint = self._get_or_add_checkpoint()
+        print("checkpoint: ", checkpoint)
+        # checkpoint.result_format = {"result_format": "COMPLETE"}
+        # checkpoint.save() 
         return checkpoint.run(batch_parameters=batch_parameters)
 
 

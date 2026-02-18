@@ -529,9 +529,9 @@ def get_single_expectation_afwijking_data(
                     "bronTabelId": table_id,
                 }
             )
-    elif "partial_unexpected_list" in result_dict:  # Handle column-level expectations
+    elif "unexpected_list" in result_dict:  # Handle column-level expectations
         deviating_attribute_value = result_dict.get(
-            "partial_unexpected_list", []
+            "unexpected_list", []
         )
         unique_deviating_values = get_unique_deviating_values(
             deviating_attribute_value
@@ -559,7 +559,7 @@ def get_single_expectation_afwijking_data(
     else:  # Unknown / unsupported expectation
         raise ValueError(
             f"Unexpected format in expectation_result for rule '{rule_name}'. "
-            "Expected 'unexpected_rows' or 'observed_value' or 'partial_unexpected_list' key."
+            "Expected 'unexpected_rows' or 'observed_value' or 'unexpected_list' key."
         )
     return extracted_data
 
