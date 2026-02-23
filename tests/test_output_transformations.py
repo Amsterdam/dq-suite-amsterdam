@@ -730,7 +730,7 @@ def test_table_level_expectation(base_expectation_result, sample_spark_df):
     
 
 def test_column_level_expectation(base_expectation_result, sample_spark_df):
-    """Test handling of column-level expectations (partial_unexpected_list)."""
+    """Test handling of column-level expectations (unexpected_list)."""
     base_expectation_result["expectation_config"]["type"] = "expect_column_values_to_be_between"
     base_expectation_result["expectation_config"]["meta"] = {
         "column": "age",
@@ -741,7 +741,7 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
         "min_value": 0,
         "max_value": 12,
     }
-    base_expectation_result["result"] = {"partial_unexpected_list": [5, 15]}
+    base_expectation_result["result"] = {"unexpected_list": [5, 15]}
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
         df=sample_spark_df,

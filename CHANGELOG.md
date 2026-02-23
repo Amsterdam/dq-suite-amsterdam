@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.2] - 19-02-2026
+
+### Changed
+- Updated Great Expectations checkpoint configuration to use ResultFormat.COMPLETE.
+- Checkpoints now return full validation results instead of defaulting to SUMMARY.
+
+### Fixed
+- Unexpected value lists are now fully returned; previously results contained only partial unexpected lists.
+
 ## [0.13.1] - 11-02-2026
 
 ### Added

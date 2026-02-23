@@ -5,6 +5,7 @@ from delta.tables import *
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
+from great_expectations.core.result_format import ResultFormat
 
 
 @dataclass()
@@ -393,6 +394,7 @@ class ValidationSettings:
         # TODO/check: nearly all names are related to 'validation_name' - do we want
         #  to allow for custom names via parameters?
         self._set_checkpoint_name()
+        self._set_result_format()
         self._set_run_name()
         self._set_data_source_name()
         self._set_data_asset_name()
@@ -404,6 +406,9 @@ class ValidationSettings:
         self._checkpoint_name = (
             f"{self.dataset_layer}/{self.dataset_name}/{self.table_name}"
         )
+
+    def _set_result_format(self):
+        self._result_format = ResultFormat.COMPLETE
 
     def _set_run_name(self):
         self._run_name = f"%Y%m%d-%H%M%S-{self.validation_name}"
