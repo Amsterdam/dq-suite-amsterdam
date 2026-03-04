@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.3] - 03-04-2026
+
+### Changed
+- Support referential integrity expectations when extracting target attributes from Great Expectations results.
+  (`ExpectColumnPairValuesToBeEqual`, `ExpectColumnPairValuesAToBeGreaterThanB`)
+- Improved filtering logic in `filter_df_based_on_deviating_values` to better handle compound keys and multi-column attributes.
+
+### Fixed
+- Resolved incorrect attribute detection for multi-column expectations defined in `kwargs`.
+
+### Known limitations
+- When using `ResultFormat.COMPLETE`, Great Expectations limits the `unexpected_list` to a maximum of 200 values per expectation.
+
 ## [0.13.2] - 19-02-2026
 
 ### Changed
