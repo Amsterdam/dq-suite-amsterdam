@@ -30,6 +30,7 @@ from src.dq_suite.output_transformations import (
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
 from .test_data.test_schema import SCHEMA2 as AFWIJKING_SCHEMA2
+from .test_data.test_schema import SCHEMA3 as AFWIJKING_SCHEMA3
 
 
 @pytest.mark.usefixtures("rules_file_path")  # From conftest.py
@@ -224,6 +225,20 @@ class TestGetTargetAttrForRule:
         result = _wrap_meta({"table": "table"})
         assert get_target_attr_for_rule(result) is None
 
+    def test_get_attr_for_rule_with_column_A_B_in_kwargs(self):
+        meta_dict = {"column": None}
+        kwargs_dict = {"column_A": "A", "column_B": "B"}
+        result = _wrap_meta(meta_dict)
+        result["expectation_config"]["kwargs"] = kwargs_dict
+        assert get_target_attr_for_rule(result) == ["A", "B"]
+
+    def test_get_attr_for_rule_with_column_list_in_kwargs(self):
+        meta_dict = {"column": None}
+        kwargs_dict = {"column_list": ["X", "Y"]}
+        result = _wrap_meta(meta_dict)
+        result["expectation_config"]["kwargs"] = kwargs_dict
+        assert get_target_attr_for_rule(result) == ["X", "Y"]
+
 
 class TestGetUniqueDeviatingValues:
     def test_get_unique_deviating_values_empty_list(self):
@@ -299,7 +314,6 @@ class TestFilterDfBasedOnDeviatingValues:
             ("Alice", "Taylor", 28),
         ]
         df = spark.createDataFrame(data, AFWIJKING_SCHEMA2)
-
         result_df = filter_df_based_on_deviating_values(
             [("voornaam", "Alice"), ("achternaam", "Jansen")],
             ["voornaam", "achternaam"],
@@ -307,6 +321,25 @@ class TestFilterDfBasedOnDeviatingValues:
         )
         expected_data = [("Alice", "Jansen", 30)]
         expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
+        assert_df_equality(result_df, expected_df)
+
+    def test_filter_df_based_on_deviating_values_expectation_example(self, spark):
+        data = [
+            ("1", "Nederland"),
+            ("2", "België"),
+            ("1", "Nederland"),
+            ("3", "France"),
+        ]
+        schema = ["countrycode", "contryname"]
+        df = spark.createDataFrame(data, AFWIJKING_SCHEMA3)
+        deviating_value = ["1", "Nederland"]
+        attribute = ["countrycode", "contryname"]
+        result_df = filter_df_based_on_deviating_values(deviating_value, attribute, df)
+        expected_data = [
+            ("1", "Nederland"),
+            ("1", "Nederland"),
+        ]
+        expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA3)
         assert_df_equality(result_df, expected_df)
 
 

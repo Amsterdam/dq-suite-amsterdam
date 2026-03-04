@@ -175,8 +175,13 @@ def get_target_attr_for_rule(result: dict) -> str | None:
     """
     expectation_config = result.get("expectation_config", {})
     meta = expectation_config.get("meta", {})
+    kwargs = expectation_config.get("kwargs", {})
 
     if "column" in meta:
+        if "column_A" in kwargs and "column_B" in kwargs :
+            return  [kwargs.get("column_A"), kwargs.get("column_B")]
+        elif "column_list" in kwargs:
+            return kwargs.get("column_list")
         return meta.get("column")
     elif "column_list" in meta:
         return meta.get("column_list")
@@ -211,17 +216,27 @@ def filter_df_based_on_deviating_values(
     The output will contain only records that did not conform to the
     expectations set.
 
-    # TODO: add documentation per parameter.
-    """
+    deviating_value : Union[str, int, float, List[Any], None]
+        The value(s) that are considered deviating from the expectation.
+        - If None: filters rows where the given attribute is NULL.
+        - If a single value: filters rows where attribute == deviating_value.
+        - If a list/tuple: used together with multiple attributes (e.g. compound keys).
+    attribute : Union[str, List[str]]
+        The column name(s) on which the filter is applied.
+        - Single string for filtering one column.
+        - List of column names when filtering on multiple columns (compound keys).
+    df: A filtered DataFrame containing only records that match the deviating value(s).
+    """    
     if deviating_value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
-        # In case of compound keys, "attribute" is a list and "deviating_value" is a dict
-        # like tuple. The indices will match, and we take [1] for deviating_value,
-        # because the "key" is stored in [0].
-        number_of_attrs = len(attribute)
-        for i in range(number_of_attrs):
-            df = df.filter(col(attribute[i]) == deviating_value[i][1])
+        for col_name, value in zip(attribute, deviating_value):
+            if isinstance(value, (tuple, list)):
+                # In case of compound keys, "attribute" is a list and "deviating_value" is a dict
+                # like tuple. The indices will match, and we take [1] for deviating_value,
+                # because the "key" is stored in [0].   
+                value = value[1]
+            df = df.filter(col(col_name) == lit(value))
         return df
     else:
         return df.filter(col(attribute) == lit(deviating_value))
@@ -236,7 +251,7 @@ def get_grouped_ids_per_deviating_value(
     """
     # TODO: add documentation. This function is very complex.
     ids = (
-        filtered_df.select(unique_identifier).rdd.flatMap(lambda x: x).collect()
+        filtered_df.select(unique_identifier).distinct().rdd.flatMap(lambda x: x).collect()
     )
     number_of_unique_ids = len(unique_identifier)
     return [
