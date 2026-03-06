@@ -10,3 +10,9 @@ SCHEMA2 = (
     .add("achternaam", "string")
     .add("leeftijd", "integer")
 )
+
+SCHEMA3 = (
+    StructType()
+    .add("countrycode", "string")
+    .add("contryname", "string")
+)

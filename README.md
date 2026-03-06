@@ -131,5 +131,7 @@ Older versions of DBR will result in errors upon install of the `dq-suite-amster
 - The `run_time` value is defined separately from Great Expectations in `validation.py`. We plan on fixing this when Great Expectations has documented how to access it from the RunIdentifier object.
 
 - Profiling rules/Rule condition logic
- 
+
 Current profiling-based rule conditions are placeholders and should be defined and validated by the data teams to ensure they are generic and reusable.
+
+ - When using Great Expectations with `ResultFormat.COMPLETE`, the `unexpected_list`  is limited to a maximum of 200 values per expectation. This is a limitation  imposed by Great Expectations. 
