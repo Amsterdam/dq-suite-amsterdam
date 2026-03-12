@@ -543,7 +543,6 @@ class TestGetAfwijkingData:
 @pytest.mark.usefixtures("spark")
 class TestGetCustomValidationResults:
     def test_get_custom_validation_results_failure(self, spark):
-        # Arrange DataFrame with 5 rows
         df = spark.createDataFrame(
             [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",),
              ("POINT (3 3)",), ("POINT (4 4)",)],
@@ -554,38 +553,38 @@ class TestGetCustomValidationResults:
 
         expectation_result = {
             "expectation_config": {
-                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
-                # Geo rules usually include column + geometry_type
-                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+                "meta": {
+                "column": "geometry",
+                "geometry_type": "MultiPolygon",
+                "rule": "ExpectColumnValuesToBeOfGeometryType"
+                }
             },
             "result": {
-                # Function extracts the first number using regex → 2 unexpected rows
-                "observed_value": "2 invalid geometries found",
+                "observed_value": "5 unexpected rows",
             },
         }
 
-        # Act
         actual = get_custom_validation_results(
             expectation_result=expectation_result,
             run_time=dtt_now,
             table_id=table_id,
             df=df,
         )
-
-        # Assert
         assert actual == {
-            "aantalValideRecords": 3,                 
+            "aantalValideRecords": 0,                 
             "aantalReferentieRecords": 5,
-            "percentageValideRecords": 0.6,
+            "percentageValideRecords": 0.0,
             "dqDatum": dtt_now,
             "dqResultaat": "failure",
             "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
-            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "regelParameters": {
+                "column": "geometry",
+                "geometry_type": "MultiPolygon"
+            },
             "bronTabelId": table_id,
         }
 
     def test_get_custom_validation_results_success(self, spark):
-        # Arrange DataFrame with 4 rows
         df = spark.createDataFrame(
             [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",), ("POINT (3 3)",)],
             ["geometry"]
@@ -595,23 +594,23 @@ class TestGetCustomValidationResults:
 
         expectation_result = {
             "expectation_config": {
-                "meta": {"rule": "ExpectColumnValuesToBeOfGeometryType"},
-                "kwargs": {"column": "geometry", "geometry_type": "MultiPolygon"},
+                "meta": {
+                "column": "geometry",
+                "geometry_type": "Point",
+                "rule": "ExpectColumnValuesToBeOfGeometryType"
+                }
             },
             "result": {
-                "observed_value": "0",  # no unexpected values
+                "observed_value": "0 unexpected rows",  # no unexpected values
             },
         }
 
-        # Act
         actual = get_custom_validation_results(
             expectation_result=expectation_result,
             run_time=dtt_now,
             table_id=table_id,
             df=df,
         )
-
-        # Assert
         assert actual == {
             "aantalValideRecords": 4,
             "aantalReferentieRecords": 4,
@@ -619,9 +618,13 @@ class TestGetCustomValidationResults:
             "dqDatum": dtt_now,
             "dqResultaat": "success",
             "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
-            "regelParameters": {"geometry_type": "MultiPolygon"},
+            "regelParameters": {
+                "column": "geometry",
+                "geometry_type": "Point"
+            },
             "bronTabelId": table_id,
         }
+
 
 def test_get_highest_severity_from_validation_result():
     validation_result = {
@@ -799,6 +802,159 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
     assert "max_value" in first["regelParameters"]
     deviating_values = [r["afwijkendeAttribuutWaarde"] for r in result]
     assert set(deviating_values) == {5, 15}
+
+
+def test_get_single_expectation_afwijking_data_geometry_type(spark, base_expectation_result):
+    """Test handling of ExpectColumnValuesToBeOfGeometryType expectation (unexpected_rows)."""
+    df = spark.createDataFrame(
+        [
+            (1, "POINT (1 1)"),
+            (2, "LINESTRING (0 0,1 1)"),
+        ],
+            ["id", "geometry"],
+        )
+    run_time = datetime.now()
+    table_id = "geo_source_001"
+    base_expectation_result["expectation_config"]["meta"] = {
+                    "rule": "ExpectColumnValuesToBeOfGeometryType",
+                    "column": "geometry",
+                    "geometry_type": "MultiPolygon",
+                }
+    base_expectation_result["expectation_config"]["success"] = False
+    base_expectation_result["result"] = {
+                    "observed_value": "2 unexpected rows",
+                    "details": {
+                        "unexpected_rows": [
+                            {"id": 1, "geometry": "POINT (1 1)"},
+                            {"id": 2, "geometry": "LINESTRING (0 0,1 1)"}
+                        ]
+                    }
+                }
+    result = get_single_expectation_afwijking_data(
+            expectation_result=base_expectation_result,
+            df=df,
+            unique_identifier=["id"],
+            run_time=run_time,
+            table_id=table_id,
+        )
+    assert result == [
+            {
+                "identifierVeldWaarde": [[1]],
+                "afwijkendeAttribuutWaarde": "POINT (1 1)",
+                "dqDatum": run_time,
+                "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+                "regelParameters": {
+                    "column": "geometry",
+                    "geometry_type": "MultiPolygon",
+                },
+                "bronTabelId": table_id,
+            },
+            {
+                "identifierVeldWaarde": [[2]],
+                "afwijkendeAttribuutWaarde": "LINESTRING (0 0,1 1)",
+                "dqDatum": run_time,
+                "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+                "regelParameters": {
+                    "column": "geometry",
+                    "geometry_type": "MultiPolygon",
+                },
+                "bronTabelId": table_id,
+            },
+        ]
+
+
+def test_get_single_expectation_afwijking_data_valid_geometry(spark, base_expectation_result):
+    """Test handling of ExpectColumnValuesToHaveValidGeometry expectation (unexpected_rows)."""
+    dummy_invalid_multipolygon = '{"type": "Point", "coordinates": [[[[0,0],[4,0],[4,4],[0,4],[0,0]]], [[[1,1],[3,3],[3,1],[1,3],[1,1]]]]}'
+    df = spark.createDataFrame(
+        [
+            (1, "POINT (1 1)"),
+            (2, dummy_invalid_multipolygon),
+        ],
+        ["id", "geometry"],
+    )
+    run_time = datetime.now()
+    table_id = "geo_source_001"
+    base_expectation_result["expectation_config"]["meta"] = {
+                    "rule": "ExpectColumnValuesToHaveValidGeometry",
+                    "column": "geometry",
+                    "geometry_type": None,
+                }
+    base_expectation_result["expectation_config"]["success"] = False
+    base_expectation_result["result"] = {
+                    "observed_value": "1 unexpected rows",
+                    "details": {
+                        "unexpected_rows": [
+                            {"id": 2, "geometry": dummy_invalid_multipolygon}
+                        ]
+                    }
+                }
+    result = get_single_expectation_afwijking_data(
+            expectation_result=base_expectation_result,
+            df=df,
+            unique_identifier=["id"],
+            run_time=run_time,
+            table_id=table_id,
+        )
+    assert result == [
+            {
+                "identifierVeldWaarde": [[2]],
+                "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
+                "dqDatum": run_time,
+                "regelNaam": "ExpectColumnValuesToHaveValidGeometry",
+                "regelParameters": {
+                    "column": "geometry",
+                },
+                "bronTabelId": table_id,
+            },
+        ]
+
+
+def test_get_single_expectation_afwijking_data_empty_geometry(spark, base_expectation_result):
+    """Test handling of ExpectGeometryColumnValuesToNotBeEmpty expectation (unexpected_rows)."""
+    dummy_invalid_multipolygon = '{"type": "Point", "coordinates": []}'
+    df = spark.createDataFrame(
+        [
+            (1, "POINT (1 1)"),
+            (2, dummy_invalid_multipolygon),
+        ],
+        ["id", "geometry"],
+    )
+    run_time = datetime.now()
+    table_id = "geo_source_001"
+    base_expectation_result["expectation_config"]["meta"] = {
+                    "rule": "ExpectGeometryColumnValuesToNotBeEmpty",
+                    "column": "geometry",
+                    "geometry_type": None,
+                }
+    base_expectation_result["expectation_config"]["success"] = False
+    base_expectation_result["result"] = {
+                    "observed_value": "1 unexpected rows",
+                    "details": {
+                        "unexpected_rows": [
+                            {"id": 2, "geometry": dummy_invalid_multipolygon}
+                        ]
+                    }
+                }
+    result = get_single_expectation_afwijking_data(
+            expectation_result=base_expectation_result,
+            df=df,
+            unique_identifier=["id"],
+            run_time=run_time,
+            table_id=table_id,
+        )
+    assert result == [
+            {
+                "identifierVeldWaarde": [[2]],
+                "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
+                "dqDatum": run_time,
+                "regelNaam": "ExpectGeometryColumnValuesToNotBeEmpty",
+                "regelParameters": {
+                    "column": "geometry",
+                },
+                "bronTabelId": table_id,
+            },
+        ]
 
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.
