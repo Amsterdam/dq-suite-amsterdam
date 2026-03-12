@@ -18,10 +18,11 @@ from great_expectations.data_context.types.base import (
 from great_expectations.datasource.fluent import SparkDatasource
 from great_expectations.datasource.fluent.spark_datasource import DataFrameAsset
 from great_expectations.exceptions import DataContextError
-from great_expectations.expectations import core as gx_core, UnexpectedRowsExpectation
+from great_expectations.expectations import UnexpectedRowsExpectation
+from great_expectations.expectations import core as gx_core
 from pyspark.sql import DataFrame, SparkSession
 
-from .common import DatasetDict, Rule, GeoRule, RulesDict, ValidationSettings
+from .common import DatasetDict, GeoRule, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
 from .output_transformations import (
     get_highest_severity_from_validation_result,
@@ -154,7 +155,9 @@ class ValidationRunner:
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
-    def _create_geo_expectation(self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule) -> UnexpectedRowsExpectation:
+    def _create_geo_expectation(
+        self, expectation_suite_obj: ExpectationSuite, geo_rule: GeoRule
+    ) -> UnexpectedRowsExpectation:
         """
         Create a spatial validation rule for Great Expectations on Spark/Sedona
         directly from a GeoRule object.
@@ -165,7 +168,9 @@ class ValidationRunner:
             FROM {{batch}}
             WHERE {where_condition}
         """
-        custom_query = base_query_template.format(where_condition=geo_rule.geo_query_template)
+        custom_query = base_query_template.format(
+            where_condition=geo_rule.geo_query_template
+        )
         return UnexpectedRowsExpectation(
             unexpected_rows_query=custom_query,
             description=geo_rule.description,
@@ -296,7 +301,7 @@ class ValidationRunner:
     def run_validation(
         self, batch_parameters: Dict[str, DataFrame]
     ) -> CheckpointResult:  # pragma: no cover - only GX functions
-        checkpoint = self._get_or_add_checkpoint() 
+        checkpoint = self._get_or_add_checkpoint()
         return checkpoint.run(batch_parameters=batch_parameters)
 
 
@@ -392,7 +397,7 @@ def run_validation(
             f"'{table_name}' in JSON file at '"
             f"{json_path}'."
         )
-        
+
     # 2) ... perform the validation on the dataframe...
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
@@ -417,11 +422,11 @@ def run_validation(
         else:
             rules_list.append(Rule(**r))
 
-    # 4) Cretae RulesDict 
+    # 4) Cretae RulesDict
     rules_dict_obj = RulesDict(
         unique_identifier=rules_dict["unique_identifier"],
         table_name=rules_dict["table_name"],
-        rules=rules_list
+        rules=rules_list,
     )
 
     checkpoint_result = validate(
