@@ -10,7 +10,7 @@
 # MAGIC  
 
 # COMMAND ----------
-
+https://github.com/Amsterdam/dq-suite-amsterdam/settings/access
 # Install dq-suite
 %pip install dq-suite-amsterdam==0.11.10
  
