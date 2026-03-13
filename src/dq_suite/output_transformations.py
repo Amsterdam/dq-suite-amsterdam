@@ -1,9 +1,12 @@
 import copy
 import datetime
 import re
-from typing import Any, List
-
-from great_expectations.checkpoint.checkpoint import CheckpointResult
+from typing import Any, Dict, List
+import logging
+from great_expectations.checkpoint.checkpoint import (
+    CheckpointDescriptionDict,
+    CheckpointResult,
+)
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
@@ -26,7 +29,8 @@ from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
-
+from .schemas.team import SCHEMA as TEAM_SCHEMA
+logger = logging.getLogger("dq_suite.output_transformations")
 
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
@@ -272,6 +276,7 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
         {
             "bronDatasetId": dataset_dict["name"],
             "medaillonLaag": dataset_dict["layer"],
+            "teamId": dq_rules_dict["team"]["teamid"],
         }
     ]
 
@@ -280,10 +285,12 @@ def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
     table_name = rules_dict["table_name"]
     unique_identifier = rules_dict["unique_identifier"]
     table_id = f"{dataset_name}_{table_name}"
+    bronDatasetId = f"{dataset_name}"
     return {
         "bronTabelId": table_id,
         "tabelNaam": table_name,
         "uniekeSleutel": unique_identifier,
+        "bronDatasetId": bronDatasetId,
     }
 
 
@@ -341,7 +348,7 @@ def get_bronattribuut_data(
     return extracted_data
 
 
-def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
+def get_single_rule_dict(rule: Rule, table_id: str, teamid: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
     # Round min/max values (if present) to a single decimal
@@ -356,6 +363,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         "bronTabelId": table_id,
         "attribuut": parameters.get("column", None),
         "severity": rule.get("severity", "ok"),
+        "teamId": teamid,
     }
 
 
@@ -365,11 +373,12 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    teamid = dq_rules_dict["team"]["teamid"]
     for table in dq_rules_dict["tables"]:
         table_id = f"{dataset_name}_{table['table_name']}"
         for rule in table["rules"]:
             extracted_data.append(
-                get_single_rule_dict(rule=rule, table_id=table_id)
+                get_single_rule_dict(rule=rule, table_id=table_id,teamid=teamid)
             )
     return extracted_data
 
@@ -522,6 +531,7 @@ def get_single_expectation_afwijking_data(
     unique_identifier: List[str],
     run_time: datetime,
     table_id: str,
+    mask_columns: List[str] | None = None,
 ) -> list[dict]:
     extracted_data = []
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
@@ -535,10 +545,19 @@ def get_single_expectation_afwijking_data(
         .get("details", {})
         .get("unexpected_rows")
     )
+
+    def mask_value(value,attr):
+        """
+        Mask the value of the attribute if it is in the masking_columns list.
+        """
+        if mask_columns and attr in mask_columns:
+            return "***masked***"
+        return value
+
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
-            afwijkende_value = row.get(attribute)
+            afwijkende_value = mask_value(row.get(attribute), attribute)
             extracted_data.append(
                 {
                     "identifierVeldWaarde": [grouped_id],
@@ -554,9 +573,9 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": None,
-                    "afwijkendeAttribuutWaarde": result_dict.get(
+                    "afwijkendeAttribuutWaarde": mask_value(result_dict.get(
                         "observed_value", []
-                    ),
+                    ), attribute),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -581,7 +600,7 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": grouped_ids,
-                    "afwijkendeAttribuutWaarde": value,
+                    "afwijkendeAttribuutWaarde": mask_value(value, attribute),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -611,6 +630,7 @@ def get_afwijking_data(
         f"{validation_settings_obj.table_name}"
     )
     unique_identifier = validation_settings_obj.unique_identifier
+    mask_columns = validation_settings_obj.mask_columns
 
     extracted_data = []
     if not isinstance(
@@ -626,6 +646,7 @@ def get_afwijking_data(
                 unique_identifier=unique_identifier,
                 run_time=run_time,
                 table_id=table_id,
+                mask_columns=mask_columns,
             )
     return extracted_data
 
@@ -647,6 +668,9 @@ def create_metadata_dataframe(
     elif metadata_table_name == "regel":
         extracted_data = get_regel_data(dq_rules_dict=dq_rules_dict)
         schema = REGEL_SCHEMA
+    elif metadata_table_name == "team":
+        extracted_data = get_team_data(dq_rules_dict=dq_rules_dict)
+        schema = TEAM_SCHEMA
     else:
         raise ValueError(f"Unknown metadata table name '{metadata_table_name}'")
     df = list_of_dicts_to_df(
@@ -671,6 +695,7 @@ def write_validation_metadata_tables(
         "brontabel",
         "bronattribuut",
         "regel",
+        "team",
     ]
 
     for metadata_table_name in metadata_table_names:
@@ -810,3 +835,16 @@ def get_highest_severity_from_validation_result(
         failed_severities, key=lambda sev: severity_priority.get(sev, 0)
     )
     return highest_severity
+
+def get_team_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+    """
+    Get the team data from the dq_rules_dict.
+    """
+    dataset_dict: DatasetDict = dq_rules_dict["team"]
+    return [
+        {
+            "teamId": dataset_dict["teamid"],
+            "teamName": dataset_dict["teamname"],
+            "teamDescription": dataset_dict["teamdescription"],
+        }
+    ]
