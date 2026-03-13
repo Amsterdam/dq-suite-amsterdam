@@ -4,7 +4,6 @@ They were moved here, because none of them are used by an actual validation
 run - instead, they are more like general helper functions for ad-hoc tasks.
 """
 
-
 import json
 from typing import Any, Dict, List
 
@@ -218,8 +217,8 @@ def data_quality_rules_json_string_to_dict(
                 if "row_condition" in parameter:
                     #  GX requires this statement for conditional rules when
                     #  using spark
-                    parameter[
-                        "condition_parser"
-                    ] = "great_expectations__experimental__"
+                    parameter["condition_parser"] = (
+                        "great_expectations__experimental__"
+                    )
 
     return generate_dq_rules_from_schema(dq_rules_dict=dq_rules_dict)

@@ -336,7 +336,8 @@ def validate(
     # print("Unexpected rows:", unexpected)
     print("***Starting validation run***")
     return validation_runner_obj.run_validation(
-        batch_parameters={"dataframe": df})
+        batch_parameters={"dataframe": df}
+    )
 
 
 def run_validation(
