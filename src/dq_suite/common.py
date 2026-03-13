@@ -114,12 +114,13 @@ class RulesDict:
     """
     Groups a list of Rule-objects together with the name of the table
     these rules are to be applied to, as well as a unique identifier used for
-    identifying outliers.
+    identifying outliers, and column to mask data in output afwijking table.
     """
 
     unique_identifier: str | List[str]  # TODO: List[str] for more complex keys?
     table_name: str
     rules: RulesList
+    mask_columns: List[str] | None = None
 
     def __post_init__(self):
         if (not isinstance(self.unique_identifier, str)) & (
@@ -134,6 +135,9 @@ class RulesDict:
 
         if not isinstance(self.rules, list):
             raise TypeError("'rules' should be RulesList")
+        if not isinstance(self.mask_columns, list):
+            if self.mask_columns is not None:
+                raise TypeError("'mask_columns' should be of type list of str")
 
     def __getitem__(self, key) -> str | RulesList | None:
         if key == "unique_identifier":
@@ -268,6 +272,7 @@ def merge_df_with_unity_table(
         merge_dict = {
             "bronDatasetId": f"{df_new_alias}.bronDatasetId",
             "medaillonLaag": f"{df_new_alias}.medaillonLaag",
+            "teamId": f"{df_new_alias}.teamId",
         }
         merge_on = "bronDatasetId"
     elif table_name == "brontabel":
@@ -275,6 +280,7 @@ def merge_df_with_unity_table(
             "bronTabelId": f"{df_new_alias}.bronTabelId",
             "tabelNaam": f"{df_new_alias}.tabelNaam",
             "uniekeSleutel": f"{df_new_alias}.uniekeSleutel",
+            "bronDatasetId": f"{df_new_alias}.bronDatasetId",
         }
         merge_on = "bronTabelId"
     elif table_name == "bronattribuut":
@@ -293,8 +299,16 @@ def merge_df_with_unity_table(
             "bronTabelId": f"{df_new_alias}.bronTabelId",
             "attribuut": f"{df_new_alias}.attribuut",
             "severity": f"{df_new_alias}.severity",
+            "teamId": f"{df_new_alias}.teamId",
         }
         merge_on = "regelId"
+    elif table_name == "team":
+        merge_dict = {
+            "teamId": f"{df_new_alias}.teamId",
+            "teamname": f"{df_new_alias}.teamNaam",
+            "teamdescription": f"{df_new_alias}.teamdescription",
+        }
+        merge_on = "teamId"
     else:
         raise ValueError(f"Unknown metadata table name '{table_name}'")
 
@@ -338,6 +352,8 @@ class ValidationSettings:
         an MS Teams notification will be sent
     notify_on: when to send notifications, can be equal to "all",
         "success" or "failure"
+    teamid: team id of the data quality team
+    mask_columns: column mask for masking PII data, List of columns name to mask in afwijking table output
     """
 
     spark_session: SparkSession
@@ -352,7 +368,9 @@ class ValidationSettings:
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
-    
+    teamid: str | None = None
+    mask_columns: List[str] |None = None
+
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
             raise TypeError("'spark_session' should be of type SparkSession")
@@ -388,6 +406,12 @@ class ValidationSettings:
             raise ValueError(
                 "'notify_on' should be equal to 'all', 'success' or 'failure'"
             )
+        if not isinstance(self.teamid, str):
+            if self.teamid is not None:
+                raise TypeError("'teamid' should be of type str")
+        if not isinstance(self.mask_columns, list):
+            if self.mask_columns is not None:
+                raise TypeError("'mask_columns' should be of type list")
         self._initialise_or_update_name_parameters()
 
     def _initialise_or_update_name_parameters(self):
