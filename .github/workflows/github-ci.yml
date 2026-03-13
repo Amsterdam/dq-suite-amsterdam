@@ -35,7 +35,7 @@ jobs:
         run: black ./src  --check --diff
 
       - name: Run autoflake
-        run: autoflake --recursive --check --remove-all-unused-imports --remove-unused-variables .
+        run: autoflake ./src --recursive --check --remove-all-unused-imports --remove-unused-variables .
   unit-tests:
     runs-on: ubuntu-latest
     steps:
