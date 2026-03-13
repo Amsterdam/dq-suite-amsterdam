@@ -8,4 +8,5 @@ SCHEMA = (
     .add("bronTabelId", "string")
     .add("attribuut", "string")
     .add("severity", "string")
+    .add("teamId", "string")
 )
