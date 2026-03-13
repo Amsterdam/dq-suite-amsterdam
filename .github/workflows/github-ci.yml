@@ -12,12 +12,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Linting / Black
-        uses: psf/black@stable
+      # - name: Linting / Black
+      #   uses: psf/black@stable
+      #   with:
+      #     options: "--check --diff"
+      #     src: "./src"
+      #     use_pyproject: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          options: "--check --diff"
-          src: "./src"
-          use_pyproject: true
+          python-version: "3.11"
+
+      - name: Install formatters
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort autoflake
+
+      - name: Run isort
+        run: isort ./src  --check-only
+
+      - name: Run black
+        run: black ./src  --check --diff
+
+      - name: Run autoflake
+        run: autoflake --recursive --check --remove-all-unused-imports --remove-unused-variables .
   unit-tests:
     runs-on: ubuntu-latest
     steps:
