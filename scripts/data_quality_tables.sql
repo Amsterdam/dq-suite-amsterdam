@@ -4,7 +4,7 @@
 
 -- COMMAND ----------
 
-CREATE WIDGET TEXT catalog DEFAULT "dpxx_dev"
+CREATE WIDGET TEXT catalog DEFAULT "dpd1_xxx"
 
 -- COMMAND ----------
 
@@ -14,7 +14,8 @@ create schema if not exists ${catalog}.data_quality
 
 CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brondataset (
   bronDatasetId STRING,
-  medaillonLaag STRING)
+  medaillonLaag STRING,
+  teamId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -30,7 +31,8 @@ TBLPROPERTIES (
 CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
   bronTabelId STRING,
   tabelNaam STRING,
-  uniekeSleutel STRING)
+  uniekeSleutel STRING,
+  bronDatasetId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -66,7 +68,8 @@ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
   norm INT,
   bronTabelId STRING,
   attribuut STRING,
-  severity STRING)
+  severity STRING,
+  teamId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -156,3 +159,19 @@ TBLPROPERTIES (
   'delta.feature.deletionVectors' = 'supported',
   'delta.minReaderVersion' = '3',
   'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+ CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.team (
+   teamId STRING,
+   teamName STRING,
+   teamDescription STRING)
+ USING delta
+ COMMENT 'Stores metadata about teams'
+ TBLPROPERTIES (
+   'delta.columnMapping.mode' = 'name',
+   'delta.enableDeletionVectors' = 'true',
+   'delta.feature.columnMapping' = 'supported',
+   'delta.feature.deletionVectors' = 'supported',
+   'delta.minReaderVersion' = '3',
+   'delta.minWriterVersion' = '7');
