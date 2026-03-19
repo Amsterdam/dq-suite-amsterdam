@@ -8,12 +8,13 @@ CREATE WIDGET TEXT catalog DEFAULT "dpd1_xxx"
 
 -- COMMAND ----------
 
-create schema if not exists ${catalog}.data_quality
+create schema if not exists identifier(:catalog).data_quality
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brondataset (
+CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.brondataset (
   bronDatasetId STRING,
+  bronDatasetNaam STRING,
   medaillonLaag STRING,
   teamId STRING)
 USING delta

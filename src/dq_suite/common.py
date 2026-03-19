@@ -271,6 +271,7 @@ def merge_df_with_unity_table(
     if table_name == "brondataset":
         merge_dict = {
             "bronDatasetId": f"{df_new_alias}.bronDatasetId",
+            "bronDatasetNaam": f"{df_new_alias}.bronDatasetNaam",
             "medaillonLaag": f"{df_new_alias}.medaillonLaag",
             "teamId": f"{df_new_alias}.teamId",
         }

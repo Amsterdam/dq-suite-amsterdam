@@ -343,7 +343,10 @@ class TestGetDatasetData:
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
-            {"bronDatasetId": "the_dataset", "medaillonLaag": "the_layer"}
+            {
+                "bronDatasetId": "the_dataset_the_layer",
+                "bronDatasetNaam": "the_dataset",
+                "medaillonLaag": "the_layer"}
         ]
         assert test_output == expected_result
 
