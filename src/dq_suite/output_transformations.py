@@ -272,20 +272,23 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     Get the dataset data from the dq_rules_dict.
     """
     dataset_dict: DatasetDict = dq_rules_dict["dataset"]
+    dataset_name = dataset_dict["name"]
+    dataset_layer = dataset_dict["layer"]
     return [
         {
-            "bronDatasetId": dataset_dict["name"],
+            "bronDatasetId": f"{dataset_name}_{dataset_layer}",
+            "bronDatasetNaam": dataset_dict["name"],
             "medaillonLaag": dataset_dict["layer"],
             "teamId": dq_rules_dict["team"]["teamid"],
         }
     ]
 
 
-def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
+def get_single_brontabel_dict(dataset_name: str,dataset_layer: str, rules_dict: RulesDict) -> dict:
     table_name = rules_dict["table_name"]
     unique_identifier = rules_dict["unique_identifier"]
-    table_id = f"{dataset_name}_{table_name}"
-    bronDatasetId = f"{dataset_name}"
+    table_id = f"{dataset_name}_{dataset_layer}_{table_name}"
+    bronDatasetId = f"{dataset_name}_{dataset_layer}"
     return {
         "bronTabelId": table_id,
         "tabelNaam": table_name,
@@ -300,10 +303,11 @@ def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
     for rules_dict in dq_rules_dict["tables"]:
         extracted_data.append(
             get_single_brontabel_dict(
-                dataset_name=dataset_name, rules_dict=rules_dict
+                dataset_name=dataset_name,dataset_layer=dataset_layer, rules_dict=rules_dict
             )
         )
     return extracted_data
@@ -331,10 +335,11 @@ def get_bronattribuut_data(
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
     bronattribuut_id_set = set()  # To keep track of used IDs
     for param in dq_rules_dict["tables"]:
         table_name = param["table_name"]
-        table_id = f"{dataset_name}_{table_name}"
+        table_id = f"{dataset_name}_{dataset_layer}_{table_name}"
         for rule in param["rules"]:
             bronattribuut_dict = get_single_bronattribuut_dict(
                 rule=rule, table_id=table_id
@@ -373,9 +378,10 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
     teamid = dq_rules_dict["team"]["teamid"]
     for table in dq_rules_dict["tables"]:
-        table_id = f"{dataset_name}_{table['table_name']}"
+        table_id = f"{dataset_name}_{dataset_layer}_{table['table_name']}"
         for rule in table["rules"]:
             extracted_data.append(
                 get_single_rule_dict(rule=rule, table_id=table_id,teamid=teamid)
@@ -506,6 +512,7 @@ def get_validatie_data(
     """
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.dataset_layer}_"
         f"{validation_settings_obj.table_name}"
     )
 
@@ -627,6 +634,7 @@ def get_afwijking_data(
     run_results = list(validation_output.run_results.values())
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.dataset_layer}_"
         f"{validation_settings_obj.table_name}"
     )
     unique_identifier = validation_settings_obj.unique_identifier
