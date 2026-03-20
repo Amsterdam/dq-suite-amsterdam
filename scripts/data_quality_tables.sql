@@ -1,18 +1,19 @@
 -- Databricks notebook source
+CREATE WIDGET DROPDOWN catalog DEFAULT "dpd1_prd" CHOICES select * from (values ("dpd1_prd"),("dpd1_dev"))
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC This script creates the schema and tables for dq-suite-amsterdam
 
 -- COMMAND ----------
 
-CREATE WIDGET TEXT catalog DEFAULT "dpd1_xxx"
+USE CATALOG IDENTIFIER(:catalog); 
+CREATE SCHEMA IF NOT EXISTS data_quality
 
 -- COMMAND ----------
 
-create schema if not exists identifier(:catalog).data_quality
-
--- COMMAND ----------
-
-CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.brondataset (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.brondataset') (
   bronDatasetId STRING,
   bronDatasetNaam STRING,
   medaillonLaag STRING,
@@ -29,7 +30,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.brontabel') (
   bronTabelId STRING,
   tabelNaam STRING,
   uniekeSleutel STRING,
@@ -46,7 +47,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.bronattribuut (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.bronattribuut') (
   bronAttribuutId STRING,
   bronTabelId STRING,
   attribuutNaam STRING)
@@ -62,7 +63,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.regel') (
   regelId STRING,
   regelNaam STRING,
   regelParameters STRING,
@@ -83,7 +84,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.validatie' ) (
   regelId STRING,
   aantalValideRecords BIGINT,
   aantalReferentieRecords BIGINT,
@@ -103,7 +104,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.afwijking (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.afwijking')  (
   regelId STRING,
   identifierVeldWaarde STRING,
   afwijkendeAttribuutWaarde STRING,
@@ -120,7 +121,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingtabel ( 
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.profilingtabel') ( 
   `profilingTabelId` STRING,
   `bronTabelId` STRING,
   `aantalRecords` BIGINT,
@@ -140,7 +141,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
- CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingattribuut (
+ CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.profilingattribuut') (
   `profilingAttribuutId` STRING,
   `profilingTabelId` STRING,
   `bronAttribuutId` STRING,
@@ -163,7 +164,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
- CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.team (
+ CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.team') (
    teamId STRING,
    teamName STRING,
    teamDescription STRING)
