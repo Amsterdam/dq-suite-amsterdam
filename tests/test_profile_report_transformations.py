@@ -71,8 +71,8 @@ def test_create_profiling_attributes(dummy_df):
     assert len(result) == 1
     attr = result[0]
     assert attr["bronAttribuutId"] == "dataset1_test_table_col1"
-    assert attr["topVoorkomenWaardes"] == "a"
-    assert attr["vulgraad"] == 0.1
+    assert attr["topVoorkomendeWaardes"] == "a"
+    assert attr["missingDataPercentage"] == 0.1
 
 
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
