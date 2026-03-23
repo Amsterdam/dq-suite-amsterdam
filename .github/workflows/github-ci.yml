@@ -7,6 +7,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   static-analysis:
     runs-on: ubuntu-latest
@@ -31,7 +34,7 @@ jobs:
 
       - name: Run autoflake
         run: autoflake ./src --recursive --check --remove-all-unused-imports --remove-unused-variables
-        
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:
