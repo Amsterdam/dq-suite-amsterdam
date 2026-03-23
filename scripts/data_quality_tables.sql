@@ -116,7 +116,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingtabel ( 
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.profilingtabel ( 
   `profilingTabelId` STRING,
   `bronTabelId` STRING,
   `aantalRecords` BIGINT,
@@ -136,16 +136,16 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
- CREATE TABLE IF NOT EXISTS dpd1_dev.data_quality.profilingattribuut (
+CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.profilingattribuut (
   `profilingAttribuutId` STRING,
   `profilingTabelId` STRING,
   `bronAttribuutId` STRING,
   `dataType` STRING,
-  `vulgraad` DOUBLE,
+  `missingDataPercentage` DOUBLE,
   `aantalUniekeWaardes` BIGINT,
   `minWaarde` STRING,
   `maxWaarde` STRING,
-  `topVoorkomenWaardes` STRING,
+  `topVoorkomendeWaardes` STRING,
   `dqDatum` TIMESTAMP)
 USING delta
 COMMENT 'Created by the file upload UI'

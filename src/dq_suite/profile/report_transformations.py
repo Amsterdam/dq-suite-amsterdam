@@ -64,11 +64,11 @@ def create_profiling_attributes(
             {
                 "profilingAttribuutId": None,
                 "bronAttribuutId": bronAttribuutId,
-                "vulgraad": stats.get("p_missing"),
+                "missingDataPercentage": stats.get("p_missing"),
                 "minWaarde": str(stats.get("min")),
                 "maxWaarde": str(stats.get("max")),
                 "aantalUniekeWaardes": stats.get("n_distinct"),
-                "topVoorkomenWaardes": (
+                "topVoorkomendeWaardes": (
                     str(top_value) if top_value is not None else None
                 ),
                 "dataType": data_type,

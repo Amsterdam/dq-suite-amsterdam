@@ -1,6 +1,6 @@
 from typing import Any
 
-from dq_suite.common import Rule, GeoRule
+from dq_suite.common import GeoRule, Rule
 
 column_compound_unique_rule = Rule(
     rule_name="ExpectCompoundColumnsToBeUnique",

@@ -1,12 +1,9 @@
 import copy
 import datetime
 import re
-from typing import Any, Dict, List
+from typing import Any, List
 
-from great_expectations.checkpoint.checkpoint import (
-    CheckpointDescriptionDict,
-    CheckpointResult,
-)
+from great_expectations.checkpoint.checkpoint import CheckpointResult
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
@@ -107,10 +104,10 @@ def get_parameters_from_results(result: dict) -> list[dict]:
     """
     exp_cfg = extract_expectation_config(result)
     parameters = merge_parameters(exp_cfg)
-    
+
     if not parameters:
         raise ValueError("No meta or kwargs found to build parameters.")
-    
+
     # Prepare parameters for regelId hashing.
     parameters = remove_helper_keys(parameters)
     parameters = remove_null_geometry_type(parameters)
@@ -119,14 +116,17 @@ def get_parameters_from_results(result: dict) -> list[dict]:
 
 
 def extract_expectation_config(result: dict) -> dict:
-    if "expectation_config" not in result or result["expectation_config"] is None:
+    if (
+        "expectation_config" not in result
+        or result["expectation_config"] is None
+    ):
         raise ValueError("No expectation_config in result.")
     return result["expectation_config"]
 
 
 def merge_parameters(exp_cfg: dict) -> dict:
     parameters = {}
-    
+
     if "meta" in exp_cfg and exp_cfg["meta"] is not None:
         parameters.update(copy.deepcopy(exp_cfg["meta"]))
     if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
@@ -152,7 +152,7 @@ def remove_null_geometry_type(params: dict) -> dict:
 
 
 def normalize_value_set(params: dict) -> dict:
-    #Convert 'value_set' in parameters to a standard Python list if it is a tuple or other iterable, ensuring that 'value_set' is always a list.
+    # Convert 'value_set' in parameters to a standard Python list if it is a tuple or other iterable, ensuring that 'value_set' is always a list.
     if isinstance(params.get("value_set"), (list, tuple)):
         params["value_set"] = list(params["value_set"])
     return params
@@ -178,8 +178,8 @@ def get_target_attr_for_rule(result: dict) -> str | None:
     kwargs = expectation_config.get("kwargs", {})
 
     if "column" in meta:
-        if "column_A" in kwargs and "column_B" in kwargs :
-            return  [kwargs.get("column_A"), kwargs.get("column_B")]
+        if "column_A" in kwargs and "column_B" in kwargs:
+            return [kwargs.get("column_A"), kwargs.get("column_B")]
         elif "column_list" in kwargs:
             return kwargs.get("column_list")
         return meta.get("column")
@@ -226,7 +226,7 @@ def filter_df_based_on_deviating_values(
         - Single string for filtering one column.
         - List of column names when filtering on multiple columns (compound keys).
     df: A filtered DataFrame containing only records that match the deviating value(s).
-    """    
+    """
     if deviating_value is None:
         return df.filter(col(attribute).isNull())
     elif isinstance(attribute, list):
@@ -234,7 +234,7 @@ def filter_df_based_on_deviating_values(
             if isinstance(value, (tuple, list)):
                 # In case of compound keys, "attribute" is a list and "deviating_value" is a dict
                 # like tuple. The indices will match, and we take [1] for deviating_value,
-                # because the "key" is stored in [0].   
+                # because the "key" is stored in [0].
                 value = value[1]
             df = df.filter(col(col_name) == lit(value))
         return df
@@ -251,7 +251,10 @@ def get_grouped_ids_per_deviating_value(
     """
     # TODO: add documentation. This function is very complex.
     ids = (
-        filtered_df.select(unique_identifier).distinct().rdd.flatMap(lambda x: x).collect()
+        filtered_df.select(unique_identifier)
+        .distinct()
+        .rdd.flatMap(lambda x: x)
+        .collect()
     )
     number_of_unique_ids = len(unique_identifier)
     return [
@@ -379,7 +382,9 @@ def _is_number(x):
 def get_non_geo_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str
 ) -> dict:
-    expectation_type: str = expectation_result.get("expectation_config", {}).get("type", "")
+    expectation_type: str = expectation_result.get(
+        "expectation_config", {}
+    ).get("type", "")
     result: dict = expectation_result.get("result", {}) or {}
     is_row_count_exp = expectation_type.startswith("expect_table_row_count_to_")
 
@@ -435,8 +440,8 @@ def get_non_geo_validation_results(
         "regelParameters": validation_parameters,
         "bronTabelId": table_id,
     }
- 
- 
+
+
 def get_custom_validation_results(
     expectation_result: dict, run_time: datetime, table_id: str, df: DataFrame
 ) -> dict:
@@ -449,7 +454,9 @@ def get_custom_validation_results(
     percentage_of_valid_records = (total_count - unexpected_count) / total_count
 
     validation_result = "success" if unexpected_count == 0 else "failure"
-    validation_parameters = normalize_validation_parameters(get_parameters_from_results(result=expectation_result))
+    validation_parameters = normalize_validation_parameters(
+        get_parameters_from_results(result=expectation_result)
+    )
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
     return {
         "aantalValideRecords": total_count - unexpected_count,
@@ -464,13 +471,17 @@ def get_custom_validation_results(
 
 
 def get_single_validation_result_dict(
-    expectation_result: dict, run_time: datetime, table_id: str , df: DataFrame
+    expectation_result: dict, run_time: datetime, table_id: str, df: DataFrame
 ) -> dict:
     expectation_type = expectation_result["expectation_config"]["type"]
     if expectation_type == "unexpected_rows_expectation":
-        validation_results = get_custom_validation_results(expectation_result, run_time, table_id, df)
+        validation_results = get_custom_validation_results(
+            expectation_result, run_time, table_id, df
+        )
     else:
-        validation_results = get_non_geo_validation_results(expectation_result, run_time, table_id)
+        validation_results = get_non_geo_validation_results(
+            expectation_result, run_time, table_id
+        )
 
     return validation_results
 
@@ -514,30 +525,38 @@ def get_single_expectation_afwijking_data(
 ) -> list[dict]:
     extracted_data = []
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
-    afwijking_parameters =  normalize_validation_parameters(
+    afwijking_parameters = normalize_validation_parameters(
         get_parameters_from_results(expectation_result)
     )
     attribute = get_target_attr_for_rule(expectation_result)
     result_dict = expectation_result.get("result", {})
-    unexpected_rows = expectation_result.get("result", {}).get("details", {}).get("unexpected_rows")
+    unexpected_rows = (
+        expectation_result.get("result", {})
+        .get("details", {})
+        .get("unexpected_rows")
+    )
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
             afwijkende_value = row.get(attribute)
-            extracted_data.append({
-                "identifierVeldWaarde": [grouped_id],
-                "afwijkendeAttribuutWaarde": afwijkende_value,
-                "dqDatum": run_time,
-                "regelNaam": rule_name,
-                "regelParameters": afwijking_parameters,
-                "bronTabelId": table_id,
-            })
+            extracted_data.append(
+                {
+                    "identifierVeldWaarde": [grouped_id],
+                    "afwijkendeAttribuutWaarde": afwijkende_value,
+                    "dqDatum": run_time,
+                    "regelNaam": rule_name,
+                    "regelParameters": afwijking_parameters,
+                    "bronTabelId": table_id,
+                }
+            )
     elif "observed_value" in result_dict:  # Handle table-level expectations
         if not expectation_result.get("success"):
             extracted_data.append(
                 {
                     "identifierVeldWaarde": None,
-                    "afwijkendeAttribuutWaarde": result_dict.get("observed_value", []),
+                    "afwijkendeAttribuutWaarde": result_dict.get(
+                        "observed_value", []
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -545,9 +564,7 @@ def get_single_expectation_afwijking_data(
                 }
             )
     elif "unexpected_list" in result_dict:  # Handle column-level expectations
-        deviating_attribute_value = result_dict.get(
-            "unexpected_list", []
-        )
+        deviating_attribute_value = result_dict.get("unexpected_list", [])
         unique_deviating_values = get_unique_deviating_values(
             deviating_attribute_value
         )
@@ -669,15 +686,15 @@ def write_validation_metadata_tables(
             table_name=metadata_table_name,
             spark_session=validation_settings_obj.spark_session,
         )
-   
-        
+
+
 def create_validation_result_dataframe(
     df: DataFrame,
     checkpoint_result: CheckpointResult,
     validation_table_name: str,
     validation_settings_obj: ValidationSettings,
 ) -> DataFrame:
-    validation_output = checkpoint_result 
+    validation_output = checkpoint_result
     run_time = checkpoint_result.run_id.run_time
 
     if validation_table_name == "validatie":

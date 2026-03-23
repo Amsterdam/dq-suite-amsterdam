@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.5] - 03-24-2026
+
+### Changed
+- Improved CI pipeline by aligning linting tools (isort, black, autoflake) with `pyproject.toml`.
+- Fixed typo in profiling attributes field name: `topVoorkomenWaardes` renamed to `topVoorkomendeWaardes` and updated in `profilingattribuut` catalog table.
+- Renamed profiling attributes field `vulgraad` to `missingDataPercentage` and updated in `profilingattribuut` catalog table.
+- Refactored hardcoded catalog reference in profiling tables creation scripts to dynamic `{catalog}` parameter.
+- Updated profiling documentation in README to reflect dynamic catalog configuration.
+
 ## [0.13.4] - 03-11-2026
 
 ### Added

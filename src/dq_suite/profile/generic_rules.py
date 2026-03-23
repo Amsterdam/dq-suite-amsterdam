@@ -1,21 +1,22 @@
 import json
 from typing import Dict
+
 from pyspark.sql import DataFrame
 
 from dq_suite.common import DatasetDict, RulesDict
 from dq_suite.profile.rules_module import (
     column_between_rule,
     column_compound_unique_rule,
+    column_geometry_type_rule,
     column_match_rule,
     column_not_null_rule,
     column_type_rule,
     column_unique_rule,
+    column_values_have_valid_geometry_rule,
     column_values_in_set_rule,
+    column_values_not_empty_geometry_rule,
     datetime_regex_rule,
     row_count_rule,
-    column_values_have_valid_geometry_rule,
-    column_values_not_empty_geometry_rule,
-    column_geometry_type_rule,
 )
 
 
@@ -30,11 +31,16 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     Returns:
         bool: True if at least one value in the column is of type 'Geometry', else False.
     """
-    return df[column_name].dropna().apply(lambda x: type(x).__name__ == "Geometry").any()
+    return (
+        df[column_name]
+        .dropna()
+        .apply(lambda x: type(x).__name__ == "Geometry")
+        .any()
+    )
 
 
 def create_dq_rules(
-    dataset_name: str, table_name: str, profiling_json: Dict, df : DataFrame
+    dataset_name: str, table_name: str, profiling_json: Dict, df: DataFrame
 ) -> RulesDict:
     """
     Create data quality rules based on the profiling report.
@@ -51,7 +57,7 @@ def create_dq_rules(
     for variable in profiling_json["variables"]:
         details = profiling_json["variables"][variable]
         col_type = details["type"]
-        
+
         if "DateTime" in col_type:
             rules.append(datetime_regex_rule(variable))
             col_type = "TimestampType"
@@ -84,13 +90,13 @@ def create_dq_rules(
             if isinstance(col_min, int) and isinstance(col_max, int):
                 col_type = "IntegerType"
             else:
-                col_type = "DoubleType"       
+                col_type = "DoubleType"
         if has_geometry_column(df, variable):
-            col_type = type(df[variable].dropna().iloc[0]).__name__ 
+            col_type = type(df[variable].dropna().iloc[0]).__name__
             geo_rules = [
-            column_values_not_empty_geometry_rule(variable),
-            column_geometry_type_rule(variable, col_type),
-            column_values_have_valid_geometry_rule(variable),
+                column_values_not_empty_geometry_rule(variable),
+                column_geometry_type_rule(variable, col_type),
+                column_values_have_valid_geometry_rule(variable),
             ]
             # Drop geo_query_template and description fields
             for r in geo_rules:
