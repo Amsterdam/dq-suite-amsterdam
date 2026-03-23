@@ -58,7 +58,7 @@ def create_profiling_attributes(
         top_value = extract_top_value(stats)
         data_type = stats.get("type")
         if has_geometry_column(df, col):
-            data_type = type(df[col].dropna().iloc[0]).__name__ 
+            data_type = type(df[col].dropna().iloc[0]).__name__
 
         attributes.append(
             {
