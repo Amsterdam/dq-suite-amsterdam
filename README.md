@@ -83,7 +83,7 @@ The profiling functionality in dq_suite generates profiling results and automati
 pip install dq-suite-amsterdam
 ```
 2. 2. Create the `data_quality` schema (and profiling tables that store profiling results) by running the SQL notebook located [here](scripts/data_quality_tables.sql). 
-All it needs is the name of the catalog and the rights to create a schema within that catalog. The catalog is now configurable (no longer hardcoded), allowing flexible usage across environments (e.g. dev, test, prod).
+All it needs is the name of the catalog and the rights to create a schema within that catalog. The catalog allows flexible usage across environments (e.g. dev, test, prod).
 This step will create the required profiling tables, including:
 - `profilingtabel` (table-level profiling results)
 - `profilingattribuut` (attribute-level profiling results)
