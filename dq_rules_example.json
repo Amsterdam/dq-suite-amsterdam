@@ -1,4 +1,9 @@
 {
+    "team": {
+        "teamid": "dpxx",
+        "teamname": "xx team",
+        "teamdescription": "xx team"
+    },
     "dataset": {
         "name": "Afvalcontainers",
         "layer": "Brons"
@@ -25,6 +30,9 @@
                             "value_set": [1, 2]
                         }
                 }
+            ],
+            "mask_columns": [
+                "owner"
             ]
         },
         {
@@ -98,6 +106,9 @@
                             "type_": "DoubleType"
                         }
                 }
+            ],
+            "mask_columns": [
+                "owner"
             ]
         }
         
