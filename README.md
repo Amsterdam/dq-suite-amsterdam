@@ -82,14 +82,20 @@ The profiling functionality in dq_suite generates profiling results and automati
 ```
 pip install dq-suite-amsterdam
 ```
-2. Get ready to profile your first table. To do so, define
+2. 2. Create the `data_quality` schema (and profiling tables that store profiling results) by running the SQL notebook located [here](scripts/data_quality_tables.sql). 
+All it needs is the name of the catalog and the rights to create a schema within that catalog. The catalog allows flexible usage across environments (e.g. dev, test, prod).
+This step will create the required profiling tables, including:
+- `profilingtabel` (table-level profiling results)
+- `profilingattribuut` (attribute-level profiling results)
+3. Get ready to profile your first table. To do so, define
 - `df` as a Panda dataframe containing the table that needs to be validated (e.g. via `pd.read_csv`)
 - `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
 - `dq_rule_json_path` as a path to a JSON file, wil be formatted in [this](src/dq_suite/profile/dq_rules_example_from_profiling.json) way after running profiling function
 - `dataset_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
 - `table_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
-3. Finally, perform the profiling by running 
+- `catalog_name` as the name of your catalog ('dpxx_dev' or 'dpxx_prd')
+4. Finally, perform the profiling by running 
 ```python
 from dq_suite.profile.profile import profile_and_create_rules
 
@@ -97,6 +103,7 @@ profile_and_create_rules(
     df=df,
     dataset_name=dataset_name,
     table_name=table_name,
+    catalog_name=catalog_name,
     spark_session=spark,
     generate_rules=True,
     rule_path=dq_rule_json_path

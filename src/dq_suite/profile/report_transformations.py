@@ -1,15 +1,15 @@
 from datetime import datetime
-from typing import Dict, Any, List, Union
+from typing import Any, Dict, List, Union
 
-from pyspark.sql import DataFrame
-from pyspark.sql import SparkSession, Row
+from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 
-from dq_suite.schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
+from dq_suite.common import write_to_unity_catalog
 from dq_suite.schemas.profilingattribuut import (
     SCHEMA as PROFILINGATTRIBUUT_SCHEMA,
 )
-from dq_suite.common import write_to_unity_catalog
+from dq_suite.schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
+
 from .generic_rules import has_geometry_column
 
 
@@ -58,17 +58,17 @@ def create_profiling_attributes(
         top_value = extract_top_value(stats)
         data_type = stats.get("type")
         if has_geometry_column(df, col):
-            data_type = type(df[col].dropna().iloc[0]).__name__ 
+            data_type = type(df[col].dropna().iloc[0]).__name__
 
         attributes.append(
             {
                 "profilingAttribuutId": None,
                 "bronAttribuutId": bronAttribuutId,
-                "vulgraad": stats.get("p_missing"),
+                "missingDataPercentage": stats.get("p_missing"),
                 "minWaarde": str(stats.get("min")),
                 "maxWaarde": str(stats.get("max")),
                 "aantalUniekeWaardes": stats.get("n_distinct"),
-                "topVoorkomenWaardes": (
+                "topVoorkomendeWaardes": (
                     str(top_value) if top_value is not None else None
                 ),
                 "dataType": data_type,

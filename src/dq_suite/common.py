@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import List, Literal
 
 from delta.tables import *
+from great_expectations.core.result_format import ResultFormat
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
-from great_expectations.core.result_format import ResultFormat
 
 
 @dataclass()
@@ -59,9 +59,10 @@ class Rule:
 class GeoRule(Rule):
     """
     A specialized rule for geospatial validation.
-    This rule leverages Databricks spatial functions—st_isvalid(), st_isempty(), 
+    This rule leverages Databricks spatial functions—st_isvalid(), st_isempty(),
     and st_geometrytype()——which are provided by Databricks SQL.
     """
+
     rule_type: Literal["geo"] = "geo"
     geo_query_template: str | None = None
     description: str | None = None
@@ -90,14 +91,18 @@ class GeoRule(Rule):
     def _handle_not_empty_geometry(self):
         geometry_column = self.parameters.get("column", "geometry")
         self.geo_query_template = f"st_isempty({geometry_column})"
-        self.description = "Geometry column should not contain empty geometries."
+        self.description = (
+            "Geometry column should not contain empty geometries."
+        )
 
     def _handle_geometry_type(self):
         geometry_column = self.parameters.get("column", "geometry")
         expected_type = self.parameters.get("geometry_type")
 
         if not expected_type:
-            raise ValueError("Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType.")
+            raise ValueError(
+                "Missing 'geometry_type' for ExpectColumnValuesToBeOfGeometryType."
+            )
 
         self.geo_query_template = (
             f"st_geometrytype({geometry_column}) != 'ST_{expected_type}'"
@@ -105,6 +110,7 @@ class GeoRule(Rule):
         self.description = (
             f"Geometry column should contain only {expected_type} geometries."
         )
+
 
 RulesList = list[Rule | GeoRule]  # a list of DQ rules
 
@@ -352,7 +358,7 @@ class ValidationSettings:
     slack_webhook: str | None = None
     ms_teams_webhook: str | None = None
     notify_on: Literal["all", "success", "failure"] = "failure"
-    
+
     def __post_init__(self):
         if not isinstance(self.spark_session, SparkSession):
             raise TypeError("'spark_session' should be of type SparkSession")
