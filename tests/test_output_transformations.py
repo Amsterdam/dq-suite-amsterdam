@@ -25,7 +25,8 @@ from src.dq_suite.output_transformations import (
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_custom_validation_results
+    get_custom_validation_results,
+    get_team_data
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -65,6 +66,7 @@ def validation_settings_obj():
         dataset_layer="the_layer",
         dataset_name="the_dataset_name",
         unique_identifier="the_id",
+        teamid="dpso"
     )
     return validation_settings_obj
 
@@ -379,7 +381,30 @@ class TestGetDatasetData:
             {
                 "bronDatasetId": "the_dataset_the_layer",
                 "bronDatasetNaam": "the_dataset",
-                "medaillonLaag": "the_layer"}
+                "medaillonLaag": "the_layer",
+                "teamId": "dpso"}
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestGetTeamData:
+    def test_get_dataset_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            get_team_data(dq_rules_dict="123")
+
+    def test_get_dataset_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = get_team_data(
+            dq_rules_dict=read_test_rules_as_dict
+        )
+        expected_result = [
+            {
+                "teamId": "dpso",
+                "teamName": "so team",
+                "teamDescription": "so team"
+            }
         ]
         assert test_output == expected_result
 
@@ -394,19 +419,22 @@ class TestGetTableData:
         test_output = get_brontabel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
                 "tabelNaam": "the_table",
                 "uniekeSleutel": "id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
             {
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "tabelNaam": "the_other_table",
                 "uniekeSleutel": "other_id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
             {
-                "bronTabelId": "the_dataset_the_third_table_name",
+                "bronTabelId": "the_dataset_the_layer_the_third_table_name",
                 "tabelNaam": "the_third_table_name",
                 "uniekeSleutel": "id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
         ]
         assert test_output == expected_result
@@ -426,14 +454,14 @@ class TestGetAttributeData:
         )
         expected_result = [
             {
-                "bronAttribuutId": "the_dataset_the_table_the_column",
+                "bronAttribuutId": "the_dataset_the_layer_the_table_the_column",
                 "attribuutNaam": "the_column",
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
             },
             {
-                "bronAttribuutId": "the_dataset_the_other_table_the_other_column",
+                "bronAttribuutId": "the_dataset_the_layer_the_other_table_the_other_column",
                 "attribuutNaam": "the_other_column",
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
             },
         ]
         assert test_output == expected_result
@@ -455,9 +483,10 @@ class TestGetRegelData:
                     "column": "the_column",
                     "value_set": [1, 2, 3],
                 },
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
                 "attribuut": "the_column",
                 "norm": None,
+                "teamId": "dpso",
             },
             {
                 "regelNaam": "ExpectColumnValuesToBeBetween",
@@ -467,17 +496,19 @@ class TestGetRegelData:
                     "min_value": 6,
                     "max_value": 10000,
                 },
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "attribuut": "the_other_column",
                 "norm": None,
+                "teamId": "dpso",
             },
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
                 "severity": "fatal",
                 "regelParameters": {"min_value": 1, "max_value": 1000, "column": None},
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "attribuut": None,
                 "norm": None,
+                "teamId": "dpso",
             },
         ]
         assert test_output == expected_result
@@ -519,7 +550,7 @@ class TestGetValidatieData:
         "regelParameters": {
             "column": "tpep_pickup_datetime"
         },
-        "bronTabelId": "the_dataset_name_the_table_name",
+        "bronTabelId": "the_dataset_name_the_layer_the_table_name",
         "dqDatum": dtt_now,
         }
         for key in test_sample.keys():

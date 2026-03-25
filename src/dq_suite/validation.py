@@ -340,7 +340,6 @@ def validate(
     validation_runner_obj.create_batch_definition()
     validation_runner_obj.create_validation_definition()
 
-    print("***Starting validation run***")
     return validation_runner_obj.run_validation(
         batch_parameters={"dataframe": df}
     )

@@ -5,7 +5,7 @@
         "teamdescription": "xx team"
     },
     "dataset": {
-        "name": "Afvalcontainers",
+        "name": "dpso_prd",
         "layer": "Brons"
     },
     "tables": [

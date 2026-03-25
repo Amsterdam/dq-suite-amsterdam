@@ -1,4 +1,9 @@
 {
+    "team": {
+        "teamid": "dpso",
+        "teamname": "so team",
+        "teamdescription": "so team"
+    },
     "dataset": {
         "name": "the_dataset",
         "layer": "the_layer"
@@ -39,6 +44,9 @@
                         "max_value": 1000
                     }
                 }
+            ],
+            "mask_columns": [
+                "owner"
             ]
         },
         {
