@@ -2,7 +2,6 @@ import copy
 import datetime
 import re
 from typing import Any, Dict, List
-import logging
 from great_expectations.checkpoint.checkpoint import (
     CheckpointDescriptionDict,
     CheckpointResult,
@@ -30,7 +29,7 @@ from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 from .schemas.team import SCHEMA as TEAM_SCHEMA
-logger = logging.getLogger("dq_suite.output_transformations")
+
 
 def create_empty_dataframe(
     spark_session: SparkSession, schema: StructType
