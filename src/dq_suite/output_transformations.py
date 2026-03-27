@@ -531,7 +531,6 @@ def get_validatie_data(
             )
     return extracted_data
 
-
 def get_single_expectation_afwijking_data(
     expectation_result: Any,
     df: DataFrame,

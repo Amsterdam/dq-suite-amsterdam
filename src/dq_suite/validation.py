@@ -386,7 +386,7 @@ def run_validation(
         a tuple containing boolean flag and CheckpointResult object is returned
     """
     # 1) extract the data quality rules to be applied...
-    logger.info ("Extract dq rules")
+    logger.info ("Extract dq rules from input json file")
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
 
     #validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
@@ -410,7 +410,7 @@ def run_validation(
         )
 
     # 2) ... perform the validation on the dataframe...
-    logger.info ("Perform validation on DF ")
+    logger.info (f"Perform validation on DF for Team - {teamid} ")
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
         catalog_name=catalog_name,
@@ -472,5 +472,5 @@ def run_validation(
             checkpoint_result=checkpoint_result,
             validation_settings_obj=validation_settings_obj,
         )
-
+    logger.info ("***End Validation Run***")
     return checkpoint_result.success, highest_severity
