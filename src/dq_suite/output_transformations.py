@@ -3,9 +3,7 @@ import datetime
 import re
 from typing import Any, List
 
-from great_expectations.checkpoint.checkpoint import (
-    CheckpointResult,
-)
+from great_expectations.checkpoint.checkpoint import CheckpointResult
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 from pyspark.sql.types import StructType
