@@ -11,8 +11,4 @@ SCHEMA2 = (
     .add("leeftijd", "integer")
 )
 
-SCHEMA3 = (
-    StructType()
-    .add("countrycode", "string")
-    .add("contryname", "string")
-)
+SCHEMA3 = StructType().add("countrycode", "string").add("contryname", "string")

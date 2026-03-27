@@ -35,7 +35,7 @@ def validate_data_quality_rules_dict(
 
     validate_dataset(data_quality_rules_dict=data_quality_rules_dict)
     validate_tables(data_quality_rules_dict=data_quality_rules_dict)
-    validate_team(data_quality_rules_dict=data_quality_rules_dict)    
+    validate_team(data_quality_rules_dict=data_quality_rules_dict)
 
     for rules_dict in data_quality_rules_dict["tables"]:
         validate_rules_dict(rules_dict=rules_dict)
@@ -193,7 +193,7 @@ def get_team_from_rules_dict(data_quality_rules_dict: dict) -> dict | None:
     return {
         "teamid": team_info["teamid"],
         "teamname": team_info["teamname"],
-        "teamdescription": team_info.get("teamdescription", None)
+        "teamdescription": team_info.get("teamdescription", None),
     }
 
 

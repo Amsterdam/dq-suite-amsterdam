@@ -40,10 +40,13 @@ from .validation_input import (
 logger = logging.getLogger("dq_suite.validation")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+formatter = logging.Formatter(
+    "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
+)
 handler.setFormatter(formatter)
 if not logger.hasHandlers():
     logger.addHandler(handler)
+
 
 class ValidationRunner:
     def __init__(
@@ -386,10 +389,10 @@ def run_validation(
         a tuple containing boolean flag and CheckpointResult object is returned
     """
     # 1) extract the data quality rules to be applied...
-    logger.info ("Extract dq rules from input json file")
+    logger.info("Extract dq rules from input json file")
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
 
-    #validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
+    # validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=table_name,
@@ -410,7 +413,7 @@ def run_validation(
         )
 
     # 2) ... perform the validation on the dataframe...
-    logger.info (f"Perform validation on DF for Team - {teamid} ")
+    logger.info(f"Perform validation on DF for Team - {teamid} ")
     validation_settings_obj = ValidationSettings(
         spark_session=spark_session,
         catalog_name=catalog_name,
@@ -441,7 +444,7 @@ def run_validation(
         unique_identifier=rules_dict["unique_identifier"],
         table_name=rules_dict["table_name"],
         rules=rules_list,
-        mask_columns=rules_dict.get("mask_columns")
+        mask_columns=rules_dict.get("mask_columns"),
     )
 
     checkpoint_result = validate(
@@ -461,16 +464,16 @@ def run_validation(
 
     # 3) ... and write results to unity catalog
     if write_results_to_unity_catalog:
-        logger.info ("Write results in unity catalog dimension tables")
+        logger.info("Write results in unity catalog dimension tables")
         write_validation_metadata_tables(
             dq_rules_dict=validation_dict,
             validation_settings_obj=validation_settings_obj,
         )
-        logger.info ("Write results in unity catalog fact tables")
+        logger.info("Write results in unity catalog fact tables")
         write_validation_result_tables(
             df=df,
             checkpoint_result=checkpoint_result,
             validation_settings_obj=validation_settings_obj,
         )
-    logger.info ("***End Validation Run***")
+    logger.info("***End Validation Run***")
     return checkpoint_result.success, highest_severity

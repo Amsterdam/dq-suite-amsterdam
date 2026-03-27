@@ -284,7 +284,9 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     ]
 
 
-def get_single_brontabel_dict(dataset_name: str,dataset_layer: str, rules_dict: RulesDict) -> dict:
+def get_single_brontabel_dict(
+    dataset_name: str, dataset_layer: str, rules_dict: RulesDict
+) -> dict:
     table_name = rules_dict["table_name"]
     unique_identifier = rules_dict["unique_identifier"]
     table_id = f"{dataset_name}_{dataset_layer}_{table_name}"
@@ -307,7 +309,9 @@ def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     for rules_dict in dq_rules_dict["tables"]:
         extracted_data.append(
             get_single_brontabel_dict(
-                dataset_name=dataset_name,dataset_layer=dataset_layer, rules_dict=rules_dict
+                dataset_name=dataset_name,
+                dataset_layer=dataset_layer,
+                rules_dict=rules_dict,
             )
         )
     return extracted_data
@@ -384,7 +388,9 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
         table_id = f"{dataset_name}_{dataset_layer}_{table['table_name']}"
         for rule in table["rules"]:
             extracted_data.append(
-                get_single_rule_dict(rule=rule, table_id=table_id,teamid=teamid)
+                get_single_rule_dict(
+                    rule=rule, table_id=table_id, teamid=teamid
+                )
             )
     return extracted_data
 
@@ -531,6 +537,7 @@ def get_validatie_data(
             )
     return extracted_data
 
+
 def get_single_expectation_afwijking_data(
     expectation_result: Any,
     df: DataFrame,
@@ -552,7 +559,7 @@ def get_single_expectation_afwijking_data(
         .get("unexpected_rows")
     )
 
-    def mask_value(value,attr):
+    def mask_value(value, attr):
         """
         Mask the value of the attribute if it is in the masking_columns list.
         """
@@ -579,9 +586,9 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": None,
-                    "afwijkendeAttribuutWaarde": mask_value(result_dict.get(
-                        "observed_value", []
-                    ), attribute),
+                    "afwijkendeAttribuutWaarde": mask_value(
+                        result_dict.get("observed_value", []), attribute
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -842,6 +849,7 @@ def get_highest_severity_from_validation_result(
         failed_severities, key=lambda sev: severity_priority.get(sev, 0)
     )
     return highest_severity
+
 
 def get_team_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
