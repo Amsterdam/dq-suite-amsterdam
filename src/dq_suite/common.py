@@ -17,13 +17,11 @@ class Rule:
 
     rule_name: str  # Name of the GX expectation
     parameters: Dict[str, Any]  # Collection of parameters required for
-    severity: Literal["fatal", "error", "warning"] | None = (
-        None  # Indicates the impact level of a rule if it fails.
-    )
+    severity: Literal[
+        "fatal", "error", "warning"
+    ] | None = None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
-    norm: int | None = (
-        None  # TODO/check: what is the meaning of this field? Add documentation.
-    )
+    norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
