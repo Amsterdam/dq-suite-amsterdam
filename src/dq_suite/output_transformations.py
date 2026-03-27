@@ -1,10 +1,9 @@
 import copy
 import datetime
 import re
-from typing import Any, Dict, List
+from typing import Any, List
 
 from great_expectations.checkpoint.checkpoint import (
-    CheckpointDescriptionDict,
     CheckpointResult,
 )
 from pyspark.sql import DataFrame, Row, SparkSession

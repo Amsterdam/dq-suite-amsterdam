@@ -33,7 +33,6 @@ from .output_transformations import (
 from .validation_input import (
     filter_validation_dict_by_table_name,
     get_data_quality_rules_dict,
-    validate_data_quality_rules_dict,
 )
 
 # Configure logger to log to stdout
@@ -392,7 +391,6 @@ def run_validation(
     logger.info("Extract dq rules from input json file")
     validation_dict = get_data_quality_rules_dict(file_path=json_path)
 
-    # validate_data_quality_rules_dict(data_quality_rules_dict=validation_dict)
     rules_dict = filter_validation_dict_by_table_name(
         validation_dict=validation_dict,
         table_name=table_name,
