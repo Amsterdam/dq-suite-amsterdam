@@ -28,8 +28,8 @@ from .schemas.brondataset import SCHEMA as BRONDATASET_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
-from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 from .schemas.team import SCHEMA as TEAM_SCHEMA
+from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
 def create_empty_dataframe(

@@ -1,7 +1,6 @@
 import copy
-from typing import Any, Dict, List, Literal, Tuple
-
 import logging
+from typing import Any, Dict, List, Literal, Tuple
 
 from great_expectations import (
     Checkpoint,
@@ -36,7 +35,6 @@ from .validation_input import (
     get_data_quality_rules_dict,
     validate_data_quality_rules_dict,
 )
-
 
 # Configure logger to log to stdout
 logger = logging.getLogger("dq_suite.validation")
