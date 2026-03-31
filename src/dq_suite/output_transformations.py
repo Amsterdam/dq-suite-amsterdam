@@ -191,6 +191,43 @@ def get_target_attr_for_rule(result: dict) -> str | None:
         return None
 
 
+def mask_value(value: Any, attr: Any, mask_columns: List[str] | None = None):
+    """
+    Mask the value of the attribute if it is in the masking_columns list.
+
+    Supports:
+    - scalar attribute names
+    - compound attribute keys (list/tuple of column names)
+    - values that are tuple/list of key-value tuples, e.g.
+      (("contryname", "Belgie"), ("id", 2))
+    """
+    if not mask_columns:
+        return value
+
+    if isinstance(attr, (list, tuple)):
+        if any(str(column) in mask_columns for column in attr):
+            return "***masked***"
+    else:
+        if str(attr) in mask_columns:
+            return "***masked***"
+
+    # If value itself is a list/tuple of key-value pairs, mask the individual
+    # values for keys that are in mask_columns.
+    if isinstance(value, (list, tuple)):
+        if all(
+            isinstance(item, (list, tuple)) and len(item) == 2 for item in value
+        ):
+            masked_value = []
+            for key, val in value:
+                if str(key) in mask_columns:
+                    masked_value.append((key, "***masked***"))
+                else:
+                    masked_value.append((key, val))
+            return tuple(masked_value)
+
+    return value
+
+
 def get_unique_deviating_values(
     deviating_attribute_value: list[str],
 ) -> set[str]:
@@ -556,18 +593,12 @@ def get_single_expectation_afwijking_data(
         .get("unexpected_rows")
     )
 
-    def mask_value(value, attr):
-        """
-        Mask the value of the attribute if it is in the masking_columns list.
-        """
-        if mask_columns and attr in mask_columns:
-            return "***masked***"
-        return value
-
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
-            afwijkende_value = mask_value(row.get(attribute), attribute)
+            afwijkende_value = mask_value(
+                row.get(attribute), attribute, mask_columns=mask_columns
+            )
             extracted_data.append(
                 {
                     "identifierVeldWaarde": [grouped_id],
@@ -584,7 +615,9 @@ def get_single_expectation_afwijking_data(
                 {
                     "identifierVeldWaarde": None,
                     "afwijkendeAttribuutWaarde": mask_value(
-                        result_dict.get("observed_value", []), attribute
+                        result_dict.get("observed_value", []),
+                        attribute,
+                        mask_columns=mask_columns,
                     ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
@@ -610,7 +643,9 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": grouped_ids,
-                    "afwijkendeAttribuutWaarde": mask_value(value, attribute),
+                    "afwijkendeAttribuutWaarde": mask_value(
+                        value, attribute, mask_columns=mask_columns
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,

@@ -46,7 +46,6 @@ class TestRule:
 
 
 class TestGeoRule:
-
     def test_geo_rule_is_dataclass(self):
         rule = GeoRule(
             rule_name="ExpectColumnValuesToHaveValidGeometry", parameters={}

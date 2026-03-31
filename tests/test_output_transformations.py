@@ -875,6 +875,53 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
     assert set(deviating_values) == {5, 15}
 
 
+def test_mask_value_compound_key_tuple_list():
+    value = (("contryname", "Belgie"), ("id", 2))
+    attr = ["contryname", "id"]
+    masked = mask_value(value, attr, mask_columns=["contryname"])
+    assert masked == (("contryname", "***masked***"), ("id", 2))
+
+
+def test_column_level_expectation_compound_key_masked(
+    base_expectation_result, sample_spark_df
+):
+    """Test masking works for compound key unexpected_list values."""
+    base_expectation_result["expectation_config"][
+        "type"
+    ] = "expect_compound_key"
+    base_expectation_result["expectation_config"]["meta"] = {
+        "column": "dummy",
+        "rule": "ExpectCompoundKey",
+    }
+    base_expectation_result["expectation_config"]["kwargs"] = {
+        "column_A": "contryname",
+        "column_B": "id",
+    }
+    base_expectation_result["result"] = {
+        "unexpected_list": [
+            (("contryname", "Belgie"), ("id", 2)),
+        ]
+    }
+
+    df = sample_spark_df.sparkSession.createDataFrame(
+        [
+            {"id": 2, "contryname": "Belgie"},
+        ]
+    )
+
+    result = get_single_expectation_afwijking_data(
+        expectation_result=base_expectation_result,
+        df=df,
+        unique_identifier=["id"],
+        run_time=datetime(2025, 10, 24),
+        table_id="table_003",
+        mask_columns=["contryname"],
+    )
+
+    assert len(result) == 1
+    assert result[0]["afwijkendeAttribuutWaarde"] == "***masked***"
+
+
 def test_get_single_expectation_afwijking_data_geometry_type(
     spark, base_expectation_result
 ):
