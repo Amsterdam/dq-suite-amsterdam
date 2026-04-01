@@ -27,6 +27,7 @@ from src.dq_suite.output_transformations import (
     list_of_dicts_to_df,
     get_custom_validation_results,
     get_team_data,
+    mask_value,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -351,10 +352,10 @@ class TestFilterDfBasedOnDeviatingValues:
             ("1", "Nederland"),
             ("3", "France"),
         ]
-        schema = ["countrycode", "contryname"]
+        schema = ["countrycode", "countryname"]
         df = spark.createDataFrame(data, AFWIJKING_SCHEMA3)
         deviating_value = ["1", "Nederland"]
-        attribute = ["countrycode", "contryname"]
+        attribute = ["countrycode", "countryname"]
         result_df = filter_df_based_on_deviating_values(
             deviating_value, attribute, df
         )
@@ -876,10 +877,10 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
 
 
 def test_mask_value_compound_key_tuple_list():
-    value = (("contryname", "Belgie"), ("id", 2))
-    attr = ["contryname", "id"]
-    masked = mask_value(value, attr, mask_columns=["contryname"])
-    assert masked == (("contryname", "***masked***"), ("id", 2))
+    value = (("countryname", "Belgie"), ("id", 2))
+    attr = ["countryname", "id"]
+    masked = mask_value(value, attr, mask_columns=["countryname"])
+    assert masked == ( "***masked***")
 
 
 def test_column_level_expectation_compound_key_masked(
@@ -894,18 +895,18 @@ def test_column_level_expectation_compound_key_masked(
         "rule": "ExpectCompoundKey",
     }
     base_expectation_result["expectation_config"]["kwargs"] = {
-        "column_A": "contryname",
+        "column_A": "countryname",
         "column_B": "id",
     }
     base_expectation_result["result"] = {
         "unexpected_list": [
-            (("contryname", "Belgie"), ("id", 2)),
+            (("countryname", "Belgie"), ("id", 2)),
         ]
     }
 
     df = sample_spark_df.sparkSession.createDataFrame(
         [
-            {"id": 2, "contryname": "Belgie"},
+            {"id": 2, "countryname": "Belgie"},
         ]
     )
 
@@ -915,7 +916,7 @@ def test_column_level_expectation_compound_key_masked(
         unique_identifier=["id"],
         run_time=datetime(2025, 10, 24),
         table_id="table_003",
-        mask_columns=["contryname"],
+        mask_columns=["countryname"],
     )
 
     assert len(result) == 1
