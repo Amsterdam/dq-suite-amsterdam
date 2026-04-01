@@ -614,7 +614,9 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": None,
-                    "afwijkendeAttribuutWaarde": result_dict.get("observed_value", []),
+                    "afwijkendeAttribuutWaarde": result_dict.get(
+                        "observed_value", []
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
