@@ -596,13 +596,12 @@ def get_single_expectation_afwijking_data(
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
-            afwijkende_value = mask_value(
-                row.get(attribute), attribute, mask_columns=mask_columns
-            )
             extracted_data.append(
                 {
                     "identifierVeldWaarde": [grouped_id],
-                    "afwijkendeAttribuutWaarde": afwijkende_value,
+                    "afwijkendeAttribuutWaarde": mask_value(
+                        row.get(attribute), attribute, mask_columns=mask_columns
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
