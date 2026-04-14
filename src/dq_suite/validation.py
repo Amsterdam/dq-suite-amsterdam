@@ -8,6 +8,7 @@ from great_expectations import (
     get_context,
 )
 from great_expectations.checkpoint import MicrosoftTeamsNotificationAction
+from .custom_renderers.teams_renderer import CustomMSTeamsRenderer
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
@@ -260,10 +261,7 @@ class ValidationRunner:
                 name="send_ms_teams_notification",
                 teams_webhook=self.ms_teams_webhook,
                 notify_on=self.notify_on,
-                renderer={
-                    "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
-                    "class_name": "MicrosoftTeamsRenderer",
-                },
+                renderer=CustomMSTeamsRenderer(),
             )
         )
 

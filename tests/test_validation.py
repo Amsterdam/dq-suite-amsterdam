@@ -18,7 +18,9 @@ from src.dq_suite.output_transformations import (
     create_validation_result_dataframe,
 )
 from src.dq_suite.validation import ValidationRunner, validate
-
+from src.dq_suite.custom_renderers.teams_renderer import (
+    CustomMSTeamsRenderer,
+)
 
 @pytest.fixture
 def validation_settings_obj():
@@ -271,6 +273,32 @@ class TestValidationRunner:
         # Now there should still be no actions in the action_list parameter
         assert isinstance(validation_runner_obj.action_list, list)
         assert len(validation_runner_obj.action_list) == 0
+
+    def test_create_action_list_with_ms_teams_webhook_uses_custom_renderer(
+        self, validation_runner_obj
+    ):
+        # Arrange
+        assert validation_runner_obj.action_list is None
+        validation_runner_obj.ms_teams_webhook = "the_ms_teams_webhook"
+ 
+        # Act
+        validation_runner_obj._create_action_list()
+ 
+        # Assert
+        action = validation_runner_obj.action_list[0]
+        assert isinstance(action, MicrosoftTeamsNotificationAction)
+        assert isinstance(action.renderer, CustomMSTeamsRenderer)
+ 
+        # Validate that the custom renderer produces an AdaptiveCard payload.
+        payload = action.renderer.render(
+            checkpoint_result=Mock(
+                success=True,
+                checkpoint_config=Mock(name="my_checkpoint"),
+                run_results={},
+            )
+        )
+        assert payload["type"] == "message"
+        assert payload["attachments"][0]["content"]["type"] == "AdaptiveCard"
 
     def test_get_or_add_checkpoint(self, validation_runner_obj):
         # TODO: mock use of ValidationDefinition for Checkpoint
