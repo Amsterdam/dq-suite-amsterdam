@@ -47,7 +47,8 @@ Prerequistries:
 - Create a workflow for webhook on Micrsoft teams chat. click [here](https://learn.microsoft.com/th-th/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=dotnet#create-an-incoming-webhook-from-a-template)
 - Add The application firwall in databricks otap.json file. Add the webhook url to firewall for each workspace. The file can found the project https://dev.azure.com/CloudCompetenceCenter/Cloud%20Platform%20Operations
 
-`        {
+```json
+        {
           "name": "allow-msteams-webhook-api-call",
           "description": "Allow Databricks to call MS teams webhook.",
           "source": ["databricks-public"],
@@ -55,10 +56,10 @@ Prerequistries:
           "protocol": ["https"],
           "port": [443]
         } 
-`
+```
 - Use the parameters `ms_teams_webhook` and `notify_on` in run_validation method.
 For example:
-`
+```python
 mswebhook ="https://default72fca1b12c2e4376a445294d801968.04.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/417be331......."
  
 from dq_suite.validation import run_validation
@@ -71,7 +72,7 @@ run_validation(
     ms_teams_webhook=mswebhook,
     notify_on='failure'
 )
-`
+```
 ## Add severity level to the Input Form
 We added a severity level to the `Input Form` to help with prioritizing failed validation rules based on their criticality.
 
