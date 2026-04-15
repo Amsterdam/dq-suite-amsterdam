@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+## [0.14.1] - 04-15-2026
+
+### Added
+- Microsoft team alert functionality added, by passing the webhook and the notify parameters
+
 ## [0.14.0] - 03-27-2026
 
 ### Added
