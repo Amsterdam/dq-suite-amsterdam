@@ -1,7 +1,7 @@
 # About dq-suite-amsterdam
 This repository aims to be an easy-to-use wrapper for the data quality library [Great Expectations](https://github.com/great-expectations/great_expectations) (GX). All that is needed to get started is an in-memory Spark dataframe and a set of data quality rules - specified in a JSON file [of particular formatting](dq_rules_example.json). 
 
-By default, all the validation results are written to Unity Catalog. Alternatively, one could disallow writing to a `data_quality` schema in UC, which one has to create once per catalog via [this notebook](scripts/data_quality_tables.sql). Additionally, users can choose to get notified via Slack or Microsoft Teams.
+By default, all the validation results are written to Unity Catalog of DMT (dpd1_prd). Data Team User or Service principle (SPN) which runs jobs/notebook will be given access to DMT catalog to write results in data_quality schema. Based on the results, DQ reports can be viewed in power bi reports hosted by DMT. Alternatively, one could disallow writing to a `data_quality` schema in UC, which one has to create once per catalog via [this notebook](scripts/data_quality_tables.sql). Additionally, users can choose to get notified via Slack or Microsoft Teams.
 
 <img src="docs/wip_computer.jpg" width="20%" height="auto">
 
@@ -26,10 +26,10 @@ pip install dq-suite-amsterdam
 
 
 3. Get ready to validate your first table. To do so, define
-- `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way
+- `dq_rule_json_path` as a path to a JSON file, formatted in [this](dq_rules_example.json) way. Detailed description for defining the json can be found [here](docs/Readme-prepare_input_json.md)
 - `df` as a Spark dataframe containing the table that needs to be validated (e.g. via `spark.read.csv` or `spark.read.table`)
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
-- `catalog_name` as the name of your catalog ('dpxx_dev' or 'dpxx_prd')
+- `catalog_name` as the name of catalog where output of dq suite will be stored ('dpd1_dev' or 'dpd1_prd')
 - `table_name` as the name of the table for which a data quality check is required. This name should also occur in the JSON file at `dq_rule_json_path`
 
 

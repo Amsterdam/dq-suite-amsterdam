@@ -25,6 +25,7 @@ from .schemas.brondataset import SCHEMA as BRONDATASET_SCHEMA
 from .schemas.brontabel import SCHEMA as BRONTABEL_SCHEMA
 from .schemas.regel import SCHEMA as REGEL_SCHEMA
 from .schemas.regel_id_input import SCHEMA as REGEL_ID_INPUT_SCHEMA
+from .schemas.team import SCHEMA as TEAM_SCHEMA
 from .schemas.validatie import SCHEMA as VALIDATIE_SCHEMA
 
 
@@ -190,6 +191,43 @@ def get_target_attr_for_rule(result: dict) -> str | None:
         return None
 
 
+def mask_value(value: Any, attr: Any, mask_columns: List[str] | None = None):
+    """
+    Mask the value of the attribute if it is in the masking_columns list.
+
+    Supports:
+    - scalar attribute names
+    - compound attribute keys (list/tuple of column names)
+    - values that are tuple/list of key-value tuples, e.g.
+      (("contryname", "Belgie"), ("id", 2))
+    """
+    if not mask_columns:
+        return value
+
+    if isinstance(attr, (list, tuple)):
+        if any(str(column) in mask_columns for column in attr):
+            return "***masked***"
+    else:
+        if str(attr) in mask_columns:
+            return "***masked***"
+
+    # If value itself is a list/tuple of key-value pairs, mask the individual
+    # values for keys that are in mask_columns.
+    if isinstance(value, (list, tuple)):
+        if all(
+            isinstance(item, (list, tuple)) and len(item) == 2 for item in value
+        ):
+            masked_value = []
+            for key, val in value:
+                if str(key) in mask_columns:
+                    masked_value.append((key, "***masked***"))
+                else:
+                    masked_value.append((key, val))
+            return tuple(masked_value)
+
+    return value
+
+
 def get_unique_deviating_values(
     deviating_attribute_value: list[str],
 ) -> set[str]:
@@ -268,22 +306,30 @@ def get_brondataset_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     Get the dataset data from the dq_rules_dict.
     """
     dataset_dict: DatasetDict = dq_rules_dict["dataset"]
+    dataset_name = dataset_dict["name"]
+    dataset_layer = dataset_dict["layer"]
     return [
         {
-            "bronDatasetId": dataset_dict["name"],
+            "bronDatasetId": f"{dataset_name}_{dataset_layer}",
+            "bronDatasetNaam": dataset_dict["name"],
             "medaillonLaag": dataset_dict["layer"],
+            "teamId": dq_rules_dict["team"]["teamid"],
         }
     ]
 
 
-def get_single_brontabel_dict(dataset_name: str, rules_dict: RulesDict) -> dict:
+def get_single_brontabel_dict(
+    dataset_name: str, dataset_layer: str, rules_dict: RulesDict
+) -> dict:
     table_name = rules_dict["table_name"]
     unique_identifier = rules_dict["unique_identifier"]
-    table_id = f"{dataset_name}_{table_name}"
+    table_id = f"{dataset_name}_{dataset_layer}_{table_name}"
+    bronDatasetId = f"{dataset_name}_{dataset_layer}"
     return {
         "bronTabelId": table_id,
         "tabelNaam": table_name,
         "uniekeSleutel": unique_identifier,
+        "bronDatasetId": bronDatasetId,
     }
 
 
@@ -293,10 +339,13 @@ def get_brontabel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
     for rules_dict in dq_rules_dict["tables"]:
         extracted_data.append(
             get_single_brontabel_dict(
-                dataset_name=dataset_name, rules_dict=rules_dict
+                dataset_name=dataset_name,
+                dataset_layer=dataset_layer,
+                rules_dict=rules_dict,
             )
         )
     return extracted_data
@@ -324,10 +373,11 @@ def get_bronattribuut_data(
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
     bronattribuut_id_set = set()  # To keep track of used IDs
     for param in dq_rules_dict["tables"]:
         table_name = param["table_name"]
-        table_id = f"{dataset_name}_{table_name}"
+        table_id = f"{dataset_name}_{dataset_layer}_{table_name}"
         for rule in param["rules"]:
             bronattribuut_dict = get_single_bronattribuut_dict(
                 rule=rule, table_id=table_id
@@ -341,7 +391,7 @@ def get_bronattribuut_data(
     return extracted_data
 
 
-def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
+def get_single_rule_dict(rule: Rule, table_id: str, teamid: str) -> dict:
     parameters = copy.deepcopy(rule["parameters"])
 
     # Round min/max values (if present) to a single decimal
@@ -356,6 +406,7 @@ def get_single_rule_dict(rule: Rule, table_id: str) -> dict:
         "bronTabelId": table_id,
         "attribuut": parameters.get("column", None),
         "severity": rule.get("severity", "ok"),
+        "teamId": teamid,
     }
 
 
@@ -365,11 +416,15 @@ def get_regel_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
     """
     extracted_data = []
     dataset_name = dq_rules_dict["dataset"]["name"]
+    dataset_layer = dq_rules_dict["dataset"]["layer"]
+    teamid = dq_rules_dict["team"]["teamid"]
     for table in dq_rules_dict["tables"]:
-        table_id = f"{dataset_name}_{table['table_name']}"
+        table_id = f"{dataset_name}_{dataset_layer}_{table['table_name']}"
         for rule in table["rules"]:
             extracted_data.append(
-                get_single_rule_dict(rule=rule, table_id=table_id)
+                get_single_rule_dict(
+                    rule=rule, table_id=table_id, teamid=teamid
+                )
             )
     return extracted_data
 
@@ -497,6 +552,7 @@ def get_validatie_data(
     """
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.dataset_layer}_"
         f"{validation_settings_obj.table_name}"
     )
 
@@ -522,6 +578,7 @@ def get_single_expectation_afwijking_data(
     unique_identifier: List[str],
     run_time: datetime,
     table_id: str,
+    mask_columns: List[str] | None = None,
 ) -> list[dict]:
     extracted_data = []
     rule_name = expectation_result["expectation_config"]["meta"]["rule"]
@@ -535,14 +592,16 @@ def get_single_expectation_afwijking_data(
         .get("details", {})
         .get("unexpected_rows")
     )
+
     if unexpected_rows:
         for row in unexpected_rows:
             grouped_id = [row[uid] for uid in unique_identifier]
-            afwijkende_value = row.get(attribute)
             extracted_data.append(
                 {
                     "identifierVeldWaarde": [grouped_id],
-                    "afwijkendeAttribuutWaarde": afwijkende_value,
+                    "afwijkendeAttribuutWaarde": mask_value(
+                        row.get(attribute), attribute, mask_columns=mask_columns
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -581,7 +640,9 @@ def get_single_expectation_afwijking_data(
             extracted_data.append(
                 {
                     "identifierVeldWaarde": grouped_ids,
-                    "afwijkendeAttribuutWaarde": value,
+                    "afwijkendeAttribuutWaarde": mask_value(
+                        value, attribute, mask_columns=mask_columns
+                    ),
                     "dqDatum": run_time,
                     "regelNaam": rule_name,
                     "regelParameters": afwijking_parameters,
@@ -608,9 +669,11 @@ def get_afwijking_data(
     run_results = list(validation_output.run_results.values())
     table_id = (
         f"{validation_settings_obj.dataset_name}_"
+        f"{validation_settings_obj.dataset_layer}_"
         f"{validation_settings_obj.table_name}"
     )
     unique_identifier = validation_settings_obj.unique_identifier
+    mask_columns = validation_settings_obj.mask_columns
 
     extracted_data = []
     if not isinstance(
@@ -626,6 +689,7 @@ def get_afwijking_data(
                 unique_identifier=unique_identifier,
                 run_time=run_time,
                 table_id=table_id,
+                mask_columns=mask_columns,
             )
     return extracted_data
 
@@ -647,6 +711,9 @@ def create_metadata_dataframe(
     elif metadata_table_name == "regel":
         extracted_data = get_regel_data(dq_rules_dict=dq_rules_dict)
         schema = REGEL_SCHEMA
+    elif metadata_table_name == "team":
+        extracted_data = get_team_data(dq_rules_dict=dq_rules_dict)
+        schema = TEAM_SCHEMA
     else:
         raise ValueError(f"Unknown metadata table name '{metadata_table_name}'")
     df = list_of_dicts_to_df(
@@ -671,6 +738,7 @@ def write_validation_metadata_tables(
         "brontabel",
         "bronattribuut",
         "regel",
+        "team",
     ]
 
     for metadata_table_name in metadata_table_names:
@@ -810,3 +878,17 @@ def get_highest_severity_from_validation_result(
         failed_severities, key=lambda sev: severity_priority.get(sev, 0)
     )
     return highest_severity
+
+
+def get_team_data(dq_rules_dict: DataQualityRulesDict) -> list[dict]:
+    """
+    Get the team data from the dq_rules_dict.
+    """
+    dataset_dict: DatasetDict = dq_rules_dict["team"]
+    return [
+        {
+            "teamId": dataset_dict["teamid"],
+            "teamName": dataset_dict["teamname"],
+            "teamDescription": dataset_dict["teamdescription"],
+        }
+    ]

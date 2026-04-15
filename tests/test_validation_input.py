@@ -15,6 +15,7 @@ from src.dq_suite.validation_input import (
     validate_rules_dict,
     validate_table_schema,
     validate_tables,
+    validate_team,
 )
 
 

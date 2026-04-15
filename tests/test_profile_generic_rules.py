@@ -12,28 +12,32 @@ class Geometry:
 
     def __repr__(self):
         return f"Geometry({self.wkb!r}, {self.srid})"
-    
-    
+
+
 @pytest.fixture
 def df():
-    return pd.DataFrame({
-        "id": [1, 2, 3],
-        "amount": [10, 20, 30],
-        "status": ["open", "closed", "open"],
-        "timestamp": ["2024-01-01", "2024-01-02", "2024-01-03"],
-        "price": [1.5, 2.5, 99.9],
-    })
-    
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "amount": [10, 20, 30],
+            "status": ["open", "closed", "open"],
+            "timestamp": ["2024-01-01", "2024-01-02", "2024-01-03"],
+            "price": [1.5, 2.5, 99.9],
+        }
+    )
+
 
 @pytest.fixture
 def df_with_geometry():
-    return pd.DataFrame({
-        "geometry": [
-            Geometry(b"\x01\x06\x00\x00\x00\x01\x00\x00\x00", 4326),
-            Geometry(b"\x01\x06\x00\x00\x00\x01\x00\x00\x00", 4326),
-        ],
-        "id": [1, 2],
-    })
+    return pd.DataFrame(
+        {
+            "geometry": [
+                Geometry(b"\x01\x06\x00\x00\x00\x01\x00\x00\x00", 4326),
+                Geometry(b"\x01\x06\x00\x00\x00\x01\x00\x00\x00", 4326),
+            ],
+            "id": [1, 2],
+        }
+    )
 
 
 @pytest.fixture

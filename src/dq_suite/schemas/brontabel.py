@@ -5,4 +5,5 @@ SCHEMA = (
     .add("bronTabelId", "string")
     .add("tabelNaam", "string")
     .add("uniekeSleutel", "string")
+    .add("bronDatasetId", "string")
 )

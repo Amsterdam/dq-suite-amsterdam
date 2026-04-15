@@ -1,4 +1,9 @@
 {
+    "team": {
+        "teamid": "dpso",
+        "teamname": "so team",
+        "teamdescription": "so team"
+    },
     "dataset": {
         "name": "the_name",
         "layer": "the_layer"

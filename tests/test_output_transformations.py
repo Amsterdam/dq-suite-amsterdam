@@ -25,7 +25,9 @@ from src.dq_suite.output_transformations import (
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_custom_validation_results
+    get_custom_validation_results,
+    get_team_data,
+    mask_value,
 )
 
 from .test_data.test_schema import SCHEMA as AFWIJKING_SCHEMA
@@ -65,6 +67,7 @@ def validation_settings_obj():
         dataset_layer="the_layer",
         dataset_name="the_dataset_name",
         unique_identifier="the_id",
+        teamid="dpso",
     )
     return validation_settings_obj
 
@@ -140,57 +143,70 @@ class TestConstructRegelId:
 
 
 def _wrap_meta(meta: dict) -> dict:
-    """ Helper to build the input structure the function expects:
-    {"expectation_config": {"meta": <meta>}} """
+    """Helper to build the input structure the function expects:
+    {"expectation_config": {"meta": <meta>}}"""
     return {"expectation_config": {"meta": deepcopy(meta)}}
 
+
 def _wrap_kwargs(kwargs: dict) -> dict:
-    """ Helper that puts kwargs under expectation_config.kwargs """
+    """Helper that puts kwargs under expectation_config.kwargs"""
     return {"expectation_config": {"kwargs": deepcopy(kwargs)}}
+
 
 class TestGetParametersFromResults:
     @pytest.mark.parametrize(
-    "meta, expected",
-    [
-        (
-            {
-                "value": 10,
-                "table": "table",
-                "rule": "ExpectColumnValuesToNotBeNull",
-            },
-            {"value": 10},
-        ),
-        (
-            {
-                "geometry_type": "Polygon",
-                "rule": "ExpectColumnValuesToBeOfGeometryType",
-            },
-            {"geometry_type": "Polygon"},
-        ),
-    ],
-)
-
-    def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(self, meta, expected):
+        "meta, expected",
+        [
+            (
+                {
+                    "value": 10,
+                    "table": "table",
+                    "rule": "ExpectColumnValuesToNotBeNull",
+                },
+                {"value": 10},
+            ),
+            (
+                {
+                    "geometry_type": "Polygon",
+                    "rule": "ExpectColumnValuesToBeOfGeometryType",
+                },
+                {"geometry_type": "Polygon"},
+            ),
+        ],
+    )
+    def test_get_parameters_from_results_strips_keys_and_handles_geometry_type(
+        self, meta, expected
+    ):
         result = _wrap_meta(meta)
         assert get_parameters_from_results(result) == expected
 
-    def test_get_parameters_from_results_raises_when_expectation_config_missing(self):
-        with pytest.raises(ValueError, match="No expectation_config in result."):
+    def test_get_parameters_from_results_raises_when_expectation_config_missing(
+        self,
+    ):
+        with pytest.raises(
+            ValueError, match="No expectation_config in result."
+        ):
             get_parameters_from_results({})
 
-    def test_get_parameters_from_results_raises_when_no_meta_and_no_kwargs(self):
-        with pytest.raises(ValueError, match="No meta or kwargs found to build parameters."):
+    def test_get_parameters_from_results_raises_when_no_meta_and_no_kwargs(
+        self,
+    ):
+        with pytest.raises(
+            ValueError, match="No meta or kwargs found to build parameters."
+        ):
             get_parameters_from_results({"expectation_config": {}})
 
     def test_kwargs_only_includes_rule_args_and_drops_runtime_keys(self):
-        result = _wrap_kwargs({
-            "column": "the_column",
-            "batch_id": "abc123",
-            "unexpected_rows_query": "SELECT * FROM t",
-            "value_set": [1, 2, 3],
-            "min_value": 0,
-            "max_value": 10,
-        })
+        result = _wrap_kwargs(
+            {
+                "column": "the_column",
+                "batch_id": "abc123",
+                "unexpected_rows_query": "SELECT * FROM t",
+                "value_set": [1, 2, 3],
+                "min_value": 0,
+                "max_value": 10,
+            }
+        )
         expected = {"value_set": [1, 2, 3], "min_value": 0, "max_value": 10}
         assert get_parameters_from_results(result) == expected
 
@@ -211,7 +227,9 @@ class TestGetParametersFromResults:
 
 class TestGetTargetAttrForRule:
     def test_get_attr_for_rule_with_column(self):
-        result = _wrap_meta({"column": "col_a", "column_list": ["col_a", "col_b"]})
+        result = _wrap_meta(
+            {"column": "col_a", "column_list": ["col_a", "col_b"]}
+        )
         assert get_target_attr_for_rule(result) == "col_a"
 
     def test_get_attr_for_rule_with_column_list(self):
@@ -221,7 +239,9 @@ class TestGetTargetAttrForRule:
     def test_get_attr_for_rule_when_meta_missing_returns_none(self):
         assert get_target_attr_for_rule({}) is None
 
-    def test_get_attr_for_rule_when_meta_present_but_no_columns_returns_none(self):
+    def test_get_attr_for_rule_when_meta_present_but_no_columns_returns_none(
+        self,
+    ):
         result = _wrap_meta({"table": "table"})
         assert get_target_attr_for_rule(result) is None
 
@@ -323,18 +343,22 @@ class TestFilterDfBasedOnDeviatingValues:
         expected_df = spark.createDataFrame(expected_data, AFWIJKING_SCHEMA2)
         assert_df_equality(result_df, expected_df)
 
-    def test_filter_df_based_on_deviating_values_expectation_example(self, spark):
+    def test_filter_df_based_on_deviating_values_expectation_example(
+        self, spark
+    ):
         data = [
             ("1", "Nederland"),
             ("2", "België"),
             ("1", "Nederland"),
             ("3", "France"),
         ]
-        schema = ["countrycode", "contryname"]
+        schema = ["countrycode", "countryname"]
         df = spark.createDataFrame(data, AFWIJKING_SCHEMA3)
         deviating_value = ["1", "Nederland"]
-        attribute = ["countrycode", "contryname"]
-        result_df = filter_df_based_on_deviating_values(deviating_value, attribute, df)
+        attribute = ["countrycode", "countryname"]
+        result_df = filter_df_based_on_deviating_values(
+            deviating_value, attribute, df
+        )
         expected_data = [
             ("1", "Nederland"),
             ("1", "Nederland"),
@@ -376,7 +400,32 @@ class TestGetDatasetData:
             dq_rules_dict=read_test_rules_as_dict
         )
         expected_result = [
-            {"bronDatasetId": "the_dataset", "medaillonLaag": "the_layer"}
+            {
+                "bronDatasetId": "the_dataset_the_layer",
+                "bronDatasetNaam": "the_dataset",
+                "medaillonLaag": "the_layer",
+                "teamId": "dpso",
+            }
+        ]
+        assert test_output == expected_result
+
+
+@pytest.mark.usefixtures("read_test_rules_as_dict")
+class TestGetTeamData:
+    def test_get_dataset_data_raises_type_error(self):
+        with pytest.raises(TypeError):
+            get_team_data(dq_rules_dict="123")
+
+    def test_get_dataset_data_returns_correct_list(
+        self, read_test_rules_as_dict
+    ):
+        test_output = get_team_data(dq_rules_dict=read_test_rules_as_dict)
+        expected_result = [
+            {
+                "teamId": "dpso",
+                "teamName": "so team",
+                "teamDescription": "so team",
+            }
         ]
         assert test_output == expected_result
 
@@ -391,19 +440,22 @@ class TestGetTableData:
         test_output = get_brontabel_data(dq_rules_dict=read_test_rules_as_dict)
         expected_result = [
             {
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
                 "tabelNaam": "the_table",
                 "uniekeSleutel": "id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
             {
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "tabelNaam": "the_other_table",
                 "uniekeSleutel": "other_id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
             {
-                "bronTabelId": "the_dataset_the_third_table_name",
+                "bronTabelId": "the_dataset_the_layer_the_third_table_name",
                 "tabelNaam": "the_third_table_name",
                 "uniekeSleutel": "id",
+                "bronDatasetId": "the_dataset_the_layer",
             },
         ]
         assert test_output == expected_result
@@ -423,14 +475,14 @@ class TestGetAttributeData:
         )
         expected_result = [
             {
-                "bronAttribuutId": "the_dataset_the_table_the_column",
+                "bronAttribuutId": "the_dataset_the_layer_the_table_the_column",
                 "attribuutNaam": "the_column",
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
             },
             {
-                "bronAttribuutId": "the_dataset_the_other_table_the_other_column",
+                "bronAttribuutId": "the_dataset_the_layer_the_other_table_the_other_column",
                 "attribuutNaam": "the_other_column",
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
             },
         ]
         assert test_output == expected_result
@@ -452,9 +504,10 @@ class TestGetRegelData:
                     "column": "the_column",
                     "value_set": [1, 2, 3],
                 },
-                "bronTabelId": "the_dataset_the_table",
+                "bronTabelId": "the_dataset_the_layer_the_table",
                 "attribuut": "the_column",
                 "norm": None,
+                "teamId": "dpso",
             },
             {
                 "regelNaam": "ExpectColumnValuesToBeBetween",
@@ -464,25 +517,34 @@ class TestGetRegelData:
                     "min_value": 6,
                     "max_value": 10000,
                 },
-                "bronTabelId": "the_dataset_the_other_table",
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "attribuut": "the_other_column",
                 "norm": None,
+                "teamId": "dpso",
             },
             {
                 "regelNaam": "ExpectTableRowCountToBeBetween",
                 "severity": "fatal",
-                "regelParameters": {"min_value": 1, "max_value": 1000, "column": None},
-                "bronTabelId": "the_dataset_the_other_table",
+                "regelParameters": {
+                    "min_value": 1,
+                    "max_value": 1000,
+                    "column": None,
+                },
+                "bronTabelId": "the_dataset_the_layer_the_other_table",
                 "attribuut": None,
                 "norm": None,
+                "teamId": "dpso",
             },
         ]
         assert test_output == expected_result
 
+
 @pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
 class TestGetValidatieData:
-    def test_get_validatie_data_raises_attribute_error(self, spark, validation_settings_obj):
+    def test_get_validatie_data_raises_attribute_error(
+        self, spark, validation_settings_obj
+    ):
         df = spark.createDataFrame([], schema="x string")
         with pytest.raises(AttributeError):
             get_validatie_data(
@@ -508,19 +570,18 @@ class TestGetValidatieData:
         )
         test_sample = test_output[0]
         expected_result = {
-        "aantalValideRecords": 1000,
-        "aantalReferentieRecords": 1000,
-        "dqResultaat": "success",
-        "percentageValideRecords": 1.0,
-        "regelNaam": "ExpectColumnValuesToNotBeNull",
-        "regelParameters": {
-            "column": "tpep_pickup_datetime"
-        },
-        "bronTabelId": "the_dataset_name_the_table_name",
-        "dqDatum": dtt_now,
+            "aantalValideRecords": 1000,
+            "aantalReferentieRecords": 1000,
+            "dqResultaat": "success",
+            "percentageValideRecords": 1.0,
+            "regelNaam": "ExpectColumnValuesToNotBeNull",
+            "regelParameters": {"column": "tpep_pickup_datetime"},
+            "bronTabelId": "the_dataset_name_the_layer_the_table_name",
+            "dqDatum": dtt_now,
         }
         for key in test_sample.keys():
             assert test_sample[key] == expected_result[key]
+
 
 @pytest.mark.usefixtures("spark")
 @pytest.mark.usefixtures("read_test_result_as_dict", "validation_settings_obj")
@@ -540,13 +601,19 @@ class TestGetAfwijkingData:
                 validation_output="123",
             )  # wrong type: lacks `.run_results`
 
+
 @pytest.mark.usefixtures("spark")
 class TestGetCustomValidationResults:
     def test_get_custom_validation_results_failure(self, spark):
         df = spark.createDataFrame(
-            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",),
-             ("POINT (3 3)",), ("POINT (4 4)",)],
-            ["geometry"]
+            [
+                ("POINT (0 0)",),
+                ("POINT (1 1)",),
+                ("POINT (2 2)",),
+                ("POINT (3 3)",),
+                ("POINT (4 4)",),
+            ],
+            ["geometry"],
         )
         dtt_now = datetime.now()
         table_id = "geo_bron_001"
@@ -554,9 +621,9 @@ class TestGetCustomValidationResults:
         expectation_result = {
             "expectation_config": {
                 "meta": {
-                "column": "geometry",
-                "geometry_type": "MultiPolygon",
-                "rule": "ExpectColumnValuesToBeOfGeometryType"
+                    "column": "geometry",
+                    "geometry_type": "MultiPolygon",
+                    "rule": "ExpectColumnValuesToBeOfGeometryType",
                 }
             },
             "result": {
@@ -571,7 +638,7 @@ class TestGetCustomValidationResults:
             df=df,
         )
         assert actual == {
-            "aantalValideRecords": 0,                 
+            "aantalValideRecords": 0,
             "aantalReferentieRecords": 5,
             "percentageValideRecords": 0.0,
             "dqDatum": dtt_now,
@@ -579,15 +646,20 @@ class TestGetCustomValidationResults:
             "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
             "regelParameters": {
                 "column": "geometry",
-                "geometry_type": "MultiPolygon"
+                "geometry_type": "MultiPolygon",
             },
             "bronTabelId": table_id,
         }
 
     def test_get_custom_validation_results_success(self, spark):
         df = spark.createDataFrame(
-            [("POINT (0 0)",), ("POINT (1 1)",), ("POINT (2 2)",), ("POINT (3 3)",)],
-            ["geometry"]
+            [
+                ("POINT (0 0)",),
+                ("POINT (1 1)",),
+                ("POINT (2 2)",),
+                ("POINT (3 3)",),
+            ],
+            ["geometry"],
         )
         dtt_now = datetime.now()
         table_id = "geo_bron_002"
@@ -595,9 +667,9 @@ class TestGetCustomValidationResults:
         expectation_result = {
             "expectation_config": {
                 "meta": {
-                "column": "geometry",
-                "geometry_type": "Point",
-                "rule": "ExpectColumnValuesToBeOfGeometryType"
+                    "column": "geometry",
+                    "geometry_type": "Point",
+                    "rule": "ExpectColumnValuesToBeOfGeometryType",
                 }
             },
             "result": {
@@ -618,10 +690,7 @@ class TestGetCustomValidationResults:
             "dqDatum": dtt_now,
             "dqResultaat": "success",
             "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
-            "regelParameters": {
-                "column": "geometry",
-                "geometry_type": "Point"
-            },
+            "regelParameters": {"column": "geometry", "geometry_type": "Point"},
             "bronTabelId": table_id,
         }
 
@@ -632,16 +701,15 @@ def test_get_highest_severity_from_validation_result():
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"} 
+                    "meta": {"rule": "ExpectColumnValuesToNotBeNull"}
                 },
             },
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule": "ExpectColumnValuesToBeUnique"} 
+                    "meta": {"rule": "ExpectColumnValuesToBeUnique"}
                 },
             },
-
         ]
     }
 
@@ -670,7 +738,7 @@ def test_get_highest_severity_all_successful():
             {
                 "success": True,
                 "expectation_config": {
-                    "meta":{"rule": "ExpectColumnValuesToNotBeNull"}
+                    "meta": {"rule": "ExpectColumnValuesToNotBeNull"}
                 },
             }
         ]
@@ -698,7 +766,7 @@ def test_get_highest_severity_no_matching_severity():
             {
                 "success": False,
                 "expectation_config": {
-                    "meta":{"rule":"expect_column_values_to_be_unique"}
+                    "meta": {"rule": "expect_column_values_to_be_unique"}
                 },
             }
         ]
@@ -747,7 +815,9 @@ def base_expectation_result():
 def test_table_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of table-level expectations (observed_value)."""
     base_expectation_result["result"] = {"observed_value": 123}
-    base_expectation_result["expectation_config"]["meta"]["rule"] = "ExpectTableRowCountToEqual"
+    base_expectation_result["expectation_config"]["meta"][
+        "rule"
+    ] = "ExpectTableRowCountToEqual"
     result = get_single_expectation_afwijking_data(
         expectation_result=base_expectation_result,
         df=sample_spark_df,
@@ -763,11 +833,13 @@ def test_table_level_expectation(base_expectation_result, sample_spark_df):
     assert row["regelNaam"] == "ExpectTableRowCountToEqual"
     assert row["bronTabelId"] == "table_001"
     assert row["dqDatum"] == datetime(2025, 10, 15)
-    
+
 
 def test_column_level_expectation(base_expectation_result, sample_spark_df):
     """Test handling of column-level expectations (unexpected_list)."""
-    base_expectation_result["expectation_config"]["type"] = "expect_column_values_to_be_between"
+    base_expectation_result["expectation_config"][
+        "type"
+    ] = "expect_column_values_to_be_between"
     base_expectation_result["expectation_config"]["meta"] = {
         "column": "age",
         "rule": "ExpectColumnValuesToBeBetween",
@@ -786,7 +858,7 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
         table_id="table_002",
     )
     assert isinstance(result, list)
-    assert len(result) == 2 
+    assert len(result) == 2
     first = result[0]
     assert set(first.keys()) == {
         "identifierVeldWaarde",
@@ -804,66 +876,117 @@ def test_column_level_expectation(base_expectation_result, sample_spark_df):
     assert set(deviating_values) == {5, 15}
 
 
-def test_get_single_expectation_afwijking_data_geometry_type(spark, base_expectation_result):
+def test_mask_value_compound_key_tuple_list():
+    value = (("countryname", "Belgie"), ("id", 2))
+    attr = ["countryname", "id"]
+    masked = mask_value(value, attr, mask_columns=["countryname"])
+    assert masked == ( "***masked***")
+
+
+def test_column_level_expectation_compound_key_masked(
+    base_expectation_result, sample_spark_df
+):
+    """Test masking works for compound key unexpected_list values."""
+    base_expectation_result["expectation_config"][
+        "type"
+    ] = "expect_compound_key"
+    base_expectation_result["expectation_config"]["meta"] = {
+        "column": "dummy",
+        "rule": "ExpectCompoundKey",
+    }
+    base_expectation_result["expectation_config"]["kwargs"] = {
+        "column_A": "countryname",
+        "column_B": "id",
+    }
+    base_expectation_result["result"] = {
+        "unexpected_list": [
+            (("countryname", "Belgie"), ("id", 2)),
+        ]
+    }
+
+    df = sample_spark_df.sparkSession.createDataFrame(
+        [
+            {"id": 2, "countryname": "Belgie"},
+        ]
+    )
+
+    result = get_single_expectation_afwijking_data(
+        expectation_result=base_expectation_result,
+        df=df,
+        unique_identifier=["id"],
+        run_time=datetime(2025, 10, 24),
+        table_id="table_003",
+        mask_columns=["countryname"],
+    )
+
+    assert len(result) == 1
+    assert result[0]["afwijkendeAttribuutWaarde"] == "***masked***"
+
+
+def test_get_single_expectation_afwijking_data_geometry_type(
+    spark, base_expectation_result
+):
     """Test handling of ExpectColumnValuesToBeOfGeometryType expectation (unexpected_rows)."""
     df = spark.createDataFrame(
         [
             (1, "POINT (1 1)"),
             (2, "LINESTRING (0 0,1 1)"),
         ],
-            ["id", "geometry"],
-        )
+        ["id", "geometry"],
+    )
     run_time = datetime.now()
     table_id = "geo_source_001"
     base_expectation_result["expectation_config"]["meta"] = {
-                    "rule": "ExpectColumnValuesToBeOfGeometryType",
-                    "column": "geometry",
-                    "geometry_type": "MultiPolygon",
-                }
+        "rule": "ExpectColumnValuesToBeOfGeometryType",
+        "column": "geometry",
+        "geometry_type": "MultiPolygon",
+    }
     base_expectation_result["expectation_config"]["success"] = False
     base_expectation_result["result"] = {
-                    "observed_value": "2 unexpected rows",
-                    "details": {
-                        "unexpected_rows": [
-                            {"id": 1, "geometry": "POINT (1 1)"},
-                            {"id": 2, "geometry": "LINESTRING (0 0,1 1)"}
-                        ]
-                    }
-                }
+        "observed_value": "2 unexpected rows",
+        "details": {
+            "unexpected_rows": [
+                {"id": 1, "geometry": "POINT (1 1)"},
+                {"id": 2, "geometry": "LINESTRING (0 0,1 1)"},
+            ]
+        },
+    }
     result = get_single_expectation_afwijking_data(
-            expectation_result=base_expectation_result,
-            df=df,
-            unique_identifier=["id"],
-            run_time=run_time,
-            table_id=table_id,
-        )
+        expectation_result=base_expectation_result,
+        df=df,
+        unique_identifier=["id"],
+        run_time=run_time,
+        table_id=table_id,
+    )
     assert result == [
-            {
-                "identifierVeldWaarde": [[1]],
-                "afwijkendeAttribuutWaarde": "POINT (1 1)",
-                "dqDatum": run_time,
-                "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
-                "regelParameters": {
-                    "column": "geometry",
-                    "geometry_type": "MultiPolygon",
-                },
-                "bronTabelId": table_id,
+        {
+            "identifierVeldWaarde": [[1]],
+            "afwijkendeAttribuutWaarde": "POINT (1 1)",
+            "dqDatum": run_time,
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {
+                "column": "geometry",
+                "geometry_type": "MultiPolygon",
             },
-            {
-                "identifierVeldWaarde": [[2]],
-                "afwijkendeAttribuutWaarde": "LINESTRING (0 0,1 1)",
-                "dqDatum": run_time,
-                "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
-                "regelParameters": {
-                    "column": "geometry",
-                    "geometry_type": "MultiPolygon",
-                },
-                "bronTabelId": table_id,
+            "bronTabelId": table_id,
+        },
+        {
+            "identifierVeldWaarde": [[2]],
+            "afwijkendeAttribuutWaarde": "LINESTRING (0 0,1 1)",
+            "dqDatum": run_time,
+            "regelNaam": "ExpectColumnValuesToBeOfGeometryType",
+            "regelParameters": {
+                "column": "geometry",
+                "geometry_type": "MultiPolygon",
             },
-        ]
+            "bronTabelId": table_id,
+        },
+    ]
 
 
-def test_get_single_expectation_afwijking_data_valid_geometry(spark, base_expectation_result):
+def test_get_single_expectation_afwijking_data_valid_geometry(
+    spark, base_expectation_result
+):
     """Test handling of ExpectColumnValuesToHaveValidGeometry expectation (unexpected_rows)."""
     dummy_invalid_multipolygon = '{"type": "Point", "coordinates": [[[[0,0],[4,0],[4,4],[0,4],[0,0]]], [[[1,1],[3,3],[3,1],[1,3],[1,1]]]]}'
     df = spark.createDataFrame(
@@ -876,41 +999,43 @@ def test_get_single_expectation_afwijking_data_valid_geometry(spark, base_expect
     run_time = datetime.now()
     table_id = "geo_source_001"
     base_expectation_result["expectation_config"]["meta"] = {
-                    "rule": "ExpectColumnValuesToHaveValidGeometry",
-                    "column": "geometry",
-                    "geometry_type": None,
-                }
+        "rule": "ExpectColumnValuesToHaveValidGeometry",
+        "column": "geometry",
+        "geometry_type": None,
+    }
     base_expectation_result["expectation_config"]["success"] = False
     base_expectation_result["result"] = {
-                    "observed_value": "1 unexpected rows",
-                    "details": {
-                        "unexpected_rows": [
-                            {"id": 2, "geometry": dummy_invalid_multipolygon}
-                        ]
-                    }
-                }
+        "observed_value": "1 unexpected rows",
+        "details": {
+            "unexpected_rows": [
+                {"id": 2, "geometry": dummy_invalid_multipolygon}
+            ]
+        },
+    }
     result = get_single_expectation_afwijking_data(
-            expectation_result=base_expectation_result,
-            df=df,
-            unique_identifier=["id"],
-            run_time=run_time,
-            table_id=table_id,
-        )
+        expectation_result=base_expectation_result,
+        df=df,
+        unique_identifier=["id"],
+        run_time=run_time,
+        table_id=table_id,
+    )
     assert result == [
-            {
-                "identifierVeldWaarde": [[2]],
-                "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
-                "dqDatum": run_time,
-                "regelNaam": "ExpectColumnValuesToHaveValidGeometry",
-                "regelParameters": {
-                    "column": "geometry",
-                },
-                "bronTabelId": table_id,
+        {
+            "identifierVeldWaarde": [[2]],
+            "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
+            "dqDatum": run_time,
+            "regelNaam": "ExpectColumnValuesToHaveValidGeometry",
+            "regelParameters": {
+                "column": "geometry",
             },
-        ]
+            "bronTabelId": table_id,
+        },
+    ]
 
 
-def test_get_single_expectation_afwijking_data_empty_geometry(spark, base_expectation_result):
+def test_get_single_expectation_afwijking_data_empty_geometry(
+    spark, base_expectation_result
+):
     """Test handling of ExpectGeometryColumnValuesToNotBeEmpty expectation (unexpected_rows)."""
     dummy_invalid_multipolygon = '{"type": "Point", "coordinates": []}'
     df = spark.createDataFrame(
@@ -923,38 +1048,38 @@ def test_get_single_expectation_afwijking_data_empty_geometry(spark, base_expect
     run_time = datetime.now()
     table_id = "geo_source_001"
     base_expectation_result["expectation_config"]["meta"] = {
-                    "rule": "ExpectGeometryColumnValuesToNotBeEmpty",
-                    "column": "geometry",
-                    "geometry_type": None,
-                }
+        "rule": "ExpectGeometryColumnValuesToNotBeEmpty",
+        "column": "geometry",
+        "geometry_type": None,
+    }
     base_expectation_result["expectation_config"]["success"] = False
     base_expectation_result["result"] = {
-                    "observed_value": "1 unexpected rows",
-                    "details": {
-                        "unexpected_rows": [
-                            {"id": 2, "geometry": dummy_invalid_multipolygon}
-                        ]
-                    }
-                }
+        "observed_value": "1 unexpected rows",
+        "details": {
+            "unexpected_rows": [
+                {"id": 2, "geometry": dummy_invalid_multipolygon}
+            ]
+        },
+    }
     result = get_single_expectation_afwijking_data(
-            expectation_result=base_expectation_result,
-            df=df,
-            unique_identifier=["id"],
-            run_time=run_time,
-            table_id=table_id,
-        )
+        expectation_result=base_expectation_result,
+        df=df,
+        unique_identifier=["id"],
+        run_time=run_time,
+        table_id=table_id,
+    )
     assert result == [
-            {
-                "identifierVeldWaarde": [[2]],
-                "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
-                "dqDatum": run_time,
-                "regelNaam": "ExpectGeometryColumnValuesToNotBeEmpty",
-                "regelParameters": {
-                    "column": "geometry",
-                },
-                "bronTabelId": table_id,
+        {
+            "identifierVeldWaarde": [[2]],
+            "afwijkendeAttribuutWaarde": f"{dummy_invalid_multipolygon}",
+            "dqDatum": run_time,
+            "regelNaam": "ExpectGeometryColumnValuesToNotBeEmpty",
+            "regelParameters": {
+                "column": "geometry",
             },
-        ]
+            "bronTabelId": table_id,
+        },
+    ]
 
     # TODO: fix test. Also: this is not a proper unit test, needs more
     #  mocking and fewer calls to other functions inside.

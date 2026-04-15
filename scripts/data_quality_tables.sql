@@ -1,20 +1,23 @@
 -- Databricks notebook source
+CREATE WIDGET DROPDOWN catalog DEFAULT "dpd1_prd" CHOICES select * from (values ("dpd1_prd"),("dpd1_dev"))
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC This script creates the schema and tables for dq-suite-amsterdam
 
 -- COMMAND ----------
 
-CREATE WIDGET TEXT catalog DEFAULT "dpxx_dev"
+USE CATALOG IDENTIFIER(:catalog); 
+CREATE SCHEMA IF NOT EXISTS data_quality
 
 -- COMMAND ----------
 
-create schema if not exists ${catalog}.data_quality
-
--- COMMAND ----------
-
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brondataset (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.brondataset') (
   bronDatasetId STRING,
-  medaillonLaag STRING)
+  bronDatasetNaam STRING,
+  medaillonLaag STRING,
+  teamId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -27,10 +30,11 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.brontabel (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.brontabel') (
   bronTabelId STRING,
   tabelNaam STRING,
-  uniekeSleutel STRING)
+  uniekeSleutel STRING,
+  bronDatasetId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -43,7 +47,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.bronattribuut (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.bronattribuut') (
   bronAttribuutId STRING,
   bronTabelId STRING,
   attribuutNaam STRING)
@@ -59,14 +63,15 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.regel (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.regel') (
   regelId STRING,
   regelNaam STRING,
   regelParameters STRING,
   norm INT,
   bronTabelId STRING,
   attribuut STRING,
-  severity STRING)
+  severity STRING,
+  teamId STRING)
 USING delta
 COMMENT 'Deployed by dq-suite-amsterdam'
 TBLPROPERTIES (
@@ -79,7 +84,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.validatie (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.validatie' ) (
   regelId STRING,
   aantalValideRecords BIGINT,
   aantalReferentieRecords BIGINT,
@@ -99,7 +104,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.afwijking (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.afwijking')  (
   regelId STRING,
   identifierVeldWaarde STRING,
   afwijkendeAttribuutWaarde STRING,
@@ -116,7 +121,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.profilingtabel ( 
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.profilingtabel') ( 
   `profilingTabelId` STRING,
   `bronTabelId` STRING,
   `aantalRecords` BIGINT,
@@ -136,7 +141,7 @@ TBLPROPERTIES (
 
 -- COMMAND ----------
 
-CREATE TABLE IF NOT EXISTS ${catalog}.data_quality.profilingattribuut (
+ CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.profilingattribuut') (
   `profilingAttribuutId` STRING,
   `profilingTabelId` STRING,
   `bronAttribuutId` STRING,
@@ -156,3 +161,19 @@ TBLPROPERTIES (
   'delta.feature.deletionVectors' = 'supported',
   'delta.minReaderVersion' = '3',
   'delta.minWriterVersion' = '7')
+
+-- COMMAND ----------
+
+ CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.team') (
+   teamId STRING,
+   teamName STRING,
+   teamDescription STRING)
+ USING delta
+ COMMENT 'Stores metadata about teams'
+ TBLPROPERTIES (
+   'delta.columnMapping.mode' = 'name',
+   'delta.enableDeletionVectors' = 'true',
+   'delta.feature.columnMapping' = 'supported',
+   'delta.feature.deletionVectors' = 'supported',
+   'delta.minReaderVersion' = '3',
+   'delta.minWriterVersion' = '7');

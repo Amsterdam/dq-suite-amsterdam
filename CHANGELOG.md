@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+## [0.14.0] - 03-27-2026
+
+### Added
+- Added new module for `team` and `mask_columns` in input json file sample `\dq_rules_example.json` and added a new readme file `docs\Readme-Prepare-input-json.md` for description of input file.
+- Added `team` Entity in data model of DQ Suite, for Management Dashboarding.
+- Added bronDatasetId mapping with brontabel, for getting the full map of table id in format `dataset_schema_table`.
+- Added masking functionality for validation afwijking table attribute `afwijkendeAttribuutWaarde`. This Will secure the privacy concerns of data while storing in DMT catalog.
+- Added logger module to debug and logging purpose.
+
+
+### Changed
+
+- Improved the builing login of tabelId (dataset_label_table) in brontabel. This makes the uniqueness of the tabelId.
+- Changed the `scripts/data_quality_tables` script for depricated ${}.
 
 ## [0.13.5] - 03-24-2026
 
