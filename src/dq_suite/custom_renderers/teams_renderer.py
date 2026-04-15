@@ -21,7 +21,8 @@ class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
     def render(
         self,
         checkpoint_result: "CheckpointResult",
-        data_docs_pages: dict["ValidationResultIdentifier", dict[str, str]] | None = None,
+        data_docs_pages: dict["ValidationResultIdentifier", dict[str, str]]
+        | None = None,
     ) -> dict:
         checkpoint_blocks: list[list[dict[str, str]]] = []
         for result_identifier, result in checkpoint_result.run_results.items():
@@ -31,7 +32,9 @@ class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
             )
             checkpoint_blocks.append(validation_blocks)
 
-        data_docs_block = self._render_data_docs_links(data_docs_pages=data_docs_pages)
+        data_docs_block = self._render_data_docs_links(
+            data_docs_pages=data_docs_pages
+        )
         return self._build_payload(
             checkpoint_result=checkpoint_result,
             checkpoint_blocks=checkpoint_blocks,
@@ -101,5 +104,9 @@ class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
         self, validation_result_suite_identifier: "ValidationResultIdentifier"
     ) -> dict[str, str]:
         run_id = validation_result_suite_identifier.run_id
-        run_name = run_id.run_name if isinstance(run_id, RunIdentifier) else run_id
-        return self._render_validation_result_element(key="Run Name", value=run_name)
+        run_name = (
+            run_id.run_name if isinstance(run_id, RunIdentifier) else run_id
+        )
+        return self._render_validation_result_element(
+            key="Run Name", value=run_name
+        )
