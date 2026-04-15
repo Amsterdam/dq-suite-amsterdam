@@ -9,7 +9,6 @@ from great_expectations import (
     get_context,
 )
 from great_expectations.checkpoint import MicrosoftTeamsNotificationAction
-from .custom_renderers.teams_renderer import CustomMSTeamsRenderer
 from great_expectations.checkpoint.checkpoint import CheckpointResult
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.data_context import AbstractDataContext
@@ -26,6 +25,7 @@ from pyspark.sql import DataFrame, SparkSession
 
 from .common import DatasetDict, GeoRule, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
+from .custom_renderers.teams_renderer import CustomMSTeamsRenderer
 from .output_transformations import (
     get_highest_severity_from_validation_result,
     write_validation_metadata_tables,
