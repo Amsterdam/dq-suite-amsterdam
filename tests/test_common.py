@@ -7,8 +7,8 @@ from pyspark.sql import SparkSession
 from src.dq_suite.common import (
     DataQualityRulesDict,
     DatasetDict,
-    Rule,
     GeoRule,
+    Rule,
     RulesDict,
     ValidationSettings,
     get_full_table_name,

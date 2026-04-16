@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 
 from dq_suite.profile.generic_rules import create_dq_rules
 

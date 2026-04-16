@@ -50,7 +50,7 @@ df.summary().show()
 # COMMAND ----------
 
 from dq_suite.validation import run_validation
- 
+
 # run the dataframe validation given the rules defined in dq_rule_json_path
 run_validation(
     json_path=dq_rule_json_path,

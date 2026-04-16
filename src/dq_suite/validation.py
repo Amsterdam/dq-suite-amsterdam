@@ -25,6 +25,7 @@ from pyspark.sql import DataFrame, SparkSession
 
 from .common import DatasetDict, GeoRule, Rule, RulesDict, ValidationSettings
 from .custom_renderers.slack_renderer import CustomSlackNotificationAction
+from .custom_renderers.teams_renderer import CustomMSTeamsRenderer
 from .output_transformations import (
     get_highest_severity_from_validation_result,
     write_validation_metadata_tables,
@@ -271,10 +272,7 @@ class ValidationRunner:
                 name="send_ms_teams_notification",
                 teams_webhook=self.ms_teams_webhook,
                 notify_on=self.notify_on,
-                renderer={
-                    "module_name": "great_expectations.render.renderer.microsoft_teams_renderer",
-                    "class_name": "MicrosoftTeamsRenderer",
-                },
+                renderer=CustomMSTeamsRenderer(),
             )
         )
 
