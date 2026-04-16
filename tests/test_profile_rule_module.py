@@ -1,16 +1,16 @@
 from dq_suite.profile.rules_module import (
     column_between_rule,
     column_compound_unique_rule,
+    column_geometry_type_rule,
     column_match_rule,
     column_not_null_rule,
     column_type_rule,
     column_unique_rule,
+    column_values_have_valid_geometry_rule,
     column_values_in_set_rule,
+    column_values_not_empty_geometry_rule,
     datetime_regex_rule,
     row_count_rule,
-    column_values_have_valid_geometry_rule,
-    column_values_not_empty_geometry_rule,
-    column_geometry_type_rule,
 )
 
 

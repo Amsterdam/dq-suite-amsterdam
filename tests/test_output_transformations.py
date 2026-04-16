@@ -1,8 +1,9 @@
 import json
-from datetime import datetime
-from unittest.mock import Mock
 from copy import deepcopy
+from datetime import datetime
 from types import SimpleNamespace
+from unittest.mock import Mock
+
 import pytest
 from chispa import assert_df_equality
 from pyspark.sql import SparkSession
@@ -16,17 +17,17 @@ from src.dq_suite.output_transformations import (
     get_bronattribuut_data,
     get_brondataset_data,
     get_brontabel_data,
+    get_custom_validation_results,
     get_grouped_ids_per_deviating_value,
     get_highest_severity_from_validation_result,
     get_parameters_from_results,
     get_regel_data,
     get_single_expectation_afwijking_data,
     get_target_attr_for_rule,
+    get_team_data,
     get_unique_deviating_values,
     get_validatie_data,
     list_of_dicts_to_df,
-    get_custom_validation_results,
-    get_team_data,
     mask_value,
 )
 
@@ -880,7 +881,7 @@ def test_mask_value_compound_key_tuple_list():
     value = (("countryname", "Belgie"), ("id", 2))
     attr = ["countryname", "id"]
     masked = mask_value(value, attr, mask_columns=["countryname"])
-    assert masked == ( "***masked***")
+    assert masked == ("***masked***")
 
 
 def test_column_level_expectation_compound_key_masked(

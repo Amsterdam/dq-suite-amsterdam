@@ -15,15 +15,14 @@ from great_expectations.expectations import (
 from pyspark.sql import SparkSession
 from pyspark.sql.types import IntegerType, StructField, StructType
 
-from src.dq_suite.common import Rule, GeoRule, ValidationSettings
+from src.dq_suite.common import GeoRule, Rule, ValidationSettings
+from src.dq_suite.custom_renderers.teams_renderer import CustomMSTeamsRenderer
 from src.dq_suite.output_transformations import (
     create_metadata_dataframe,
     create_validation_result_dataframe,
 )
 from src.dq_suite.validation import ValidationRunner, validate
-from src.dq_suite.custom_renderers.teams_renderer import (
-    CustomMSTeamsRenderer,
-)
+
 
 @pytest.fixture
 def validation_settings_obj():
@@ -285,15 +284,15 @@ class TestValidationRunner:
         # Arrange
         assert validation_runner_obj.action_list is None
         validation_runner_obj.ms_teams_webhook = "the_ms_teams_webhook"
- 
+
         # Act
         validation_runner_obj._create_action_list()
- 
+
         # Assert
         action = validation_runner_obj.action_list[0]
         assert isinstance(action, MicrosoftTeamsNotificationAction)
         assert isinstance(action.renderer, CustomMSTeamsRenderer)
- 
+
         # Validate that the custom renderer produces an AdaptiveCard payload.
         payload = action.renderer.render(
             checkpoint_result=Mock(
