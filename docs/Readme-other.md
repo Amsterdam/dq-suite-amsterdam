@@ -43,9 +43,9 @@ For more info on MS Teams webhooks, click [here](https://learn.microsoft.com/en-
 
 *Note*: this notification method is also supported [via Great Expectations](https://docs.greatexpectations.io/docs/reference/api/checkpoint/MicrosoftTeamsNotificationAction_class) by default, new renderer method is added for Microsoft teams alert.
 
-Prerequistries:
-- Create a workflow for webhook on Micrsoft teams chat. click [here](https://learn.microsoft.com/th-th/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=dotnet#create-an-incoming-webhook-from-a-template)
-- Add The application firwall in databricks otap.json file. Add the webhook url to firewall for each workspace. The file can found the project https://dev.azure.com/CloudCompetenceCenter/Cloud%20Platform%20Operations
+Prerequisites:
+- Create a workflow for webhook on Microsoft teams chat. click [here](https://learn.microsoft.com/th-th/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=dotnet#create-an-incoming-webhook-from-a-template)
+- Add The application firewall in databricks otap.json file to allow webhook url to workspace. The file can found the project https://dev.azure.com/CloudCompetenceCenter/Cloud%20Platform%20Operations
 
 ```json
         {
@@ -64,7 +64,7 @@ mswebhook ="https://default72fca1b12c2e4376a445294d801968.04.environment.api.pow
  
 from dq_suite.validation import run_validation
 run_validation(
-    json_path='/Workspace/Users/r.chellaswamy@amsterdam.nl/rules.json',
+    json_path=<<dq_rule_json_path>>,
     df=dfs[0],
     spark_session=spark,
     catalog_name='dpd1_dev',
