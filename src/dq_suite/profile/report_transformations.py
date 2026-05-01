@@ -4,14 +4,17 @@ from typing import Any, Dict, List, Union
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 
-from dq_suite.common import write_to_unity_catalog, merge_df_with_unity_table  
+from dq_suite.common import merge_df_with_unity_table, write_to_unity_catalog
 from dq_suite.schemas.profilingattribuut import (
     SCHEMA as PROFILINGATTRIBUUT_SCHEMA,
 )
 from dq_suite.schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
-from dq_suite.schemas.team import SCHEMA as TEAM_SCHEMA
 
-from .generic_rules import has_geometry_column, derive_team_from_dataset, normalize_numeric_type
+from .generic_rules import (
+    derive_team_from_dataset,
+    has_geometry_column,
+    normalize_numeric_type,
+)
 
 
 def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
@@ -27,7 +30,9 @@ def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
     return top_values
 
 
-def create_profiling_table(profiling_json: dict, dataset_name: str, layer_name: str) -> Dict:
+def create_profiling_table(
+    profiling_json: dict, dataset_name: str, layer_name: str
+) -> Dict:
     analysis = profiling_json["analysis"]
     bronTabelId = f"{dataset_name}_{layer_name}_{analysis['title']}"
     table = profiling_json["table"]
@@ -36,7 +41,7 @@ def create_profiling_table(profiling_json: dict, dataset_name: str, layer_name: 
     end_ts = datetime.fromisoformat(analysis["date_end"])
 
     return {
-        "teamId" : teamId,
+        "teamId": teamId,
         "profilingTabelId": None,
         "bronTabelId": bronTabelId,
         "tabelNaam": analysis["title"],
@@ -60,7 +65,9 @@ def create_profiling_attributes(
     attributes = []
     end_ts = datetime.fromisoformat(analysis["date_end"])
     for col, stats in profiling_json["variables"].items():
-        bronAttribuutId = f"{dataset_name}_{layer_name}_{analysis['title']}_{col}"
+        bronAttribuutId = (
+            f"{dataset_name}_{layer_name}_{analysis['title']}_{col}"
+        )
         top_value = extract_top_value(stats)
         data_type = stats.get("type")
         if data_type == "Numeric":
@@ -73,7 +80,7 @@ def create_profiling_attributes(
                 "profilingAttribuutId": None,
                 "profilingTabelId": profiling_tabel_id,
                 "bronAttribuutId": bronAttribuutId,
-                "attribuutNaam": col,  
+                "attribuutNaam": col,
                 "missingDataPercentage": stats.get("p_missing"),
                 "minWaarde": str(stats.get("min")),
                 "maxWaarde": str(stats.get("max")),
@@ -90,36 +97,47 @@ def create_profiling_attributes(
 
 def write_profiling_metadata_to_unity(
     profiling_json: dict,
-    catalog_name: str,
+    output_catalog_name: str,
     dataset_name: str,
     layer_name: str,
     spark_session: SparkSession,
     df: DataFrame,
 ) -> None:
     team = derive_team_from_dataset(dataset_name)
-    
+
     merge_df_with_unity_table(
-        df=spark_session.createDataFrame([{
-            "teamId": team["teamid"],
-            "teamNaam": team["teamname"],
-            "teamdescription": team["teamname"]
-        }]),
-        catalog_name=catalog_name,
+        df=spark_session.createDataFrame(
+            [
+                {
+                    "teamId": team["teamid"],
+                    "teamNaam": team["teamname"],
+                    "teamdescription": team["teamname"],
+                }
+            ]
+        ),
+        catalog_name=output_catalog_name,
         table_name="team",
         spark_session=spark_session,
     )
-    
+
     tabel_df = spark_session.createDataFrame(
-        [Row(**create_profiling_table(profiling_json, dataset_name, layer_name))],
+        [
+            Row(
+                **create_profiling_table(
+                    profiling_json, dataset_name, layer_name
+                )
+            )
+        ],
         schema=PROFILINGTABEL_SCHEMA,
     )
     tabel_df = tabel_df.withColumn(
-        "profilingTabelId", xxhash64(col("bronTabelId"),col("dqDatum")).substr(2, 20)
+        "profilingTabelId",
+        xxhash64(col("bronTabelId"), col("dqDatum")).substr(2, 20),
     )
 
     write_to_unity_catalog(
         df=tabel_df,
-        catalog_name=catalog_name,
+        catalog_name=output_catalog_name,
         table_name="profilingtabel",
         schema=PROFILINGTABEL_SCHEMA,
     )
@@ -133,12 +151,14 @@ def write_profiling_metadata_to_unity(
     )
     attribuut_df = attribuut_df.withColumn(
         "profilingAttribuutId",
-        xxhash64(lit(profiling_tabel_id), col("bronAttribuutId"), col("dqDatum")).substr(2, 20),
+        xxhash64(
+            lit(profiling_tabel_id), col("bronAttribuutId"), col("dqDatum")
+        ).substr(2, 20),
     )
 
     write_to_unity_catalog(
         df=attribuut_df,
-        catalog_name=catalog_name,
+        catalog_name=output_catalog_name,
         table_name="profilingattribuut",
         schema=PROFILINGATTRIBUUT_SCHEMA,
     )

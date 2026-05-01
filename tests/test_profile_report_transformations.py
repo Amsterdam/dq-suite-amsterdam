@@ -47,8 +47,8 @@ def test_create_profiling_table():
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
     }
-    result = create_profiling_table(profiling_json, "dataset1")
-    assert result["bronTabelId"] == "dataset1_test_table"
+    result = create_profiling_table(profiling_json, "dataset1", "layer")
+    assert result["bronTabelId"] == "dataset1_layer_test_table"
     assert result["aantalRecords"] == 10
     assert isinstance(result["dqDatum"], datetime)
 
@@ -68,17 +68,18 @@ def test_create_profiling_attributes(dummy_df):
         },
     }
     result = create_profiling_attributes(
-        profiling_json, "dataset1", "profiling_table_1", dummy_df
+        profiling_json, "dataset1", "profiling_table_1", "layer", dummy_df
     )
     assert len(result) == 1
     attr = result[0]
-    assert attr["bronAttribuutId"] == "dataset1_test_table_col1"
+    assert attr["bronAttribuutId"] == "dataset1_layer_test_table_col1"
     assert attr["topVoorkomendeWaardes"] == "a"
     assert attr["missingDataPercentage"] == 0.1
 
 
+@patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
-def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
+def test_write_profiling_metadata_to_unity(mock_write, mock_merge, spark, dummy_df):
     profiling_json = {
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
@@ -95,10 +96,11 @@ def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
     }
 
     write_profiling_metadata_to_unity(
-        profiling_json, "dataset1", "catalog1", spark, dummy_df
+        profiling_json, "catalog1_dev", "dataset1_dev", "layer" , spark, dummy_df
     )
 
     # Check that write_to_unity_catalog is called twice (table + attributes)
+    assert mock_merge.called
     assert mock_write.call_count == 2
 
     # Inspect first call (profiling table)

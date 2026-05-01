@@ -52,7 +52,7 @@ def normalize_numeric_type(col_type: str, details: dict) -> str:
         details (dict): Profiling details containing statistics such as "min" and "max".
 
     Returns:
-        str: 
+        str:
             - "IntegerType" if both min and max are integer-like values
             - "DoubleType" otherwise
     """
@@ -83,8 +83,13 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
         .any()
     )
 
+
 def create_dq_rules(
-    dataset_name: str, table_name: str, layer_name: str, profiling_json: Dict, df: DataFrame
+    dataset_name: str,
+    table_name: str,
+    layer_name: str,
+    profiling_json: Dict,
+    df: DataFrame,
 ) -> RulesDict:
     """
     Create data quality rules based on the profiling report.
@@ -152,12 +157,12 @@ def create_dq_rules(
         rules=rules,
     )
 
-    dataset = DatasetDict(name=dataset_name, layer=layer_name)
     team = derive_team_from_dataset(dataset_name)
+    dataset = DatasetDict(name=dataset_name, layer=layer_name)
 
     dq_json = {
-        "dataset": dataset,
         "team": team,
+        "dataset": dataset,
         "tables": [dq_rules],
     }
 
