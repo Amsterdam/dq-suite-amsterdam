@@ -4,13 +4,17 @@ from typing import Any, Dict, List, Union
 from pyspark.sql import DataFrame, Row, SparkSession
 from pyspark.sql.functions import col, lit, xxhash64
 
-from dq_suite.common import write_to_unity_catalog
+from dq_suite.common import merge_df_with_unity_table, write_to_unity_catalog
 from dq_suite.schemas.profilingattribuut import (
     SCHEMA as PROFILINGATTRIBUUT_SCHEMA,
 )
 from dq_suite.schemas.profilingtabel import SCHEMA as PROFILINGTABEL_SCHEMA
 
-from .generic_rules import has_geometry_column
+from .generic_rules import (
+    derive_team_from_dataset,
+    has_geometry_column,
+    normalize_numeric_type,
+)
 
 
 def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
@@ -26,16 +30,22 @@ def extract_top_value(stats: dict) -> Union[None, Any, List[Any]]:
     return top_values
 
 
-def create_profiling_table(profiling_json: dict, dataset_name: str) -> Dict:
+def create_profiling_table(
+    profiling_json: dict, dataset_name: str, layer_name: str
+) -> Dict:
     analysis = profiling_json["analysis"]
-    bronTabelId = f"{dataset_name}_{analysis['title']}"
+    bronTabelId = f"{dataset_name}_{layer_name}_{analysis['title']}"
     table = profiling_json["table"]
+    teamId = dataset_name.split("_")[0]
 
     end_ts = datetime.fromisoformat(analysis["date_end"])
 
     return {
+        "teamId": teamId,
         "profilingTabelId": None,
         "bronTabelId": bronTabelId,
+        "tabelNaam": analysis["title"],
+        "medaillonLaag": layer_name,
         "aantalRecords": table["n"],
         "aantalNullRecords": table["n_cells_missing"],
         "aantalAttributen": table["n_var"],
@@ -48,22 +58,29 @@ def create_profiling_attributes(
     profiling_json: dict,
     dataset_name: str,
     profiling_tabel_id: str,
+    layer_name: str,
     df: DataFrame,
 ) -> Dict:
     analysis = profiling_json["analysis"]
     attributes = []
     end_ts = datetime.fromisoformat(analysis["date_end"])
     for col, stats in profiling_json["variables"].items():
-        bronAttribuutId = f"{dataset_name}_{analysis['title']}_{col}"
+        bronAttribuutId = (
+            f"{dataset_name}_{layer_name}_{analysis['title']}_{col}"
+        )
         top_value = extract_top_value(stats)
         data_type = stats.get("type")
+        if data_type == "Numeric":
+            data_type = normalize_numeric_type(data_type, stats)
         if has_geometry_column(df, col):
             data_type = type(df[col].dropna().iloc[0]).__name__
 
         attributes.append(
             {
                 "profilingAttribuutId": None,
+                "profilingTabelId": profiling_tabel_id,
                 "bronAttribuutId": bronAttribuutId,
+                "attribuutNaam": col,
                 "missingDataPercentage": stats.get("p_missing"),
                 "minWaarde": str(stats.get("min")),
                 "maxWaarde": str(stats.get("max")),
@@ -80,41 +97,68 @@ def create_profiling_attributes(
 
 def write_profiling_metadata_to_unity(
     profiling_json: dict,
+    output_catalog_name: str,
     dataset_name: str,
-    catalog_name: str,
+    layer_name: str,
     spark_session: SparkSession,
     df: DataFrame,
 ) -> None:
+    team = derive_team_from_dataset(dataset_name)
+
+    merge_df_with_unity_table(
+        df=spark_session.createDataFrame(
+            [
+                {
+                    "teamId": team["teamid"],
+                    "teamNaam": team["teamname"],
+                    "teamdescription": team["teamname"],
+                }
+            ]
+        ),
+        catalog_name=output_catalog_name,
+        table_name="team",
+        spark_session=spark_session,
+    )
+
     tabel_df = spark_session.createDataFrame(
-        [Row(**create_profiling_table(profiling_json, dataset_name))],
+        [
+            Row(
+                **create_profiling_table(
+                    profiling_json, dataset_name, layer_name
+                )
+            )
+        ],
         schema=PROFILINGTABEL_SCHEMA,
     )
     tabel_df = tabel_df.withColumn(
-        "profilingTabelId", xxhash64(col("bronTabelId")).substr(2, 20)
+        "profilingTabelId",
+        xxhash64(col("bronTabelId"), col("dqDatum")).substr(2, 20),
     )
 
     write_to_unity_catalog(
         df=tabel_df,
-        catalog_name=catalog_name,
+        catalog_name=output_catalog_name,
         table_name="profilingtabel",
         schema=PROFILINGTABEL_SCHEMA,
     )
 
     profiling_tabel_id = tabel_df.collect()[0]["profilingTabelId"]
     attribuut_rows = create_profiling_attributes(
-        profiling_json, dataset_name, profiling_tabel_id, df
+        profiling_json, dataset_name, profiling_tabel_id, layer_name, df
     )
     attribuut_df = spark_session.createDataFrame(
         [Row(**row) for row in attribuut_rows], schema=PROFILINGATTRIBUUT_SCHEMA
     )
     attribuut_df = attribuut_df.withColumn(
         "profilingAttribuutId",
-        xxhash64(lit(profiling_tabel_id), col("bronAttribuutId")).substr(2, 20),
+        xxhash64(
+            lit(profiling_tabel_id), col("bronAttribuutId"), col("dqDatum")
+        ).substr(2, 20),
     )
 
     write_to_unity_catalog(
         df=attribuut_df,
-        catalog_name=catalog_name,
+        catalog_name=output_catalog_name,
         table_name="profilingattribuut",
         schema=PROFILINGATTRIBUUT_SCHEMA,
     )
