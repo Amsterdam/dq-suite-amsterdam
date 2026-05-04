@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from pyspark.sql import SparkSession
+from pyspark.sql import Row
 
 from dq_suite.profile.report_transformations import (
     create_profiling_attributes,
@@ -77,9 +78,15 @@ def test_create_profiling_attributes(dummy_df):
     assert attr["missingDataPercentage"] == 0.1
 
 
+
 @patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
-def test_write_profiling_metadata_to_unity(mock_write, mock_merge, spark, dummy_df):
+@patch("pyspark.sql.SparkSession.table")
+def test_write_profiling_metadata_to_unity(mock_table,mock_write, mock_merge, spark, dummy_df):
+    mock_table.return_value = spark.createDataFrame([
+        Row(teamId="dataset1", teamName="x", teamDescription="x")
+    ])
+
     profiling_json = {
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
