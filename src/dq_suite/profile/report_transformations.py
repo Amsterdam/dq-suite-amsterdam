@@ -113,24 +113,21 @@ def write_profiling_metadata_to_unity(
 
     existing_row = existing_df.first()
 
-    if existing_row:
-        team["teamname"] = existing_row["teamName"]
-        team["teamdescription"] = existing_row["teamDescription"]
-
-    merge_df_with_unity_table(
-        df=spark_session.createDataFrame(
-            [
-                {
-                    "teamId": team["teamid"],
-                    "teamName": team["teamname"],
-                    "teamDescription": team["teamdescription"],
-                }
-            ]
-        ),
-        catalog_name=output_catalog_name,
-        table_name="team",
-        spark_session=spark_session,
-    )
+    if not existing_row:
+        merge_df_with_unity_table(
+            df=spark_session.createDataFrame(
+                [
+                    {
+                        "teamId": team["teamid"],
+                        "teamName": team["teamname"],
+                        "teamDescription": team["teamdescription"],
+                    }
+                ]
+            ),
+            catalog_name=output_catalog_name,
+            table_name="team",
+            spark_session=spark_session,
+        )
 
     tabel_df = spark_session.createDataFrame(
         [

@@ -313,7 +313,7 @@ def merge_df_with_unity_table(
         merge_dict = {
             "teamId": f"{df_new_alias}.teamId",
             "teamname": f"{df_new_alias}.teamName",
-            "teamdescription": f"{df_new_alias}.teamdescription",
+            "teamdescription": f"{df_new_alias}.teamDescription",
         }
         merge_on = "teamId"
     else:
