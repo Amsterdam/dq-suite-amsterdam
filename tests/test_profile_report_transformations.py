@@ -82,7 +82,7 @@ def test_create_profiling_attributes(dummy_df):
 @patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
 @patch("pyspark.sql.SparkSession.table")
-def test_write_profiling_metadata_to_unity(mock_table,mock_write, mock_merge, spark, dummy_df):
+def test_team_exists_skip_merge(mock_table,mock_write, mock_merge, spark, dummy_df):
     mock_table.return_value = spark.createDataFrame([
         Row(teamId="dataset1", teamName="x", teamDescription="x")
     ])
@@ -107,7 +107,7 @@ def test_write_profiling_metadata_to_unity(mock_table,mock_write, mock_merge, sp
     )
 
     # Check that write_to_unity_catalog is called twice (table + attributes)
-    assert mock_merge.called
+    mock_merge.assert_not_called()
     assert mock_write.call_count == 2
 
     # Inspect first call (profiling table)
@@ -121,3 +121,37 @@ def test_write_profiling_metadata_to_unity(mock_table,mock_write, mock_merge, sp
     df_arg = kwargs["df"]
     assert df_arg.count() == 1
     assert "profilingAttribuutId" in df_arg.columns
+
+
+@patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
+@patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
+@patch("pyspark.sql.SparkSession.table")
+def test_team_not_exists_calls_merge(mock_table, mock_write, mock_merge, spark, dummy_df):
+    # empty DF
+    mock_table.return_value = spark.createDataFrame([], "teamId string, teamName string, teamDescription string")
+
+    profiling_json = {
+        "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
+        "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
+        "variables": {
+            "col1": {
+                "p_missing": 0.1,
+                "min": 1,
+                "max": 10,
+                "n_distinct": 5,
+                "type": "integer",
+                "value_counts_without_nan": {"a": 3, "b": 2},
+            }
+        },
+    }
+
+    write_profiling_metadata_to_unity(
+        profiling_json,
+        "catalog1_dev",
+        "dataset1_dev",
+        "layer",
+        spark,
+        dummy_df
+    )
+
+    mock_merge.assert_called_once()
