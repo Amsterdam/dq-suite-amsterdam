@@ -82,7 +82,8 @@ def profiling_input():
 def test_dq_structure(profiling_input, df):
     dataset_name = "test_dataset"
     table_name = "test_table"
-    dq_json = create_dq_rules(dataset_name, table_name, profiling_input, df)
+    layer_name = "test_layer"
+    dq_json = create_dq_rules(dataset_name, table_name, layer_name, profiling_input, df)
 
     assert dq_json["dataset"].name == dataset_name
     assert dq_json["tables"][0].table_name == table_name
@@ -92,18 +93,18 @@ def test_missing_table_key_raises_error(df):
     """Ensure KeyError is raised when table metadata is missing."""
     profiling_input = {"variables": {"id": {"type": "Integer"}}}
     with pytest.raises(KeyError):
-        create_dq_rules("dataset", "table", profiling_input, df)
+        create_dq_rules("dataset", "table", "layer", profiling_input, df)
 
 
 def test_missing_variables_key_raises_error(df):
     """Ensure KeyError is raised when variables metadata is missing."""
     profiling_input = {"table": {"n": 1000}}
     with pytest.raises(KeyError):
-        create_dq_rules("dataset", "table", profiling_input, df)
+        create_dq_rules("dataset", "table", "layer", profiling_input, df)
 
 
 def test_rule_logic(profiling_input, df):
-    dq_json = create_dq_rules("test_dataset", "test_table", profiling_input, df)
+    dq_json = create_dq_rules("test_dataset", "test_table", "test_layer", profiling_input, df)
     rules = dq_json["tables"][0].rules
     rule_names = [rule.rule_name for rule in rules]
     columns = list(profiling_input["variables"].keys())
@@ -160,6 +161,7 @@ def test_geometry_rules_are_created(df_with_geometry):
     dq_json = create_dq_rules(
         dataset_name="geo_dataset",
         table_name="geo_table",
+        layer_name="geo_layer",
         profiling_json=profiling_input,
         df=df_with_geometry,
     )

@@ -1,4 +1,9 @@
-{
+{   
+    "team": {
+        "teamid": "dpd1",
+        "teamname": "d1 team",
+        "teamdescription": "d1 team"
+    },
     "dataset": {
         "name": "Customer",
         "layer": "<LAYER TO BE FILLED IN>"

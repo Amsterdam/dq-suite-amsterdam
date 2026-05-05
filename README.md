@@ -92,18 +92,18 @@ This step will create the required profiling tables, including:
 - `generate_rules` as a Boolean to generate dq_rule_json. Set to False if you only want profiling without rule generation
 - `spark` as a SparkSession object (in Databricks notebooks, this is by default called `spark`)
 - `dq_rule_json_path` as a path to a JSON file, wil be formatted in [this](src/dq_suite/profile/dq_rules_example_from_profiling.json) way after running profiling function
-- `dataset_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
+- `dataset_name` as the name of the input dataset used for profiling (e.g. 'dpxx_dev' or 'dpxx_prd'). This name will be placed in the JSON file at `dq_rule_json_path`
 - `table_name` as the name of the table for which a data quality check is required. This name will be placed in the JSON file at `dq_rule_json_path`
-- `catalog_name` as the name of your catalog ('dpxx_dev' or 'dpxx_prd')
+- `output_catalog_name` as the name of the catalog where the profiling outputs will be stored ('dpd1_dev' or 'dpd1_prd') 
 4. Finally, perform the profiling by running 
 ```python
 from dq_suite.profile.profile import profile_and_create_rules
 
 profile_and_create_rules(
     df=df,
+    output_catalog_name=catalog_name,
     dataset_name=dataset_name,
     table_name=table_name,
-    catalog_name=catalog_name,
     spark_session=spark,
     generate_rules=True,
     rule_path=dq_rule_json_path

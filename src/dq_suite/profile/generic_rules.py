@@ -20,6 +20,51 @@ from dq_suite.profile.rules_module import (
 )
 
 
+def derive_team_from_dataset(dataset_name: str) -> dict:
+    """
+    Derive team information from the dataset name.
+
+    Args:
+        dataset_name (str): Name of the dataset (e.g., "dpmo_dev").
+
+    Returns:
+        dict: A dictionary containing:
+            - teamid (str): Extracted team identifier (e.g., "dpmo")
+            - teamname (str): Human-readable team name (e.g., "mo team")
+            - teamdescription (str): Description of the team (same as teamname)
+    """
+    teamid = dataset_name.split("_")[0]
+    teamname = teamid[-2:] + " team"
+
+    return {
+        "teamid": teamid,
+        "teamname": teamname,
+        "teamdescription": teamname,
+    }
+
+
+def normalize_numeric_type(col_type: str, details: dict) -> str:
+    """
+    Normalize a numeric column type based on profiling statistics.
+
+    Args:
+        col_type (str): Original column type from profiling (expected "Numeric").
+        details (dict): Profiling details containing statistics such as "min" and "max".
+
+    Returns:
+        str:
+            - "IntegerType" if both min and max are integer-like values
+            - "DoubleType" otherwise
+    """
+    col_min = details.get("min")
+    col_max = details.get("max")
+
+    if isinstance(col_min, int) and isinstance(col_max, int):
+        return "IntegerType"
+
+    return "DoubleType"
+
+
 def has_geometry_column(df: DataFrame, column_name: str) -> bool:
     """
     Check if the given DataFrame column contains at least one Geometry object.
@@ -40,7 +85,11 @@ def has_geometry_column(df: DataFrame, column_name: str) -> bool:
 
 
 def create_dq_rules(
-    dataset_name: str, table_name: str, profiling_json: Dict, df: DataFrame
+    dataset_name: str,
+    table_name: str,
+    layer_name: str,
+    profiling_json: Dict,
+    df: DataFrame,
 ) -> RulesDict:
     """
     Create data quality rules based on the profiling report.
@@ -85,12 +134,7 @@ def create_dq_rules(
         if "Categorical" in col_type or "Text" in col_type:
             col_type = "StringType"
         if col_type == "Numeric":
-            col_min = details["min"]
-            col_max = details["max"]
-            if isinstance(col_min, int) and isinstance(col_max, int):
-                col_type = "IntegerType"
-            else:
-                col_type = "DoubleType"
+            col_type = normalize_numeric_type(col_type, details)
         if has_geometry_column(df, variable):
             col_type = type(df[variable].dropna().iloc[0]).__name__
             geo_rules = [
@@ -113,9 +157,11 @@ def create_dq_rules(
         rules=rules,
     )
 
-    dataset = DatasetDict(name=dataset_name, layer="<LAYER TO BE FILLED IN>")
+    team = derive_team_from_dataset(dataset_name)
+    dataset = DatasetDict(name=dataset_name, layer=layer_name)
 
     dq_json = {
+        "team": team,
         "dataset": dataset,
         "tables": [dq_rules],
     }

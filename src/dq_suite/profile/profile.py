@@ -10,9 +10,10 @@ from .report_transformations import write_profiling_metadata_to_unity
 
 def profile_and_create_rules(
     df: DataFrame,
+    output_catalog_name: str,
     dataset_name: str,
     table_name: str,
-    catalog_name: str,
+    layer_name: str,
     spark_session: SparkSession,
     generate_rules: bool = True,
     rule_path: str = None,
@@ -40,13 +41,16 @@ def profile_and_create_rules(
     report_html = report.to_notebook_iframe()
 
     if generate_rules:
-        dq_rules = create_dq_rules(dataset_name, table_name, profiling_json, df)
+        dq_rules = create_dq_rules(
+            dataset_name, table_name, layer_name, profiling_json, df
+        )
         save_rules_to_file(dq_rules, rule_path)
 
     write_profiling_metadata_to_unity(
         profiling_json=profiling_json,
+        output_catalog_name=output_catalog_name,
         dataset_name=dataset_name,
-        catalog_name=catalog_name,
+        layer_name=layer_name,
         spark_session=spark_session,
         df=df,
     )

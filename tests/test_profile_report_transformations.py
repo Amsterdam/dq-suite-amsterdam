@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from pyspark.sql import SparkSession
+from pyspark.sql import Row
 
 from dq_suite.profile.report_transformations import (
     create_profiling_attributes,
@@ -47,8 +48,8 @@ def test_create_profiling_table():
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
     }
-    result = create_profiling_table(profiling_json, "dataset1")
-    assert result["bronTabelId"] == "dataset1_test_table"
+    result = create_profiling_table(profiling_json, "dataset1", "layer")
+    assert result["bronTabelId"] == "dataset1_layer_test_table"
     assert result["aantalRecords"] == 10
     assert isinstance(result["dqDatum"], datetime)
 
@@ -68,17 +69,24 @@ def test_create_profiling_attributes(dummy_df):
         },
     }
     result = create_profiling_attributes(
-        profiling_json, "dataset1", "profiling_table_1", dummy_df
+        profiling_json, "dataset1", "profiling_table_1", "layer", dummy_df
     )
     assert len(result) == 1
     attr = result[0]
-    assert attr["bronAttribuutId"] == "dataset1_test_table_col1"
+    assert attr["bronAttribuutId"] == "dataset1_layer_test_table_col1"
     assert attr["topVoorkomendeWaardes"] == "a"
     assert attr["missingDataPercentage"] == 0.1
 
 
+
+@patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
-def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
+@patch("pyspark.sql.SparkSession.table")
+def test_team_exists_skip_merge(mock_table, mock_write, mock_merge, spark, dummy_df):
+    mock_table.return_value = spark.createDataFrame([
+        Row(teamId="dataset1", teamName="x", teamDescription="x")
+    ])
+
     profiling_json = {
         "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
         "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
@@ -95,10 +103,11 @@ def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
     }
 
     write_profiling_metadata_to_unity(
-        profiling_json, "dataset1", "catalog1", spark, dummy_df
+        profiling_json, "catalog1_dev", "dataset1_dev", "layer" , spark, dummy_df
     )
 
     # Check that write_to_unity_catalog is called twice (table + attributes)
+    mock_merge.assert_not_called()
     assert mock_write.call_count == 2
 
     # Inspect first call (profiling table)
@@ -112,3 +121,37 @@ def test_write_profiling_metadata_to_unity(mock_write, spark, dummy_df):
     df_arg = kwargs["df"]
     assert df_arg.count() == 1
     assert "profilingAttribuutId" in df_arg.columns
+
+
+@patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
+@patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
+@patch("pyspark.sql.SparkSession.table")
+def test_team_not_exists_calls_merge(mock_table, mock_write, mock_merge, spark, dummy_df):
+    # empty DF
+    mock_table.return_value = spark.createDataFrame([], "teamId string, teamName string, teamDescription string")
+
+    profiling_json = {
+        "analysis": {"title": "test_table", "date_end": "2026-01-30T12:00:00"},
+        "table": {"n": 10, "n_cells_missing": 2, "n_var": 3, "n_duplicates": 1},
+        "variables": {
+            "col1": {
+                "p_missing": 0.1,
+                "min": 1,
+                "max": 10,
+                "n_distinct": 5,
+                "type": "integer",
+                "value_counts_without_nan": {"a": 3, "b": 2},
+            }
+        },
+    }
+
+    write_profiling_metadata_to_unity(
+        profiling_json,
+        "catalog1_dev",
+        "dataset1_dev",
+        "layer",
+        spark,
+        dummy_df
+    )
+
+    mock_merge.assert_called_once()

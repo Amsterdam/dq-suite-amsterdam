@@ -124,6 +124,9 @@ TBLPROPERTIES (
 CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.profilingtabel') ( 
   `profilingTabelId` STRING,
   `bronTabelId` STRING,
+  `teamId` STRING,
+  `tableNaam` STRING,
+  `medaillonLaag` STRING,
   `aantalRecords` BIGINT,
   `aantalNullRecords` BIGINT,
   `aantalNietUniekeRecords` BIGINT,
@@ -145,6 +148,7 @@ TBLPROPERTIES (
   `profilingAttribuutId` STRING,
   `profilingTabelId` STRING,
   `bronAttribuutId` STRING,
+  `attribuutNaam` STRING,
   `dataType` STRING,
   `missingDataPercentage` DOUBLE,
   `aantalUniekeWaardes` BIGINT,
@@ -166,7 +170,7 @@ TBLPROPERTIES (
 
  CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || 'data_quality.team') (
    teamId STRING,
-   teamName STRING,
+   teamNaam STRING,
    teamDescription STRING)
  USING delta
  COMMENT 'Stores metadata about teams'
