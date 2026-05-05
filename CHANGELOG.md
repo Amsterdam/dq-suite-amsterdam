@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   `"team": {
           "teamid": "dpxx",
           "teamname": "xx team",
-          "teamdescription": "x team"
+          "teamdescription": "xx team"
       }`
 
 - Added `tabelNaam`, `teamId` and `medaillonlaag` columns in profilingtabel table.

@@ -82,7 +82,7 @@ def test_create_profiling_attributes(dummy_df):
 @patch("dq_suite.profile.report_transformations.merge_df_with_unity_table")
 @patch("dq_suite.profile.report_transformations.write_to_unity_catalog")
 @patch("pyspark.sql.SparkSession.table")
-def test_team_exists_skip_merge(mock_table,mock_write, mock_merge, spark, dummy_df):
+def test_team_exists_skip_merge(mock_table, mock_write, mock_merge, spark, dummy_df):
     mock_table.return_value = spark.createDataFrame([
         Row(teamId="dataset1", teamName="x", teamDescription="x")
     ])
