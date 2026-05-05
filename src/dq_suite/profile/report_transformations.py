@@ -119,7 +119,7 @@ def write_profiling_metadata_to_unity(
                 [
                     {
                         "teamId": team["teamid"],
-                        "teamName": team["teamname"],
+                        "teamNaam": team["teamname"],
                         "teamDescription": team["teamdescription"],
                     }
                 ]

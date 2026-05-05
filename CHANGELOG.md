@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   `dataset_name` now explicitly represents the input dataset used for profiling
   `output_catalog_name` explicitly represents the target catalog where profiling results are stored
 - Enhanced numeric type handling in profiling to support specific numeric data types
+- Renamed column `teamName` → `teamNaam` in `data_quality.team` table.
+- Updated all related merge logic and schemas to use `teamNaam`.
 
 ## [0.14.1] - 04-15-2026
 
