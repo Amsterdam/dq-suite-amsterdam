@@ -1,5 +1,4 @@
-from typing import TYPE_CHECKING
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from great_expectations.core import RunIdentifier
 from great_expectations.render.renderer.microsoft_teams_renderer import (
