@@ -335,6 +335,31 @@ class TestValidateRule:
                 }
             )
 
+    def test_validate_rule_with_non_string_description_raises_type_error(
+        self,
+    ):
+        with pytest.raises(TypeError, match="'description' should be of type 'str'"):
+            validate_rule(
+                rule={
+                    "rule_name": "TheRule",
+                    "parameters": {"some_key": "some_value"},
+                    "description": 123,
+                }
+            )
+
+    def test_validate_rule_with_long_description_raises_value_error(
+        self,
+    ):
+        long_description = "x" * 251  # Exceeds 250 character limit
+        with pytest.raises(ValueError, match="'description' should not exceed 250 characters"):
+            validate_rule(
+                rule={
+                    "rule_name": "TheRule",
+                    "parameters": {"some_key": "some_value"},
+                    "description": long_description,
+                }
+            )
+
     def test_validate_rule_works_as_expected(
         self,
     ):
@@ -343,9 +368,19 @@ class TestValidateRule:
                 "rule_name": "TheRule",
                 "parameters": {"some_key": "some_value"},
                 "severity": "fatal",
+                "description": "This is a business-friendly description",
             }
         )
 
+    def test_description_field_is_parsed(self, real_json_file_path):
+        dq_rules = get_data_quality_rules_dict(real_json_file_path)
+
+        first_table = dq_rules["tables"][0]
+        first_rule = first_table["rules"][0]
+
+        assert "description" in first_rule
+        assert isinstance(first_rule["description"], str)
+        assert len(first_rule["description"]) <= 250
 
 @pytest.mark.usefixtures("real_json_file_invalid_formatting_path")
 @pytest.mark.usefixtures("real_json_file_path")

@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Any
 
 from great_expectations.core import RunIdentifier
 from great_expectations.render.renderer.microsoft_teams_renderer import (
@@ -7,12 +8,28 @@ from great_expectations.render.renderer.microsoft_teams_renderer import (
 
 if TYPE_CHECKING:
     from great_expectations.checkpoint.checkpoint import CheckpointResult
-    from great_expectations.core.expectation_validation_result import (
-        ExpectationSuiteValidationResult,
-    )
     from great_expectations.data_context.types.resource_identifiers import (
         ValidationResultIdentifier,
     )
+
+
+def _extract_common_fields(result) -> dict[str, Any]:
+    config = result.expectation_config
+    meta = config.meta or {}
+    kwargs = config.kwargs or {}
+    print("meta: ", meta)
+    return {
+        "Rule Name": meta.get("rule"),
+        "Rule Description": meta.get("description"),
+        "Rule Column(s)": (
+            kwargs.get("column_list")
+            or kwargs.get("column_set")
+            or meta.get("column")
+        ),
+        "Result Value": result.result.get("observed_value")
+        if result.result
+        else None,
+    }
 
 
 class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
@@ -46,16 +63,33 @@ class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
         validation_result: "ExpectationSuiteValidationResult",
         validation_result_suite_identifier: "ValidationResultIdentifier",
     ) -> list[dict[str, str]]:
-        return [
-            self._render_status(validation_result=validation_result),
-            self._render_asset_name(validation_result=validation_result),
-            self._render_suite_name(validation_result=validation_result),
-            self._render_run_name(
-                validation_result_suite_identifier=validation_result_suite_identifier
-            ),
-            self._render_batch_id(validation_result=validation_result),
-            self._render_summary(validation_result=validation_result),
+        blocks = [
+            self._render_status(validation_result),
+            self._render_asset_name(validation_result),
+            self._render_suite_name(validation_result),
+            self._render_run_name(validation_result_suite_identifier),
+            self._render_batch_id(validation_result),
         ]
+
+        def add_block(key, value):
+            if value is not None:
+                blocks.append(
+                    self._render_validation_result_element(key, value)
+                )
+
+        for result in validation_result.results:
+            print(result)
+            if result.success:
+                continue
+
+            fields = _extract_common_fields(result)
+
+            for key, value in fields.items():
+                add_block(key, value)
+
+        blocks.append(self._render_summary(validation_result))
+
+        return blocks
 
     def _build_payload(
         self,
@@ -65,7 +99,6 @@ class CustomMSTeamsRenderer(MicrosoftTeamsRenderer):
     ) -> dict:
         checkpoint_name = checkpoint_result.checkpoint_config.name
         status = "Success !!!" if checkpoint_result.success else "Failure :("
-
         title_block = {
             "type": "TextBlock",
             "size": "Large",

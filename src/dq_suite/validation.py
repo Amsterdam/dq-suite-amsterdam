@@ -159,11 +159,13 @@ class ValidationRunner:
             validation_rule["parameters"]
         )
         column_name = gx_expectation_parameters.get("column", None)
+        description = getattr(validation_rule, "description", None)
 
         gx_expectation_parameters["meta"] = {
             "table": table_name,
             "column": column_name,
             "rule": gx_expectation_name,
+            "description": description,
         }
         return gx_expectation_class(**gx_expectation_parameters)
 
