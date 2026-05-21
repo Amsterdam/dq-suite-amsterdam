@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Literal
+from typing import Any, Dict, List, Literal
 
 from delta.tables import *
 from great_expectations.core.result_format import ResultFormat
@@ -22,6 +22,9 @@ class Rule:
     ] | None = None  # Indicates the impact level of a rule if it fails.
     # evaluating the expectation
     norm: int | None = None  # TODO/check: what is the meaning of this field? Add documentation.
+    description: str | None = (
+        None  # Natural language description for business stakeholders
+    )
 
     def __post_init__(self):
         if not isinstance(self.rule_name, str):
@@ -43,6 +46,14 @@ class Rule:
                 "'severity' must be one of ('fatal', 'error', 'warning') or None"
             )
 
+        if not isinstance(self.description, str):
+            if self.description is not None:
+                raise TypeError("'description' should be of type str")
+
+        # Limit description to 250 characters for practical alerting purposes
+        if self.description is not None and len(self.description) > 250:
+            raise ValueError("'description' should not exceed 250 characters")
+
     def __getitem__(self, key) -> str | Dict[str, Any] | int | None:
         if key == "rule_name":
             return self.rule_name
@@ -52,6 +63,8 @@ class Rule:
             return self.norm
         elif key == "severity":
             return self.severity
+        elif key == "description":
+            return self.description
         raise KeyError(key)
 
 

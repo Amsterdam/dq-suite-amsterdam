@@ -130,6 +130,7 @@ def merge_parameters(exp_cfg: dict) -> dict:
 
     if "meta" in exp_cfg and exp_cfg["meta"] is not None:
         parameters.update(copy.deepcopy(exp_cfg["meta"]))
+        parameters.pop("description", None)
     if "kwargs" in exp_cfg and exp_cfg["kwargs"] is not None:
         kw = copy.deepcopy(exp_cfg["kwargs"])
         for drop_key in ("batch_id", "column", "unexpected_rows_query"):

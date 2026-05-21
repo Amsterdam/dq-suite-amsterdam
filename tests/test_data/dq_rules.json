@@ -16,6 +16,7 @@
                 {
                     "rule_name": "ExpectColumnDistinctValuesToEqualSet",
                     "severity" : "fatal",
+                    "description": "The column should only contain values 1, 2, or 3",
                     "parameters": {
                             "column": "the_column",
                             "value_set": [1, 2, 3]

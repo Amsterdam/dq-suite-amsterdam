@@ -44,8 +44,14 @@ class CustomSlackNotificationAction(SlackNotificationAction):
         self, result: ExpectationValidationResult
     ) -> str:
         expectation_metadata = result["expectation_config"]["meta"]
-        expectation_name = expectation_metadata["expectation_name"]
+        expectation_name = expectation_metadata["rule"]
+        description = expectation_metadata.get("description", None)
         results = result.result
+
+        # Create description text block if available
+        description_text = ""
+        if description:
+            description_text = f"\n *Check Description*: {description}\n"
 
         # Output for Set-type expectations is differently structured
         # TODO: refactor this output more neatly into a function
@@ -73,7 +79,7 @@ class CustomSlackNotificationAction(SlackNotificationAction):
             if partial_unexpected_list is not None:
                 partial_unexpected_list = partial_unexpected_list[:3]
             return f"""
-    \n *Column*: `{expectation_metadata['column_name']}`    *Expectation*: `{expectation_name}`\n\n
+    \n *Column*: `{expectation_metadata['column']}`    *Expectation*: `{expectation_name}`    *Description*:`{description_text}`\n\n
     :information_source: Details:
     *Sample unexpected values*:  ```{partial_unexpected_list}```\n
     *Unexpected / total count*: {results.get('unexpected_count', None)} / {results.get('element_count', 0)}\n

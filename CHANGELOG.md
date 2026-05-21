@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.14.3] - 05-15-2026
+
+### Added
+- Added `description` field in `rule.json`.
+  ` {
+       "rule_name": "ExpectColumnValuesToBeBetween",
+        "severity" : "fatal",
+        "description": "Latitude values must be between 6 and 10000",
+        "parameters": {....`
+
+- Enabled propagation of description from rule.json into custom renderers for improved validation visibility in notifications.
+
+### Changed
+Refactored _render_validation_result in teams_renderer.py to support rule-level metadata rendering, including description.
+
+- Applied description filed of rule. json in custom renderers.
+
+### Changed
+- Updated _render_validation_result fields in teams_renderer.py.
+
 ## [0.14.2] - 05-01-2026
 
 ### Added
